@@ -91,7 +91,7 @@ table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px
 </section>
 </main>
 <script>
-const PRODUCTS=["Vanilla10₹","Pista10₹","Strawberry10₹","Ripple  sauce20₹","Ripple Choco20₹","Mango20₹","Butterscotch20₹","Family Pack Vanilla110","Family Pack Mango160","Kaju Candy10₹","Mawa Candy15₹"Cone 10₹",Cone20₹,"Cone30","Other"];
+const PRODUCTS=["Vanilla10₹","Pista10₹","Strawberry10₹","Ripple  sauce20₹","Ripple Choco20₹","Mango20₹","Butterscotch20₹","Family Pack Vanilla110","Family Pack Mango160","Kaju Candy10₹","Mawa Candy15₹"Cone 10₹",Cone20₹,"Cone30",];
 const $=id=>document.getElementById(id);
 const read=(key,def)=>{try{return JSON.parse(localStorage.getItem(key))??def}catch(e){return def}};
 let shops=read("ki_shops",[]), orders=read("ki_orders",[]);
