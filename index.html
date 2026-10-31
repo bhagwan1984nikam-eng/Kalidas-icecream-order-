@@ -45,4 +45,18 @@ function importOrders(e){let f=e.target.files[0];if(!f)return;let r=new FileRead
 function backup(){dl('Kalidas_Backup.json',JSON.stringify(db,null,2),'application/json;charset=utf-8')}
 function importBackup(e){let f=e.target.files[0];if(!f)return;if(!confirm('यामुळे सध्याचा डेटा बदलू शकतो. पुढे जायचे?'))return;let r=new FileReader();r.onload=()=>{try{let d=JSON.parse(r.result);if(!Array.isArray(d.shops)||!Array.isArray(d.products)||!Array.isArray(d.orders))throw Error();db=d;save();alert('बॅकअप Import झाला.')}catch(x){alert('योग्य JSON बॅकअप निवडा.')}e.target.value=''};r.readAsText(f)}
 orderDate.value=new Date().toISOString().slice(0,10);load();render();
+<script>
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("./sw.js", {
+      scope: "./"
+    }).then(() => {
+      console.log("Offline support enabled");
+    }).catch(error => {
+      console.error("Service Worker error:", error);
+    });
+  });
+}
+</script>
+</body>
 </script></body></html>
