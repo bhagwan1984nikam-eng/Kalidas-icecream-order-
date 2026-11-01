@@ -9,19 +9,20 @@
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
         body { background: var(--bg); padding-bottom: 70px; color: #212121; }
         header { background: var(--primary); color: white; padding: 15px; text-align: center; }
-        .container { padding: 15px; max-width: 900px; margin: auto; }
+        .container { padding: 15px; max-width: 950px; margin: auto; }
         .card { background: white; border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .form-group { margin-bottom: 12px; }
         label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.9rem; }
         input, select { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; }
         button.btn { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; width: 100%; cursor: pointer; margin-top: 5px; }
-        button.btn-secondary { background: var(--secondary); }
+        button.btn-secondary { background: var(--secondary); color: white; }
         button.btn-edit { background: var(--warning); color: white; padding: 5px 10px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; margin-right: 4px; }
         button.btn-danger { background: var(--danger); color: white; padding: 5px 10px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; }
         .table-responsive { overflow-x: auto; margin-top: 10px; }
         table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
         th, td { border: 1px solid var(--border); padding: 8px; text-align: center; }
         th { background: #f5f5f5; }
+        tr.total-row { background: #fff3e0; font-weight: bold; }
         .nav-tabs { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; border-top: 1px solid var(--border); z-index: 1000; }
         .nav-tab { flex: 1; text-align: center; padding: 12px; font-size: 0.8rem; background: none; border: none; cursor: pointer; color: #666; font-weight: bold; }
         .nav-tab.active { color: var(--primary); border-top: 3px solid var(--primary); }
@@ -72,11 +73,8 @@
         <!-- 3. Shops Section -->
         <div id="sec-shops" class="section">
             <div class="card">
-                <h2>Excel / CSV फाईलवरून दुकाने अपलोड करा</h2>
-                <div style="background: #e0f2f1; padding: 12px; border-radius: 6px; margin-bottom: 15px;">
-                    <label style="color: #00695c; font-weight:bold;">📁 Excel CSV फाईल निवडा (Auto Import):</label>
-                    <input type="file" id="csvFileInput" accept=".csv" style="margin-top: 8px;" onchange="importShopsCSV(event)">
-                </div>
+                <h2>दुकानाची माहिती आणि व्यवस्थापन</h2>
+                <button class="btn btn-secondary" onclick="resetToDefaultShops()" style="margin-bottom: 15px; background: #00897b;">🔄 सर्व दुकाने व रूट्स रीसेट करा / लोड करा</button>
                 <hr style="margin: 15px 0; border:0; border-top:1px solid var(--border);">
 
                 <h2 id="shopFormTitle">दुकान जोडा / बदला</h2>
@@ -113,8 +111,15 @@
 
     <script>
         let db;
-        // All 184 shops pre-loaded directly
-        const defaultShops = [{"route": "Banda", "name": "Nandkishor sweets Malgaon highway", "details": "Malgaon | Lokesh  73020 19 933"}, {"route": "Banda", "name": "hotel Laxmi Narayan,Malgaon bazar", "details": "Malgaon bazar | 9022 312 374"}, {"route": "Banda", "name": "mahapurush Store, niravde aaros phata", "details": "niravde aaros phata | Sudhakar gavde   9850 544 348"}, {"route": "Banda", "name": "Mauli general Store,nhaveli, Sonurli chowk", "details": "nhaveli, Sonurli chowk | jethe"}, {"route": "Banda", "name": "ghodemukh krupa Store aaros road ,nhaveli", "details": "harmalkar 9404 939 564"}, {"route": "Banda", "name": "Shri Mauli general Store ,nhaveli", "details": "nhaveli | jethe  7588 565 674"}, {"route": "Banda", "name": "Shri Swami Samarth Store ,nhaveli", "details": "nhaveli | gaonkar 9404 466 385"}, {"route": "Banda", "name": "Shri Dev mahapurush Store ,nhaveli", "details": "nhaveli | gaonkar  7775 979 385"}, {"route": "Banda", "name": "Mauli general Store ,Aaros bridge", "details": "Aaros bridge | gaonkar  7798 333 930"}, {"route": "Banda", "name": "Shri Dev Vetoba general Store, Aaros", "details": "Aaros | Parab 9405 277 826"}, {"route": "Banda", "name": "Shree Mauli Store , satoli bridge", "details": "satoli bridge | kambali  7798 427 417"}, {"route": "Banda", "name": "Saiprasad general Store ,satoli", "details": "satoli | parab 9422 381 216"}, {"route": "Banda", "name": "Datta krupa Store,satoli", "details": "satoli | sutar 7588 676 054"}, {"route": "Banda", "name": "Hotel Sairaj & general Store ,Satarda bridge", "details": "Satarda bridge | raul 9422 967 800"}, {"route": "Banda", "name": "Omkar general Store ,satarda aada", "details": "satarda aada | naik  9404 186 287"}, {"route": "Banda", "name": "Adarsh coldrink & general Store, Satarda phata", "details": "Satarda phata | 8999 713 048"}, {"route": "Banda", "name": "Shri samarth general Store, Satarda bridge", "details": "Satarda bridge | parab 9421 239 881"}, {"route": "Banda", "name": "New Shripad general Store, Satarda bridge", "details": "Satarda bridge | gawas 8007 097 003"}, {"route": "Banda", "name": "Sairaj general Store ,Satarda kabadkar wadi", "details": "Satarda kabadkar wadi | kabadkar 7588 454 445"}, {"route": "Banda", "name": "Durga cold drink & general Store ,Satarda kabadkar wadi", "details": "Satarda kabadkar wadi | kabadkar 9404 186 385"}, {"route": "Banda", "name": "Sadguru general Store , Satarda market", "details": "Satarda market | dhuri 9422 374 153"}, {"route": "Banda", "name": "Raut general Store , Satarda market", "details": "Satarda market | raut 9421 237 999"}, {"route": "Banda", "name": "Raut mini market , Satarda market", "details": "Satarda market | raut 9405 275 871"}, {"route": "Banda", "name": "Balkrishna general Store , Satarda market", "details": "Satarda market | mahale 9422 392 342"}, {"route": "Banda", "name": "Samarth traders , Satarda market", "details": "Satarda market | parab 9421 254 427"}, {"route": "Banda", "name": "Sairaj general Store , Satarda market", "details": "Satarda market | sutar 9422 373 709"}, {"route": "Banda", "name": "Laxmi Narayan general Store , Satarda market", "details": "Satarda market | dhuri 9404 466 384"}, {"route": "Banda", "name": "Sainath coldrinks, kavthi market", "details": "kavthi market | mandrekar 8007 531 668"}, {"route": "Banda", "name": "Mahesh general Store , kavthi market", "details": "kavthi market | gaonkar 9404 465 572"}, {"route": "Banda", "name": "Shankar general Store, kavthi market", "details": "kavthi market | gawas 9404 456 811"}, {"route": "Banda", "name": "Gajanan general Store, kavthi market", "details": "kavthi market | gaonkar 9403 969 008"}, {"route": "Banda", "name": "Sairaj general Store, pednekar wadi, kavthi", "details": "pednekar wadi, kavthi | pednekar 9405 659 660"}, {"route": "Banda", "name": "Swami Samarth Store,  aronda bridge", "details": "aronda bridge | virnodkar 9404 939 527"}, {"route": "Banda", "name": "Om sai coldrinks, aronda bridge", "details": "aronda bridge | parab 8605 528 770"}, {"route": "Banda", "name": "hotel Sairaj, aronda bridge", "details": "aronda bridge | raut 9403 967 763"}, {"route": "Banda", "name": "Pavan general Store, aronda bridge", "details": "aronda bridge | kambali 9420 742 805"}, {"route": "Banda", "name": "Kripasindhu coldrinks, aronda bridge", "details": "aronda bridge | kambali 8805 137 573"}, {"route": "Banda", "name": "Pratap general Store, aronda phata", "details": "aronda phata | kadam 9421 237 997"}, {"route": "Banda", "name": "Kalika general Store , aronda highschool", "details": "aronda highschool | mulik 8007 348 274"}, {"route": "Banda", "name": "Swami Samarth Store, aronda phata", "details": "aronda phata | kambali 9422 632 291"}, {"route": "Banda", "name": "hotel Sagar, aronda phata", "details": "aronda phata | kadam 9403 586 160"}, {"route": "Banda", "name": "hotel Sairaj & coldrinks, aronda phata", "details": "aronda phata | dabolkar 9404 453 540"}, {"route": "Banda", "name": "Shradha general Store, aronda phata", "details": "aronda phata | dabolkar 9405 277 824"}, {"route": "Banda", "name": "Morya coldrinks, aronda phata", "details": "aronda phata | raut 9403 078 958"}, {"route": "Banda", "name": "Mauli general Store, aronda phata", "details": "aronda phata | palav 9422 435 083"}, {"route": "Banda", "name": "Navso Mauli general Store, aronda phata", "details": "aronda phata | virnodkar 9404 466 386"}, {"route": "Banda", "name": "Om kar general Store, aronda phata", "details": "aronda phata | virnodkar 9404 466 387"}];
+        const defaultShops = [
+            {"route": "Banda", "name": "Nandkishor sweets Malgaon highway", "details": "Malgaon | Lokesh 73020 19 933"},
+            {"route": "Banda", "name": "hotel Laxmi Narayan,Malgaon bazar", "details": "Malgaon bazar | 9022 312 374"},
+            {"route": "Banda", "name": "mahapurush Store, niravde aaros phata", "details": "niravde aaros phata | Sudhakar gavde 9850 544 348"},
+            {"route": "Banda", "name": "Mauli general Store,nhaveli, Sonurli chowk", "details": "nhaveli, Sonurli chowk | jethe"},
+            {"route": "Banda", "name": "ghodemukh krupa Store aaros road ,nhaveli", "details": "harmalkar 9404 939 564"},
+            {"route": "Kolgaon", "name": "Colgaon General Store", "details": "Kolgaon Market | 9422012345"},
+            {"route": "Aaros", "name": "Aaros Cold Drinks", "details": "Aaros Phata | 9822123456"}
+        ];
 
         const defaultProds = [
             { name: "व्हॅनिला", price: 50 },
@@ -122,7 +127,7 @@
             { name: "चॉकलेट", price: 60 }
         ];
 
-        const req = indexedDB.open("KalidasIceCreamDB", 5);
+        const req = indexedDB.open("KalidasIceCreamDB", 8);
         req.onerror = e => alert("Database error");
         req.onsuccess = e => { db = e.target.result; initApp(); };
         req.onupgradeneeded = e => {
@@ -154,57 +159,24 @@
 
             tx.objectStore('shops').getAll().onsuccess = e => {
                 if(e.target.result.length === 0) {
-                    let wTx = db.transaction('shops', 'readwrite');
-                    defaultShops.forEach(s => wTx.objectStore('shops').add(s));
-                    wTx.oncomplete = () => loadShops();
+                    resetToDefaultShops();
                 } else { loadShops(); }
             };
             loadOrders();
         }
 
-        function getStore(name, mode) { return db.transaction(name, mode).objectStore(name); }
-
-        // --- CSV IMPORT FUNCTION ---
-        function importShopsCSV(event) {
-            let file = event.target.files[0];
-            if(!file) return;
-
-            let reader = new FileReader();
-            reader.onload = function(e) {
-                let lines = e.target.result.split('\n');
-                let tx = db.transaction('shops', 'readwrite');
-                let store = tx.objectStore('shops');
-                let count = 0;
-
-                for(let i = 1; i < lines.length; i++) {
-                    let line = lines[i].trim();
-                    if(!line) continue;
-
-                    let row = line.split(',');
-                    if(row.length >= 4) {
-                        let name = row[0].replace(/^"|"$/g, '').trim();
-                        let addr = row[1].replace(/^"|"$/g, '').trim();
-                        let phone = row[2].replace(/^"|"$/g, '').trim();
-                        let route = row[3].replace(/^"|"$/g, '').trim() || 'General';
-
-                        if(name) {
-                            store.add({
-                                route: route,
-                                name: name,
-                                details: (addr + (addr && phone ? ' | ' : '') + phone).trim()
-                            });
-                            count++;
-                        }
-                    }
-                }
-
-                tx.oncomplete = () => {
-                    alert(count + ' दुकाने यशस्वीरित्या लोड झाली!');
-                    loadShops();
-                };
+        function resetToDefaultShops() {
+            let tx = db.transaction('shops', 'readwrite');
+            let store = tx.objectStore('shops');
+            store.clear();
+            defaultShops.forEach(s => store.add(s));
+            tx.oncomplete = () => {
+                alert('सर्व दुकाने आणि रूट्स यशस्वीरित्या लोड झाले!');
+                loadShops();
             };
-            reader.readAsText(file, 'utf-8');
         }
+
+        function getStore(name, mode) { return db.transaction(name, mode).objectStore(name); }
 
         // --- PRODUCTS CRUD ---
         function saveProduct() {
@@ -260,14 +232,17 @@
                 });
                 html += '</table>';
                 document.getElementById('productList').innerHTML = html;
-
-                document.getElementById('orderProductsContainer').innerHTML = prods.map(p => `
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;" class="prod-row" data-name="${p.name}" data-price="${p.price}">
-                        <span>${p.name} (₹${p.price})</span>
-                        <input type="number" class="order-qty" value="0" min="0" style="width:80px;" oninput="calcTotal()">
-                    </div>
-                `).join('');
+                renderOrderProductInputs(prods);
             };
+        }
+
+        function renderOrderProductInputs(prods) {
+            document.getElementById('orderProductsContainer').innerHTML = prods.map(p => `
+                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;" class="prod-row" data-name="${p.name}" data-price="${p.price}">
+                    <span>${p.name} (₹${p.price})</span>
+                    <input type="number" class="order-qty" value="0" min="0" style="width:80px;" oninput="calcTotal()">
+                </div>
+            `).join('');
         }
 
         // --- SHOPS CRUD ---
@@ -315,7 +290,8 @@
             getStore('shops', 'readonly').getAll().onsuccess = e => {
                 let shops = e.target.result;
                 let routes = [...new Set(shops.map(s => s.route))];
-                document.getElementById('orderRoute').innerHTML = routes.map(r => `<option value="${r}">${r}</option>`).join('');
+                let routeSelect = document.getElementById('orderRoute');
+                routeSelect.innerHTML = routes.map(r => `<option value="${r}">${r}</option>`).join('');
                 loadShopsByRoute();
 
                 let html = '<table><tr><th>मार्ग</th><th>दुकान</th><th>तपशील</th><th>कृती</th></tr>';
@@ -343,6 +319,7 @@
             getStore('shops', 'readonly').getAll().onsuccess = e => {
                 let shops = e.target.result.filter(s => s.route === r);
                 document.getElementById('orderShop').innerHTML = shops.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+                clearOrderFormQuantities();
             };
         }
 
@@ -361,6 +338,13 @@
             document.getElementById('orderBalance').innerText = bal.toFixed(2);
         }
 
+        function clearOrderFormQuantities() {
+            document.querySelectorAll('.order-qty').forEach(input => input.value = 0);
+            document.getElementById('orderDiscount').value = 0;
+            document.getElementById('orderPaid').value = 0;
+            calcTotal();
+        }
+
         function saveOrder() {
             let route = document.getElementById('orderRoute').value;
             let shop = document.getElementById('orderShop').value;
@@ -371,6 +355,7 @@
                 if(q > 0) items.push({ name: row.dataset.name, price: parseFloat(row.dataset.price), qty: q });
             });
             if(items.length === 0) return alert('किमान एक प्रॉडक्ट निवडा.');
+            
             let order = {
                 route, shop, date, items,
                 subtotal: parseFloat(document.getElementById('orderSubtotal').innerText),
@@ -379,9 +364,11 @@
                 paid: parseFloat(document.getElementById('orderPaid').value) || 0,
                 balance: parseFloat(document.getElementById('orderBalance').innerText)
             };
+            
             getStore('orders', 'readwrite').add(order).onsuccess = () => {
                 alert('ऑर्डर यशस्वी सेव्ह झाली!');
                 loadOrders();
+                clearOrderFormQuantities();
             };
         }
 
@@ -402,21 +389,38 @@
                     let orders = eO.target.result;
                     let html = '<table><thead><tr><th>क्र.</th><th>रूट</th><th>दुकान</th>';
                     prods.forEach(p => html += `<th>${p}</th>`);
-                    html += '<th>एकूण</th></tr></thead><tbody>';
+                    html += '<th>एकूण नग</th><th>एकूण रक्कम (₹)</th></tr></thead><tbody>';
                     
                     let totals = {}; prods.forEach(p => totals[p] = 0);
+                    let grandQty = 0;
                     let grandAmt = 0;
+
                     orders.forEach((o, idx) => {
                         let pMap = {}; prods.forEach(p => pMap[p] = 0);
-                        o.items.forEach(i => { pMap[i.name] = i.qty; });
+                        let rowTotalQty = 0;
+                        o.items.forEach(i => { 
+                            pMap[i.name] = i.qty; 
+                            rowTotalQty += i.qty;
+                        });
+
                         html += `<tr><td>${idx+1}</td><td>${o.route}</td><td>${o.shop}</td>`;
-                        prods.forEach(p => { html += `<td>${pMap[p]}</td>`; totals[p] += pMap[p]; });
-                        html += `<td>₹${o.net}</td></tr>`;
+                        prods.forEach(p => { 
+                            html += `<td>${pMap[p]}</td>`; 
+                            totals[p] += pMap[p]; 
+                        });
+                        html += `<td><b>${rowTotalQty}</b></td><td><b>₹${o.net}</b></td></tr>`;
+                        
+                        grandQty += rowTotalQty;
                         grandAmt += o.net;
                     });
-                    html += '<tr style="font-weight:bold; background:#fff3e0;"><td colspan="3">एकूण</td>';
-                    prods.forEach(p => html += `<td>${totals[p]}</td>`);
-                    html += `<td>₹${grandAmt.toFixed(2)}</td></tr></tbody></table>`;
+
+                    // TOTAL ROW AT THE BOTTOM
+                    html += `<tr class="total-row"><td colspan="3">एकूण (TOTAL)</td>`;
+                    prods.forEach(p => {
+                        html += `<td>${totals[p]}</td>`;
+                    });
+                    html += `<td><b>${grandQty}</b></td><td><b>₹${grandAmt.toFixed(2)}</b></td></tr></tbody></table>`;
+                    
                     document.getElementById('reportOutput').innerHTML = html;
                 };
             };
