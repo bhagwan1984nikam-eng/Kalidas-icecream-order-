@@ -4,11 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>कालिदास आईस्क्रीम ऑर्डर ॲप</title>
+    <!-- PWA Manifest with Local Logo -->
+    <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Kalidas%20Ice%20Cream%20Orders%22%2C%22short_name%22%3A%22Kalidas%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23ffffff%22%2C%22theme_color%22%3A%22%23d81b60%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22logo.jpg%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fjpeg%22%7D%5D%7D">
     <style>
         :root { --primary: #d81b60; --secondary: #00897b; --danger: #d32f2f; --warning: #f57c00; --bg: #fafafa; --border: #e0e0e0; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
         body { background: var(--bg); padding-bottom: 70px; color: #212121; }
-        header { background: var(--primary); color: white; padding: 15px; text-align: center; }
+        header { background: var(--primary); color: white; padding: 12px 15px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        header img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; background: white; border: 2px solid white; }
+        header h1 { font-size: 1.1rem; }
         .container { padding: 15px; max-width: 950px; margin: auto; }
         .card { background: white; border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .form-group { margin-bottom: 12px; }
@@ -20,9 +24,10 @@
         button.btn-danger { background: var(--danger); color: white; padding: 5px 10px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; }
         .table-responsive { overflow-x: auto; margin-top: 10px; }
         table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        th, td { border: 1px solid var(--border); padding: 8px; text-align: center; }
+        th, td { border: 1px solid var(--border); padding: 8px; text-align: center; vertical-align: middle; }
         th { background: #f5f5f5; }
         tr.total-row { background: #fff3e0; font-weight: bold; }
+        .prod-thumb { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc; }
         .nav-tabs { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; border-top: 1px solid var(--border); z-index: 1000; }
         .nav-tab { flex: 1; text-align: center; padding: 12px; font-size: 0.8rem; background: none; border: none; cursor: pointer; color: #666; font-weight: bold; }
         .nav-tab.active { color: var(--primary); border-top: 3px solid var(--primary); }
@@ -31,7 +36,10 @@
     </style>
 </head>
 <body>
-    <header><h1>कालिदास आईस्क्रीम ऑर्डर ॲप</h1></header>
+    <header>
+        <img src="logo.jpg" alt="Kalidas Logo">
+        <h1>कालिदास आईस्क्रीम ऑर्डर ॲप</h1>
+    </header>
     <div class="container">
         <!-- 1. Orders Section -->
         <div id="sec-orders" class="section active">
@@ -41,7 +49,7 @@
                 <div class="form-group"><label>दुकान निवडा (Shop):</label><select id="orderShop"></select></div>
                 <div class="form-group"><label>तारीख:</label><input type="date" id="orderDate"></div>
                 <h3>उत्पादने व प्रमाण</h3>
-                <div id="orderProductsContainer" style="max-height: 220px; overflow-y: auto; margin-top: 10px;"></div>
+                <div id="orderProductsContainer" style="max-height: 250px; overflow-y: auto; margin-top: 10px;"></div>
                 <div style="margin-top: 15px; background: #f9f9f9; padding: 10px; border-radius: 6px;">
                     <p><strong>एकूण: </strong><span id="orderSubtotal">0.00</span> ₹</p>
                     <div class="form-group" style="margin-top:8px;"><label>सवलत (₹):</label><input type="number" id="orderDiscount" value="0" oninput="calcTotal()"></div>
@@ -64,8 +72,15 @@
                 <input type="hidden" id="prodId">
                 <div class="form-group"><label>उत्पादनाचे नाव:</label><input type="text" id="prodName"></div>
                 <div class="form-group"><label>किंमत (₹):</label><input type="number" id="prodPrice"></div>
+                <div class="form-group">
+                    <label>उत्पादनाचा फोटो (Image):</label>
+                    <input type="file" id="prodImageFile" accept="image/*" style="margin-bottom:5px;">
+                    <div id="currentProdImagePreview" style="margin-top:5px;"></div>
+                </div>
                 <button class="btn" id="prodSaveBtn" onclick="saveProduct()">उत्पादन सेव्ह करा</button>
                 <button class="btn btn-secondary" id="prodCancelBtn" style="display:none; margin-top:5px;" onclick="resetProdForm()">रद्द करा</button>
+                
+                <h3 style="margin-top:20px;">उत्पादनांची यादी</h3>
                 <div class="table-responsive" id="productList"></div>
             </div>
         </div>
@@ -111,6 +126,8 @@
 
     <script>
         let db;
+        let currentEditingProductImage = null;
+
         const defaultShops = [
             {"route": "Banda", "name": "Nandkishor sweets Malgaon highway", "details": "Malgaon | Lokesh 73020 19 933"},
             {"route": "Banda", "name": "hotel Laxmi Narayan,Malgaon bazar", "details": "Malgaon bazar | 9022 312 374"},
@@ -122,12 +139,12 @@
         ];
 
         const defaultProds = [
-            { name: "व्हॅनिला", price: 50 },
-            { name: "पिस्ता", price: 60 },
-            { name: "चॉकलेट", price: 60 }
+            { name: "व्हॅनिला", price: 50, image: "" },
+            { name: "पिस्ता", price: 60, image: "" },
+            { name: "चॉकलेट", price: 60, image: "" }
         ];
 
-        const req = indexedDB.open("KalidasIceCreamDB", 9);
+        const req = indexedDB.open("KalidasIceCreamDB", 11);
         req.onerror = e => alert("Database error");
         req.onsuccess = e => { db = e.target.result; initApp(); };
         req.onupgradeneeded = e => {
@@ -178,14 +195,29 @@
 
         function getStore(name, mode) { return db.transaction(name, mode).objectStore(name); }
 
-        // --- PRODUCTS CRUD ---
+        // --- PRODUCTS CRUD WITH IMAGE UPLOAD & DELETE ---
         function saveProduct() {
             let id = document.getElementById('prodId').value;
             let name = document.getElementById('prodName').value.trim();
             let price = parseFloat(document.getElementById('prodPrice').value);
             if(!name || isNaN(price)) return alert('कृपया माहिती भरा.');
 
-            let item = { name, price };
+            let fileInput = document.getElementById('prodImageFile');
+            
+            if(fileInput.files && fileInput.files[0]) {
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    let base64Image = e.target.result;
+                    persistProduct(id, name, price, base64Image);
+                };
+                reader.readAsDataURL(fileInput.files[0]);
+            } else {
+                persistProduct(id, name, price, currentEditingProductImage || "");
+            }
+        }
+
+        function persistProduct(id, name, price, image) {
+            let item = { name, price, image };
             if(id) item.id = parseInt(id);
 
             getStore('products', 'readwrite').put(item).onsuccess = () => {
@@ -194,12 +226,26 @@
             };
         }
 
-        function editProduct(id, name, price) {
+        function editProduct(id, name, price, image) {
             document.getElementById('prodId').value = id;
             document.getElementById('prodName').value = name;
             document.getElementById('prodPrice').value = price;
+            currentEditingProductImage = image || "";
+            
+            let previewArea = document.getElementById('currentProdImagePreview');
+            if(currentEditingProductImage) {
+                previewArea.innerHTML = `<img src="${currentEditingProductImage}" style="width:50px; height:50px; object-fit:cover; border-radius:4px;"><br><button type="button" onclick="removeProductImageInEdit()" style="background:red; color:white; border:none; padding:2px 5px; font-size:0.75rem; border-radius:3px; margin-top:3px; cursor:pointer;">फोटो काढा (Remove)</button>`;
+            } else {
+                previewArea.innerHTML = `<small style="color:gray;">सध्या फोटो नाही</small>`;
+            }
+
             document.getElementById('prodFormTitle').innerText = "उत्पादनात बदल करा";
             document.getElementById('prodCancelBtn').style.display = "block";
+        }
+
+        function removeProductImageInEdit() {
+            currentEditingProductImage = "";
+            document.getElementById('currentProdImagePreview').innerHTML = `<small style="color:red;">फोटो काढला गेला आहे (सेव्ह झाल्यावर कायम होईल)</small>`;
         }
 
         function deleteProduct(id) {
@@ -212,6 +258,9 @@
             document.getElementById('prodId').value = '';
             document.getElementById('prodName').value = '';
             document.getElementById('prodPrice').value = '';
+            document.getElementById('prodImageFile').value = '';
+            document.getElementById('currentProdImagePreview').innerHTML = '';
+            currentEditingProductImage = null;
             document.getElementById('prodFormTitle').innerText = "उत्पादन जोडा / बदला";
             document.getElementById('prodCancelBtn').style.display = "none";
         }
@@ -219,13 +268,17 @@
         function loadProducts() {
             getStore('products', 'readonly').getAll().onsuccess = e => {
                 let prods = e.target.result;
-                let html = '<table><tr><th>नाव</th><th>किंमत</th><th>कृती</th></tr>';
+                let html = '<table><tr><th>फोटो</th><th>नाव</th><th>किंमत</th><th>कृती</th></tr>';
                 prods.forEach(p => {
+                    let imgTag = p.image ? `<img src="${p.image}" class="prod-thumb">` : '<span style="color:gray; font-size:0.75rem;">नाही</span>';
+                    let safeName = p.name.replace(/'/g, "\\'");
+                    let safeImg = (p.image || '').replace(/'/g, "\\'");
                     html += `<tr>
+                        <td>${imgTag}</td>
                         <td>${p.name}</td>
                         <td>₹${p.price}</td>
                         <td>
-                            <button class="btn-edit" onclick="editProduct(${p.id}, '${p.name}', ${p.price})">एडिट</button>
+                            <button class="btn-edit" onclick="editProduct(${p.id}, '${safeName}', ${p.price}, '${safeImg}')">एडिट</button>
                             <button class="btn-danger" onclick="deleteProduct(${p.id})">डिलीट</button>
                         </td>
                     </tr>`;
@@ -237,12 +290,15 @@
         }
 
         function renderOrderProductInputs(prods) {
-            document.getElementById('orderProductsContainer').innerHTML = prods.map(p => `
-                <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;" class="prod-row" data-name="${p.name}" data-price="${p.price}">
-                    <span>${p.name} (₹${p.price})</span>
-                    <input type="number" class="order-qty" value="0" min="0" style="width:80px;" oninput="calcTotal()">
-                </div>
-            `).join('');
+            document.getElementById('orderProductsContainer').innerHTML = prods.map(p => {
+                let thumb = p.image ? `<img src="${p.image}" style="width:30px; height:30px; object-fit:cover; border-radius:3px; vertical-align:middle; margin-right:5px;">` : '';
+                return `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;" class="prod-row" data-name="${p.name}" data-price="${p.price}">
+                        <span style="display:flex; align-items:center;">${thumb}${p.name} (₹${p.price})</span>
+                        <input type="number" class="order-qty" value="0" min="0" style="width:80px;" oninput="calcTotal()">
+                    </div>
+                `;
+            }).join('');
         }
 
         // --- SHOPS CRUD ---
@@ -414,7 +470,6 @@
                         grandAmt += o.net;
                     });
 
-                    // TOTAL ROW AT THE BOTTOM
                     html += `<tr class="total-row"><td colspan="3">एकूण (TOTAL)</td>`;
                     prods.forEach(p => {
                         html += `<td>${totals[p]}</td>`;
