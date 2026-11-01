@@ -5,9 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>कालिदास आईस्क्रीम ऑर्डर ॲप</title>
     <style>
-        :root { --primary: #d81b60; --secondary: #00897b; --bg: #fafafa; --border: #e0e0e0; }
+        :root { --primary: #d81b60; --secondary: #00897b; --danger: #d32f2f; --warning: #f57c00; --bg: #fafafa; --border: #e0e0e0; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
-        body { background: var(--bg); padding-bottom: 70px; }
+        body { background: var(--bg); padding-bottom: 70px; color: #212121; }
         header { background: var(--primary); color: white; padding: 15px; text-align: center; }
         .container { padding: 15px; max-width: 900px; margin: auto; }
         .card { background: white; border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
@@ -15,7 +15,11 @@
         label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.9rem; }
         input, select { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; }
         button.btn { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; width: 100%; cursor: pointer; margin-top: 5px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }
+        button.btn-secondary { background: var(--secondary); }
+        button.btn-edit { background: var(--warning); color: white; padding: 5px 10px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; margin-right: 4px; }
+        button.btn-danger { background: var(--danger); color: white; padding: 5px 10px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; }
+        .table-responsive { overflow-x: auto; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
         th, td { border: 1px solid var(--border); padding: 8px; text-align: center; }
         th { background: #f5f5f5; }
         .nav-tabs { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; border-top: 1px solid var(--border); z-index: 1000; }
@@ -28,7 +32,7 @@
 <body>
     <header><h1>कालिदास आईस्क्रीम ऑर्डर ॲप</h1></header>
     <div class="container">
-        <!-- Orders -->
+        <!-- 1. Orders Section -->
         <div id="sec-orders" class="section active">
             <div class="card">
                 <h2>नवीन ऑर्डर नोंदवा</h2>
@@ -48,35 +52,45 @@
             </div>
             <div class="card">
                 <h2>ऑर्डर इतिहास</h2>
-                <div id="orderHistoryList" style="overflow-x:auto;"></div>
+                <div class="table-responsive" id="orderHistoryList"></div>
             </div>
         </div>
 
-        <!-- Products -->
+        <!-- 2. Products Section -->
         <div id="sec-products" class="section">
             <div class="card">
-                <h2>उत्पादन व्यवस्थापन</h2>
-                <div class="form-group"><label>नाव:</label><input type="text" id="prodName"></div>
+                <h2 id="prodFormTitle">उत्पादन जोडा / बदला</h2>
+                <input type="hidden" id="prodId">
+                <div class="form-group"><label>उत्पादनाचे नाव:</label><input type="text" id="prodName"></div>
                 <div class="form-group"><label>किंमत (₹):</label><input type="number" id="prodPrice"></div>
-                <button class="btn" onclick="saveProduct()">उत्पादन जोडा</button>
-                <div id="productList" style="overflow-x:auto; margin-top:10px;"></div>
+                <button class="btn" id="prodSaveBtn" onclick="saveProduct()">उत्पादन सेव्ह करा</button>
+                <button class="btn btn-secondary" id="prodCancelBtn" style="display:none; margin-top:5px;" onclick="resetProdForm()">रद्द करा</button>
+                <div class="table-responsive" id="productList"></div>
             </div>
         </div>
 
-        <!-- Shops -->
+        <!-- 3. Shops Section -->
         <div id="sec-shops" class="section">
             <div class="card">
-                <h2>दुकानांची यादी (१८७ दुकाने)</h2>
-                <div id="shopList" style="overflow-x:auto; max-height: 450px;"></div>
+                <h2 id="shopFormTitle">दुकान जोडा / बदला</h2>
+                <input type="hidden" id="shopId">
+                <div class="form-group"><label>मार्ग (Route):</label><input type="text" id="shopRoute"></div>
+                <div class="form-group"><label>दुकानाचे नाव:</label><input type="text" id="shopName"></div>
+                <div class="form-group"><label>पत्ता / संपर्क:</label><input type="text" id="shopDetails"></div>
+                <button class="btn" id="shopSaveBtn" onclick="saveShop()">दुकान सेव्ह करा</button>
+                <button class="btn btn-secondary" id="shopCancelBtn" style="display:none; margin-top:5px;" onclick="resetShopForm()">रद्द करा</button>
+                
+                <h3 style="margin-top:20px;">सर्व दुकानांची यादी</h3>
+                <div class="table-responsive" id="shopList" style="max-height: 400px;"></div>
             </div>
         </div>
 
-        <!-- Reports -->
+        <!-- 4. Reports Section -->
         <div id="sec-reports" class="section">
             <div class="card">
                 <h2>अहवाल व बॅकअप</h2>
-                <button class="btn" style="background:var(--secondary);" onclick="generateReport()">अहवाल तयार करा</button>
-                <div id="reportOutput" style="overflow-x:auto; margin-top:10px;"></div>
+                <button class="btn btn-secondary" onclick="generateReport()">अहवाल तयार करा</button>
+                <div class="table-responsive" id="reportOutput" style="margin-top:10px;"></div>
                 <button class="btn" style="margin-top:10px;" onclick="exportCSV()">Excel CSV डाउनलोड करा</button>
                 <button class="btn" style="margin-top:10px; background:#d32f2f;" onclick="exportJSON()">JSON बॅकअप घ्या</button>
             </div>
@@ -92,14 +106,13 @@
 
     <script>
         let db;
-        // Pre-loaded 187 shops directly inside the script
         const defaultShops = [
             {"route": "Banda", "name": "Nandkishor sweets Malgaon highway", "details": "Malgaon | Lokesh  73020 19 933"},
             {"route": "Banda", "name": "hotel Laxmi Narayan,Malgaon bazar", "details": "Malgaon bazar | 9022 312 374"},
             {"route": "Banda", "name": "mahapurush Store, niravde aaros phata", "details": "niravde aaros phata | Sudhakar gavde   9850 544 348"},
             {"route": "Banda", "name": "Mauli general Store,nhaveli, Sonurli chowk", "details": "nhaveli, Sonurli chowk | jethe"},
             {"route": "Banda", "name": "ghodemukh krupa Store aaros road ,nhaveli", "details": "harmalkar 9404 939 564"}
-        ]; // (187 shops dataset embedded completely)
+        ];
 
         const defaultProds = [
             { name: "व्हॅनिला", price: 50 },
@@ -107,7 +120,7 @@
             { name: "चॉकलेट", price: 60 }
         ];
 
-        const req = indexedDB.open("KalidasIceCreamDB", 3);
+        const req = indexedDB.open("KalidasIceCreamDB", 4);
         req.onerror = e => alert("Database error");
         req.onsuccess = e => { db = e.target.result; initApp(); };
         req.onupgradeneeded = e => {
@@ -140,7 +153,6 @@
             tx.objectStore('shops').getAll().onsuccess = e => {
                 if(e.target.result.length === 0) {
                     let wTx = db.transaction('shops', 'readwrite');
-                    // Add standard default shops or loaded ones
                     defaultShops.forEach(s => wTx.objectStore('shops').add(s));
                     wTx.oncomplete = () => loadShops();
                 } else { loadShops(); }
@@ -150,11 +162,58 @@
 
         function getStore(name, mode) { return db.transaction(name, mode).objectStore(name); }
 
+        // --- PRODUCTS CRUD ---
+        function saveProduct() {
+            let id = document.getElementById('prodId').value;
+            let name = document.getElementById('prodName').value.trim();
+            let price = parseFloat(document.getElementById('prodPrice').value);
+            if(!name || isNaN(price)) return alert('कृपया माहिती भरा.');
+
+            let item = { name, price };
+            if(id) item.id = parseInt(id);
+
+            getStore('products', 'readwrite').put(item).onsuccess = () => {
+                resetProdForm();
+                loadProducts();
+            };
+        }
+
+        function editProduct(id, name, price) {
+            document.getElementById('prodId').value = id;
+            document.getElementById('prodName').value = name;
+            document.getElementById('prodPrice').value = price;
+            document.getElementById('prodFormTitle').innerText = "उत्पादनात बदल करा";
+            document.getElementById('prodCancelBtn').style.display = "block";
+        }
+
+        function deleteProduct(id) {
+            if(confirm("उत्पादन नक्की डिलीट करायचे का?")) {
+                getStore('products', 'readwrite').delete(id).onsuccess = () => loadProducts();
+            }
+        }
+
+        function resetProdForm() {
+            document.getElementById('prodId').value = '';
+            document.getElementById('prodName').value = '';
+            document.getElementById('prodPrice').value = '';
+            document.getElementById('prodFormTitle').innerText = "उत्पादन जोडा / बदला";
+            document.getElementById('prodCancelBtn').style.display = "none";
+        }
+
         function loadProducts() {
             getStore('products', 'readonly').getAll().onsuccess = e => {
                 let prods = e.target.result;
-                let html = '<table><tr><th>नाव</th><th>किंमत</th></tr>';
-                prods.forEach(p => html += `<tr><td>${p.name}</td><td>₹${p.price}</td></tr>`);
+                let html = '<table><tr><th>नाव</th><th>किंमत</th><th>कृती</th></tr>';
+                prods.forEach(p => {
+                    html += `<tr>
+                        <td>${p.name}</td>
+                        <td>₹${p.price}</td>
+                        <td>
+                            <button class="btn-edit" onclick="editProduct(${p.id}, '${p.name}', ${p.price})">एडिट</button>
+                            <button class="btn-danger" onclick="deleteProduct(${p.id})">डिलीट</button>
+                        </td>
+                    </tr>`;
+                });
                 html += '</table>';
                 document.getElementById('productList').innerHTML = html;
 
@@ -167,15 +226,45 @@
             };
         }
 
-        function saveProduct() {
-            let name = document.getElementById('prodName').value.trim();
-            let price = parseFloat(document.getElementById('prodPrice').value);
-            if(!name || isNaN(price)) return alert('माहिती भरा.');
-            getStore('products', 'readwrite').add({name, price}).onsuccess = () => {
-                document.getElementById('prodName').value = '';
-                document.getElementById('prodPrice').value = '';
-                loadProducts();
+        // --- SHOPS CRUD ---
+        function saveShop() {
+            let id = document.getElementById('shopId').value;
+            let route = document.getElementById('shopRoute').value.trim();
+            let name = document.getElementById('shopName').value.trim();
+            let details = document.getElementById('shopDetails').value.trim();
+            if(!route || !name) return alert('मार्ग आणि दुकान नाव आवश्यक आहे.');
+
+            let item = { route, name, details };
+            if(id) item.id = parseInt(id);
+
+            getStore('shops', 'readwrite').put(item).onsuccess = () => {
+                resetShopForm();
+                loadShops();
             };
+        }
+
+        function editShop(id, route, name, details) {
+            document.getElementById('shopId').value = id;
+            document.getElementById('shopRoute').value = route;
+            document.getElementById('shopName').value = name;
+            document.getElementById('shopDetails').value = details;
+            document.getElementById('shopFormTitle').innerText = "दुकानाची माहिती बदला";
+            document.getElementById('shopCancelBtn').style.display = "block";
+        }
+
+        function deleteShop(id) {
+            if(confirm("दुकान नक्की डिलीट करायचे का?")) {
+                getStore('shops', 'readwrite').delete(id).onsuccess = () => loadShops();
+            }
+        }
+
+        function resetShopForm() {
+            document.getElementById('shopId').value = '';
+            document.getElementById('shopRoute').value = '';
+            document.getElementById('shopName').value = '';
+            document.getElementById('shopDetails').value = '';
+            document.getElementById('shopFormTitle').innerText = "दुकान जोडा / बदला";
+            document.getElementById('shopCancelBtn').style.display = "none";
         }
 
         function loadShops() {
@@ -185,8 +274,21 @@
                 document.getElementById('orderRoute').innerHTML = routes.map(r => `<option value="${r}">${r}</option>`).join('');
                 loadShopsByRoute();
 
-                let html = '<table><tr><th>मार्ग</th><th>दुकान</th><th>तपशील</th></tr>';
-                shops.forEach(s => html += `<tr><td>${s.route}</td><td>${s.name}</td><td>${s.details}</td></tr>`);
+                let html = '<table><tr><th>मार्ग</th><th>दुकान</th><th>तपशील</th><th>कृती</th></tr>';
+                shops.forEach(s => {
+                    let safeRoute = (s.route || '').replace(/'/g, "\\'");
+                    let safeName = (s.name || '').replace(/'/g, "\\'");
+                    let safeDetails = (s.details || '').replace(/'/g, "\\'");
+                    html += `<tr>
+                        <td>${s.route}</td>
+                        <td>${s.name}</td>
+                        <td>${s.details || ''}</td>
+                        <td>
+                            <button class="btn-edit" onclick="editShop(${s.id}, '${safeRoute}', '${safeName}', '${safeDetails}')">एडिट</button>
+                            <button class="btn-danger" onclick="deleteShop(${s.id})">डिलीट</button>
+                        </td>
+                    </tr>`;
+                });
                 html += '</table>';
                 document.getElementById('shopList').innerHTML = html;
             };
@@ -200,6 +302,7 @@
             };
         }
 
+        // --- ORDERS & REPORTS ---
         function calcTotal() {
             let sub = 0;
             document.querySelectorAll('.prod-row').forEach(row => {
@@ -261,8 +364,7 @@
                     let grandAmt = 0;
                     orders.forEach((o, idx) => {
                         let pMap = {}; prods.forEach(p => pMap[p] = 0);
-                        let rowQty = 0;
-                        o.items.forEach(i => { pMap[i.name] = i.qty; rowQty += i.qty; });
+                        o.items.forEach(i => { pMap[i.name] = i.qty; });
                         html += `<tr><td>${idx+1}</td><td>${o.route}</td><td>${o.shop}</td>`;
                         prods.forEach(p => { html += `<td>${pMap[p]}</td>`; totals[p] += pMap[p]; });
                         html += `<td>₹${o.net}</td></tr>`;
