@@ -52,7 +52,7 @@
     <header>
         <div class="logo-area">
             <img src="https://via.placeholder.com/150/d81b60/ffffff?text=K" alt="Kalidas Logo">
-            <h1>कालिदास आईस्क्रीम ऑर्डर ॲप</h1>
+            <h1>कालिदास आईस्क्रीम ऑर्डर</h1>
         </div>
     </header>
 
@@ -115,11 +115,6 @@
         <div id="sec-shops" class="section">
             <div class="card">
                 <h2 id="shopFormTitle">दुकान व मार्ग व्यवस्थापन</h2>
-                <div style="background: #e0f2f1; padding: 10px; border-radius: 6px; margin-bottom: 15px;">
-                    <label style="color: #00695c;">📁 `shops.csv` इम्पोर्ट करा:</label>
-                    <input type="file" id="csvFileInput" accept=".csv" style="margin-top: 5px;" onchange="importShopsCSV(event)">
-                </div>
-                <hr style="margin: 15px 0; border:0; border-top:1px solid var(--border);">
                 <input type="hidden" id="shopId">
                 <div class="form-group"><label>मार्गाचे नाव (Route):</label><input type="text" id="shopRoute"></div>
                 <div class="form-group"><label>दुकानाचे नाव:</label><input type="text" id="shopName"></div>
@@ -173,9 +168,7 @@
 
             <div class="card" style="background:#fff3e0;">
                 <h2>बॅकअप आणि डेटा सुरक्षितता</h2>
-                <p style="font-size:0.85rem; margin-bottom:10px;">तुमचा संपूर्ण डेटा सुरक्षित ठेवण्यासाठी बॅकअप डाउनलोड किंवा रीस्टोर करा.</p>
                 <button class="btn" style="background:#00897b;" onclick="exportJSONBackup()">JSON Backup डाउनलोड करा</button>
-                
                 <div style="margin-top: 12px;">
                     <label><strong>JSON बॅकअप फाईल Restore करा:</strong></label>
                     <input type="file" id="jsonImportInput" accept=".json" style="margin-top: 5px;" onchange="importJSONBackup(event)">
@@ -195,7 +188,22 @@
         let db;
         let lastGeneratedReportData = null;
 
-        const request = indexedDB.open("KalidasIceCreamDB", 1);
+        // Default initial shops embedded to avoid any CSV upload issues
+        const defaultShops = [
+            {name: "Nandkishor sweets Malgaon highway", details: "Malgaon | Lokesh 73020 19 933", route: "Banda"},
+            {name: "hotel Laxmi Narayan,Malgaon bazar", details: "Malgaon bazar | 9022 312 374", route: "Banda"},
+            {name: "mahapurush Store, niravde aaros phata", details: "niravde aaros phata | Sudhakar gavde 9850 544 348", route: "Banda"},
+            {name: "Mauli general Store,nhaveli, Sonurli chowk", details: "nhaveli, Sonurli chowk | jethe", route: "Banda"},
+            {name: "ghodemukh krupa Store aaros road ,nhaveli", details: " | harmalkar 9404 939 564", route: "Banda"}
+        ];
+
+        const defaultProducts = [
+            {name: "व्हॅनिला", price: 50},
+            {name: "पिस्ता", price: 60},
+            {name: "चॉकलेट", price: 70}
+        ];
+
+        const request = indexedDB.open("KalidasIceCreamDB", 2);
         request.onerror = e => alert("Database error: " + e.target.errorCode);
         request.onsuccess = e => {
             db = e.target.result;
@@ -203,8 +211,20 @@
         };
         request.onupgradeneeded = e => {
             let db = e.target.result;
-            if(!db.objectStoreNames.contains('products')) db.createObjectStore('products', { keyPath: 'id', autoIncrement: true });
-            if(!db.objectStoreNames.contains('shops')) db.createObjectStore('shops', { keyPath: 'id', autoIncrement: true });
+            if(!db.objectStoreNames.contains('products')) {
+                let pStore = db.createObjectStore('products', { keyPath: 'id', autoIncrement: true });
+                pStore.transaction.oncomplete = () => {
+                    let tx = db.transaction('products', 'readwrite');
+                    defaultProducts.forEach(p => tx.objectStore('products').add(p));
+                };
+            }
+            if(!db.objectStoreNames.contains('shops')) {
+                let sStore = db.createObjectStore('shops', { keyPath: 'id', autoIncrement: true });
+                sStore.transaction.oncomplete = () => {
+                    let tx = db.transaction('shops', 'readwrite');
+                    defaultShops.forEach(s => tx.objectStore('shops').add(s));
+                };
+            }
             if(!db.objectStoreNames.contains('orders')) db.createObjectStore('orders', { keyPath: 'id', autoIncrement: true });
         };
 
@@ -237,8 +257,7 @@
             let item = { name, price };
             if(id) item.id = parseInt(id);
 
-            let req = getStore('products', 'readwrite').put(item);
-            req.onsuccess = () => { resetProdForm(); loadProducts(); };
+            getStore('products', 'readwrite').put(item).onsuccess = () => { resetProdForm(); loadProducts(); };
         }
 
         function editProduct(id, name, price) {
@@ -330,323 +349,4 @@
                     let safeDetails = (s.details || '').replace(/'/g, "\\'");
                     let safeName = s.name.replace(/'/g, "\\'");
                     let safeRoute = s.route.replace(/'/g, "\\'");
-                    html += `<tr><td>${s.route}</td><td>${s.name}</td><td>${s.details || ''}</td><td class="action-btns">
-                        <button class="btn-edit" onclick="editShop(${s.id}, '${safeRoute}', '${safeName}', '${safeDetails}')">एडिट</button>
-                        <button class="btn-edit btn-danger" onclick="deleteShop(${s.id})">डिलीट</button>
-                    </td></tr>`;
-                });
-                html += '</table>';
-                document.getElementById('shopList').innerHTML = html;
-            };
-        }
-
-        function loadShopsByRoute() {
-            let selectedRoute = document.getElementById('orderRoute').value;
-            getStore('shops', 'readonly').getAll().onsuccess = (e) => {
-                let shops = e.target.result.filter(s => s.route === selectedRoute);
-                document.getElementById('orderShop').innerHTML = shops.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
-            };
-        }
-
-        function importShopsCSV(event) {
-            let file = event.target.files[0];
-            if(!file) return;
-            let reader = new FileReader();
-            reader.onload = function(e) {
-                let text = e.target.result;
-                let lines = text.split('\n');
-                let transaction = db.transaction('shops', 'readwrite');
-                let store = transaction.objectStore('shops');
-                let count = 0;
-                for(let i = 1; i < lines.length; i++) {
-                    let line = lines[i].trim();
-                    if(!line) continue;
-                    let row = line.split(',');
-                    if(row.length >= 4) {
-                        store.add({
-                            name: row[0].replace(/^"|"$/g, '').trim(),
-                            details: (row[1] + ' | ' + row[2]).replace(/^"|"$/g, '').trim(),
-                            route: row[3].replace(/^"|"$/g, '').trim() || 'General'
-                        });
-                        count++;
-                    }
-                }
-                transaction.oncomplete = () => { alert(count + ' दुकाने जोडली गेली!'); loadShops(); };
-            };
-            reader.readAsText(file, 'utf-8');
-        }
-
-        // --- ORDER ENTRY & CALCULATIONS ---
-        function renderOrderProductInputs(products) {
-            document.getElementById('orderProductsContainer').innerHTML = products.map(p => `
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;" class="prod-row" data-price="${p.price}" data-name="${p.name}">
-                    <span>${p.name} (₹${p.price})</span>
-                    <input type="number" class="order-qty" value="0" min="0" style="width: 80px;" oninput="calculateOrderTotal()">
-                </div>
-            `).join('');
-        }
-
-        function calculateOrderTotal() {
-            let subtotal = 0;
-            document.querySelectorAll('.prod-row').forEach(r => {
-                let price = parseFloat(r.getAttribute('data-price'));
-                let qty = parseInt(r.querySelector('.order-qty').value) || 0;
-                subtotal += price * qty;
-            });
-            let discount = parseFloat(document.getElementById('orderDiscount').value) || 0;
-            let paid = parseFloat(document.getElementById('orderPaid').value) || 0;
-            let net = subtotal - discount;
-            let balance = net - paid;
-
-            document.getElementById('orderSubtotal').innerText = subtotal.toFixed(2);
-            document.getElementById('orderNetTotal').innerText = net.toFixed(2);
-            document.getElementById('orderBalance').innerText = balance.toFixed(2);
-        }
-
-        function saveOrder() {
-            let route = document.getElementById('orderRoute').value;
-            let shop = document.getElementById('orderShop').value;
-            let date = document.getElementById('orderDate').value;
-            if(!shop) return alert('दुकान निवडा.');
-
-            let items = [];
-            document.querySelectorAll('.prod-row').forEach(r => {
-                let qty = parseInt(r.querySelector('.order-qty').value) || 0;
-                if(qty > 0) {
-                    items.push({ name: r.getAttribute('data-name'), price: parseFloat(r.getAttribute('data-price')), qty });
-                }
-            });
-            if(items.length === 0) return alert('किमान एक प्रॉडक्ट निवडा.');
-
-            let order = {
-                route, shop, date, items,
-                subtotal: parseFloat(document.getElementById('orderSubtotal').innerText),
-                discount: parseFloat(document.getElementById('orderDiscount').value) || 0,
-                net: parseFloat(document.getElementById('orderNetTotal').innerText),
-                paid: parseFloat(document.getElementById('orderPaid').value) || 0,
-                balance: parseFloat(document.getElementById('orderBalance').innerText)
-            };
-
-            getStore('orders', 'readwrite').add(order).onsuccess = () => {
-                alert('ऑर्डर यशस्वी सेव्ह झाली!');
-                loadOrders();
-            };
-        }
-
-        function loadOrders() {
-            getStore('orders', 'readonly').getAll().onsuccess = (e) => {
-                let orders = e.target.result.reverse();
-                let html = '<table><tr><th>तारीख</th><th>दुकान (मार्ग)</th><th>नेट रक्कम</th><th>बाकी</th></tr>';
-                orders.forEach(o => {
-                    html += `<tr><td>${o.date}</td><td>${o.shop} (${o.route})</td><td>₹${o.net}</td><td>₹${o.balance}</td></tr>`;
-                });
-                html += '</table>';
-                document.getElementById('orderHistoryList').innerHTML = html;
-            };
-        }
-
-        // --- DETAILED REPORT GENERATION ---
-        function toggleDateInputs() {
-            let type = document.getElementById('reportDateType').value;
-            let area = document.getElementById('dateInputsArea');
-            let endGrp = document.getElementById('endDateGroup');
-            
-            if(type === 'specific') {
-                area.style.display = 'flex';
-                endGrp.style.display = 'none';
-            } else if(type === 'range') {
-                area.style.display = 'flex';
-                endGrp.style.display = 'block';
-            } else {
-                area.style.display = 'none';
-            }
-        }
-
-        function generateDetailedReport() {
-            let dateType = document.getElementById('reportDateType').value;
-            let groupType = document.getElementById('reportGroupType').value;
-
-            // Fetch All Products and Orders
-            getStore('products', 'readonly').getAll().onsuccess = (eProd) => {
-                let allProducts = eProd.target.result.map(p => p.name);
-
-                getStore('orders', 'readonly').getAll().onsuccess = (eOrd) => {
-                    let orders = eOrd.target.result;
-                    
-                    // Filter Orders by Date
-                    let today = new Date().toISOString().split('T')[0];
-                    let yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-
-                    let filteredOrders = orders.filter(o => {
-                        if(dateType === 'today') return o.date === today;
-                        if(dateType === 'yesterday') return o.date === yesterday;
-                        if(dateType === 'specific') return o.date === document.getElementById('reportStartDate').value;
-                        if(dateType === 'range') {
-                            let s = document.getElementById('reportStartDate').value;
-                            let e = document.getElementById('reportEndDate').value;
-                            return o.date >= s && o.date <= e;
-                        }
-                        return true;
-                    });
-
-                    // Build Report Output Table
-                    let productTotals = {};
-                    allProducts.forEach(p => productTotals[p] = 0);
-
-                    let html = '<table><thead><tr><th>क्र.</th>';
-                    if(groupType === 'all_routes') {
-                        html += '<th>रूट</th>';
-                    } else {
-                        html += '<th>रूट</th><th>दुकान</th>';
-                    }
-
-                    allProducts.forEach(p => html += `<th>${p}</th>`);
-                    html += '<th>एकूण नग</th><th>एकूण रक्कम (₹)</th></tr></thead><tbody>';
-
-                    let rowNum = 1;
-                    let grandQty = 0;
-                    let grandAmount = 0;
-
-                    if(groupType === 'all_routes') {
-                        // Group by Route
-                        let routeSummary = {};
-                        filteredOrders.forEach(o => {
-                            if(!routeSummary[o.route]) {
-                                routeSummary[o.route] = { totalNet: 0, prods: {} };
-                                allProducts.forEach(p => routeSummary[o.route].prods[p] = 0);
-                            }
-                            routeSummary[o.route].totalNet += o.net;
-                            o.items.forEach(it => {
-                                if(routeSummary[o.route].prods[it.name] !== undefined) {
-                                    routeSummary[o.route].prods[it.name] += it.qty;
-                                }
-                            });
-                        });
-
-                        Object.keys(routeSummary).forEach(rName => {
-                            let rData = routeSummary[rName];
-                            let rowQtyTotal = 0;
-                            html += `<tr><td>${rowNum++}</td><td>${rName}</td>`;
-                            allProducts.forEach(p => {
-                                let q = rData.prods[p] || 0;
-                                html += `<td>${q}</td>`;
-                                productTotals[p] += q;
-                                rowQtyTotal += q;
-                            });
-                            html += `<td><b>${rowQtyTotal}</b></td><td><b>₹${rData.totalNet}</b></td></tr>`;
-                            grandQty += rowQtyTotal;
-                            grandAmount += rData.totalNet;
-                        });
-
-                    } else {
-                        // Detailed Shop Wise
-                        filteredOrders.forEach(o => {
-                            let rowQtyTotal = 0;
-                            let shopProds = {};
-                            allProducts.forEach(p => shopProds[p] = 0);
-                            o.items.forEach(it => { shopProds[it.name] = it.qty; });
-
-                            html += `<tr><td>${rowNum++}</td><td>${o.route}</td><td>${o.shop}</td>`;
-                            allProducts.forEach(p => {
-                                let q = shopProds[p] || 0;
-                                html += `<td>${q}</td>`;
-                                productTotals[p] += q;
-                                rowQtyTotal += q;
-                            });
-                            html += `<td><b>${rowQtyTotal}</b></td><td><b>₹${o.net}</b></td></tr>`;
-                            grandQty += rowQtyTotal;
-                            grandAmount += o.net;
-                        });
-                    }
-
-                    // TOTAL ROW AT BOTTOM
-                    html += '<tr class="total-row"><td colspan="' + (groupType === 'all_routes' ? 2 : 3) + '">एकूण (TOTAL)</td>';
-                    allProducts.forEach(p => {
-                        html += `<td>${productTotals[p]}</td>`;
-                    });
-                    html += `<td>${grandQty}</td><td>₹${grandAmount.toFixed(2)}</td></tr>`;
-                    html += '</tbody></table>';
-
-                    document.getElementById('reportOutput').innerHTML = html;
-
-                    // Save data for CSV Export
-                    lastGeneratedReportData = { allProducts, filteredOrders, groupType, productTotals, grandQty, grandAmount };
-                };
-            };
-        }
-
-        // --- BACKUP & CSV EXPORT FUNCTIONS ---
-        function exportReportCSV() {
-            if(!lastGeneratedReportData) return alert('आधी अहवाल तयार करा.');
-            let d = lastGeneratedReportData;
-            let csv = '\uFEFFक्र.,रूट,' + (d.groupType === 'all_routes' ? '' : 'दुकान,') + d.allProducts.join(',') + ',एकूण नग,एकूण रक्कम\n';
-
-            let rowNum = 1;
-            d.filteredOrders.forEach(o => {
-                let shopProds = {};
-                d.allProducts.forEach(p => shopProds[p] = 0);
-                let rowQty = 0;
-                o.items.forEach(it => { shopProds[it.name] = it.qty; rowQty += it.qty; });
-
-                csv += `${rowNum++},"${o.route}",` + (d.groupType === 'all_routes' ? '' : `"${o.shop}",`);
-                d.allProducts.forEach(p => csv += `${shopProds[p]},`);
-                csv += `${rowQty},${o.net}\n`;
-            });
-
-            let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            let link = document.createElement("a");
-            link.href = URL.createObjectURL(blob);
-            link.download = "kalidas_report.csv";
-            link.click();
-        }
-
-        function exportJSONBackup() {
-            let backupData = {};
-            getStore('products', 'readonly').getAll().onsuccess = (e1) => {
-                backupData.products = e1.target.result;
-                getStore('shops', 'readonly').getAll().onsuccess = (e2) => {
-                    backupData.shops = e2.target.result;
-                    getStore('orders', 'readonly').getAll().onsuccess = (e3) => {
-                        backupData.orders = e3.target.result;
-
-                        let blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
-                        let link = document.createElement("a");
-                        link.href = URL.createObjectURL(blob);
-                        link.download = "kalidas_full_backup.json";
-                        link.click();
-                    };
-                };
-            };
-        }
-
-        function importJSONBackup(event) {
-            let file = event.target.files[0];
-            if(!file) return;
-
-            let reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    let data = JSON.parse(e.target.result);
-                    if(data.products && data.shops && data.orders) {
-                        let tx = db.transaction(['products', 'shops', 'orders'], 'readwrite');
-                        
-                        data.products.forEach(p => tx.objectStore('products').put(p));
-                        data.shops.forEach(s => tx.objectStore('shops').put(s));
-                        data.orders.forEach(o => tx.objectStore('orders').put(o));
-
-                        tx.oncomplete = () => {
-                            alert("JSON बॅकअप यशस्वीरित्या Restore झाला!");
-                            initializeApp();
-                        };
-                    } else {
-                        alert("अयोग्य बॅकअप फाईल!");
-                    }
-                } catch(err) {
-                    alert("JSON फाईल वाचताना अडचण आली.");
-                }
-            };
-            reader.readAsText(file);
-        }
-    </script>
-</body>
-</html>
+                    html += 
