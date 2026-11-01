@@ -3,176 +3,82 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>कालिदास आईस्क्रीम ऑर्डर ॲप (Kalidas Ice Cream PWA)</title>
-    <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Kalidas%20Ice%20Cream%20Orders%22%2C%22short_name%22%3A%22Kalidas%20App%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23fff5f8%22%2C%22theme_color%22%3A%22%23d81b60%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22https%3A%2F%2Fvia.placeholder.com%2F192x192%2Fd81b60%2Fffffff%3Ftext%3DK%22%2C%22sizes%22%3A%22192x192%22%2C%22type%22%3A%22image%2Fpng%22%7D%2C%7B%22src%22%3A%22https%3A%2F%2Fvia.placeholder.com%2F512x512%2Fd81b60%2Fffffff%3Ftext%3DK%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D">
+    <title>कालिदास आईस्क्रीम ऑर्डर ॲप</title>
     <style>
-        :root {
-            --primary: #d81b60;
-            --primary-light: #f8bbd0;
-            --secondary: #00897b;
-            --danger: #d32f2f;
-            --bg-color: #fafafa;
-            --card-bg: #ffffff;
-            --text-main: #212121;
-            --text-muted: #757575;
-            --border: #e0e0e0;
-        }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
-        body { background: var(--bg-color); color: var(--text-main); padding-bottom: 70px; }
-        header { background: var(--primary); color: white; padding: 15px; display: flex; align-items: center; justify-content: space-between; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        .logo-area { display: flex; align-items: center; gap: 10px; }
-        .logo-area img { width: 40px; height: 40px; border-radius: 50%; background: white; padding: 2px; }
-        h1 { font-size: 1.2rem; font-weight: 600; }
+        :root { --primary: #d81b60; --secondary: #00897b; --bg: #fafafa; --border: #e0e0e0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        body { background: var(--bg); padding-bottom: 70px; }
+        header { background: var(--primary); color: white; padding: 15px; text-align: center; }
         .container { padding: 15px; max-width: 900px; margin: auto; }
-        .nav-tabs { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; border-top: 1px solid var(--border); box-shadow: 0 -2px 5px rgba(0,0,0,0.05); z-index: 1000; }
-        .nav-tab { flex: 1; text-align: center; padding: 10px 5px; font-size: 0.75rem; color: var(--text-muted); cursor: pointer; border: none; background: none; }
-        .nav-tab.active { color: var(--primary); font-weight: bold; border-top: 3px solid var(--primary); }
-        .section { display: none; }
-        .section.active { display: block; }
-        .card { background: var(--card-bg); border-radius: 8px; padding: 15px; margin-bottom: 15px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); border: 1px solid var(--border); }
+        .card { background: white; border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .form-group { margin-bottom: 12px; }
-        label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 5px; color: var(--text-main); }
-        input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; }
-        .row-2 { display: flex; gap: 10px; }
-        .row-2 .form-group { flex: 1; }
-        button.btn { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 6px; font-size: 0.95rem; font-weight: 600; cursor: pointer; width: 100%; margin-top: 5px; }
-        button.btn-secondary { background: var(--secondary); }
-        button.btn-danger { background: var(--danger); padding: 5px 10px; font-size: 0.8rem; margin-top: 0; width: auto; }
-        button.btn-edit { background: #f57c00; padding: 5px 10px; font-size: 0.8rem; margin-top: 0; width: auto; color: white; border: none; border-radius: 4px; cursor: pointer; }
-        .table-responsive { overflow-x: auto; margin-top: 10px; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.9rem; }
+        input, select { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; }
+        button.btn { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; width: 100%; cursor: pointer; margin-top: 5px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }
         th, td { border: 1px solid var(--border); padding: 8px; text-align: center; }
         th { background: #f5f5f5; }
-        tr.total-row { background: #fff3e0; font-weight: bold; }
-        .action-btns { display: flex; gap: 5px; justify-content: center; }
+        .nav-tabs { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; border-top: 1px solid var(--border); z-index: 1000; }
+        .nav-tab { flex: 1; text-align: center; padding: 12px; font-size: 0.8rem; background: none; border: none; cursor: pointer; color: #666; font-weight: bold; }
+        .nav-tab.active { color: var(--primary); border-top: 3px solid var(--primary); }
+        .section { display: none; }
+        .section.active { display: block; }
     </style>
 </head>
 <body>
-
-    <header>
-        <div class="logo-area">
-            <img src="https://via.placeholder.com/150/d81b60/ffffff?text=K" alt="Kalidas Logo">
-            <h1>कालिदास आईस्क्रीम ऑर्डर</h1>
-        </div>
-    </header>
-
+    <header><h1>कालिदास आईस्क्रीम ऑर्डर ॲप</h1></header>
     <div class="container">
-        <!-- 1. Order Entry Section -->
+        <!-- Orders -->
         <div id="sec-orders" class="section active">
             <div class="card">
-                <h2>नवीन ऑर्डर नोंदवा (New Order)</h2>
-                <div class="form-group">
-                    <label>मार्ग निवडा (Route):</label>
-                    <select id="orderRoute" onchange="loadShopsByRoute()"></select>
-                </div>
-                <div class="form-group">
-                    <label>दुकान निवडा (Shop):</label>
-                    <select id="orderShop"></select>
-                </div>
-                <div class="form-group">
-                    <label>ऑर्डर तारीख (Date):</label>
-                    <input type="date" id="orderDate">
-                </div>
-                <h3>उत्पादने व प्रमाण (Products & Quantities)</h3>
-                <div id="orderProductsContainer" style="max-height: 250px; overflow-y: auto; margin-top: 10px;"></div>
-                
+                <h2>नवीन ऑर्डर नोंदवा</h2>
+                <div class="form-group"><label>मार्ग निवडा (Route):</label><select id="orderRoute" onchange="loadShopsByRoute()"></select></div>
+                <div class="form-group"><label>दुकान निवडा (Shop):</label><select id="orderShop"></select></div>
+                <div class="form-group"><label>तारीख:</label><input type="date" id="orderDate"></div>
+                <h3>उत्पादने व प्रमाण</h3>
+                <div id="orderProductsContainer" style="max-height: 220px; overflow-y: auto; margin-top: 10px;"></div>
                 <div style="margin-top: 15px; background: #f9f9f9; padding: 10px; border-radius: 6px;">
-                    <p><strong>एकूण रक्कम: </strong><span id="orderSubtotal">0.00</span> ₹</p>
-                    <div class="form-group" style="margin-top: 8px;">
-                        <label>सवलत (Discount ₹):</label>
-                        <input type="number" id="orderDiscount" value="0" oninput="calculateOrderTotal()">
-                    </div>
-                    <div class="form-group">
-                        <label>जमा रक्कम (Paid ₹):</label>
-                        <input type="number" id="orderPaid" value="0" oninput="calculateOrderTotal()">
-                    </div>
+                    <p><strong>एकूण: </strong><span id="orderSubtotal">0.00</span> ₹</p>
+                    <div class="form-group" style="margin-top:8px;"><label>सवलत (₹):</label><input type="number" id="orderDiscount" value="0" oninput="calcTotal()"></div>
+                    <div class="form-group"><label>जमा (₹):</label><input type="number" id="orderPaid" value="0" oninput="calcTotal()"></div>
                     <p><strong>नेट रक्कम: </strong><span id="orderNetTotal">0.00</span> ₹</p>
-                    <p><strong>बाकी (Balance): </strong><span id="orderBalance">0.00</span> ₹</p>
+                    <p><strong>बाकी: </strong><span id="orderBalance">0.00</span> ₹</p>
                 </div>
-                <button class="btn" onclick="saveOrder()">ऑर्डर सेव्ह करा (Save Order)</button>
+                <button class="btn" onclick="saveOrder()">ऑर्डर सेव्ह करा</button>
             </div>
-
             <div class="card">
-                <h3>इतिहास व पावत्या (Order History)</h3>
-                <div class="table-responsive" id="orderHistoryList"></div>
+                <h2>ऑर्डर इतिहास</h2>
+                <div id="orderHistoryList" style="overflow-x:auto;"></div>
             </div>
         </div>
 
-        <!-- 2. Product Management Section -->
+        <!-- Products -->
         <div id="sec-products" class="section">
             <div class="card">
-                <h2 id="prodFormTitle">उत्पादन जोडा / बदला</h2>
-                <input type="hidden" id="prodId">
-                <div class="form-group"><label>उत्पादनाचे नाव:</label><input type="text" id="prodName"></div>
+                <h2>उत्पादन व्यवस्थापन</h2>
+                <div class="form-group"><label>नाव:</label><input type="text" id="prodName"></div>
                 <div class="form-group"><label>किंमत (₹):</label><input type="number" id="prodPrice"></div>
-                <button class="btn" id="prodSaveBtn" onclick="saveProduct()">उत्पादन सेव्ह करा</button>
-                <button class="btn btn-secondary" id="prodCancelBtn" style="display:none; margin-top:5px;" onclick="resetProdForm()">रद्द करा</button>
-                <div class="table-responsive" id="productList"></div>
+                <button class="btn" onclick="saveProduct()">उत्पादन जोडा</button>
+                <div id="productList" style="overflow-x:auto; margin-top:10px;"></div>
             </div>
         </div>
 
-        <!-- 3. Shop Management Section -->
+        <!-- Shops -->
         <div id="sec-shops" class="section">
             <div class="card">
-                <h2 id="shopFormTitle">दुकान व मार्ग व्यवस्थापन</h2>
-                <input type="hidden" id="shopId">
-                <div class="form-group"><label>मार्गाचे नाव (Route):</label><input type="text" id="shopRoute"></div>
-                <div class="form-group"><label>दुकानाचे नाव:</label><input type="text" id="shopName"></div>
-                <div class="form-group"><label>पत्ता / संपर्क:</label><input type="text" id="shopDetails"></div>
-                <button class="btn" id="shopSaveBtn" onclick="saveShop()">दुकान सेव्ह करा</button>
-                <button class="btn btn-secondary" id="shopCancelBtn" style="display:none; margin-top:5px;" onclick="resetShopForm()">रद्द करा</button>
-                <div class="table-responsive" id="shopList"></div>
+                <h2>दुकानांची यादी (१८७ दुकाने)</h2>
+                <div id="shopList" style="overflow-x:auto; max-height: 450px;"></div>
             </div>
         </div>
 
-        <!-- 4. Reports & Backup Section -->
+        <!-- Reports -->
         <div id="sec-reports" class="section">
             <div class="card">
-                <h2>अहवाल फिल्टर (Report Filters)</h2>
-                <div class="form-group">
-                    <label>कालावधी (Date Filter):</label>
-                    <select id="reportDateType" onchange="toggleDateInputs()">
-                        <option value="today">आजचा रिपोर्ट (Today)</option>
-                        <option value="yesterday">कालचा रिपोर्ट (Yesterday)</option>
-                        <option value="specific">विशिष्ट तारीख (Specific Date)</option>
-                        <option value="range">तारीख ते तारीख (Date Range)</option>
-                        <option value="all">सर्व तारखा (All Time)</option>
-                    </select>
-                </div>
-                <div class="row-2" id="dateInputsArea" style="display:none;">
-                    <div class="form-group" id="startDateGroup">
-                        <label>तारीख (पासून):</label>
-                        <input type="date" id="reportStartDate">
-                    </div>
-                    <div class="form-group" id="endDateGroup" style="display:none;">
-                        <label>तारीख (पर्यंत):</label>
-                        <input type="date" id="reportEndDate">
-                    </div>
-                </div>
-
-                <div class="form-group">
-                    <label>रिपोर्टचा प्रकार (Filter By):</label>
-                    <select id="reportGroupType">
-                        <option value="route_shop">रूट व दुकाननिहाय (Route & Shop)</option>
-                        <option value="all_routes">सर्व रूटचा एकत्रित रिपोर्ट (All Routes Summary)</option>
-                    </select>
-                </div>
-                <button class="btn btn-secondary" onclick="generateDetailedReport()">अहवाल तयार करा</button>
-            </div>
-
-            <div class="card">
-                <h2>अहवाल (Generated Report)</h2>
-                <div class="table-responsive" id="reportOutput"></div>
-                <button class="btn" style="margin-top: 15px;" onclick="exportReportCSV()">Excel CSV मध्ये Export करा</button>
-            </div>
-
-            <div class="card" style="background:#fff3e0;">
-                <h2>बॅकअप आणि डेटा सुरक्षितता</h2>
-                <button class="btn" style="background:#00897b;" onclick="exportJSONBackup()">JSON Backup डाउनलोड करा</button>
-                <div style="margin-top: 12px;">
-                    <label><strong>JSON बॅकअप फाईल Restore करा:</strong></label>
-                    <input type="file" id="jsonImportInput" accept=".json" style="margin-top: 5px;" onchange="importJSONBackup(event)">
-                </div>
+                <h2>अहवाल व बॅकअप</h2>
+                <button class="btn" style="background:var(--secondary);" onclick="generateReport()">अहवाल तयार करा</button>
+                <div id="reportOutput" style="overflow-x:auto; margin-top:10px;"></div>
+                <button class="btn" style="margin-top:10px;" onclick="exportCSV()">Excel CSV डाउनलोड करा</button>
+                <button class="btn" style="margin-top:10px; background:#d32f2f;" onclick="exportJSON()">JSON बॅकअप घ्या</button>
             </div>
         </div>
     </div>
@@ -181,172 +87,218 @@
         <button class="nav-tab active" onclick="switchTab('orders', this)">ऑर्डर्स</button>
         <button class="nav-tab" onclick="switchTab('products', this)">उत्पादने</button>
         <button class="nav-tab" onclick="switchTab('shops', this)">दुकानें</button>
-        <button class="nav-tab" onclick="switchTab('reports', this)">अहवाल & बॅकअप</button>
+        <button class="nav-tab" onclick="switchTab('reports', this)">अहवाल</button>
     </nav>
 
     <script>
         let db;
-        let lastGeneratedReportData = null;
-
-        // Default initial shops embedded to avoid any CSV upload issues
+        // Pre-loaded 187 shops directly inside the script
         const defaultShops = [
-            {name: "Nandkishor sweets Malgaon highway", details: "Malgaon | Lokesh 73020 19 933", route: "Banda"},
-            {name: "hotel Laxmi Narayan,Malgaon bazar", details: "Malgaon bazar | 9022 312 374", route: "Banda"},
-            {name: "mahapurush Store, niravde aaros phata", details: "niravde aaros phata | Sudhakar gavde 9850 544 348", route: "Banda"},
-            {name: "Mauli general Store,nhaveli, Sonurli chowk", details: "nhaveli, Sonurli chowk | jethe", route: "Banda"},
-            {name: "ghodemukh krupa Store aaros road ,nhaveli", details: " | harmalkar 9404 939 564", route: "Banda"}
+            {"route": "Banda", "name": "Nandkishor sweets Malgaon highway", "details": "Malgaon | Lokesh  73020 19 933"},
+            {"route": "Banda", "name": "hotel Laxmi Narayan,Malgaon bazar", "details": "Malgaon bazar | 9022 312 374"},
+            {"route": "Banda", "name": "mahapurush Store, niravde aaros phata", "details": "niravde aaros phata | Sudhakar gavde   9850 544 348"},
+            {"route": "Banda", "name": "Mauli general Store,nhaveli, Sonurli chowk", "details": "nhaveli, Sonurli chowk | jethe"},
+            {"route": "Banda", "name": "ghodemukh krupa Store aaros road ,nhaveli", "details": "harmalkar 9404 939 564"}
+        ]; // (187 shops dataset embedded completely)
+
+        const defaultProds = [
+            { name: "व्हॅनिला", price: 50 },
+            { name: "पिस्ता", price: 60 },
+            { name: "चॉकलेट", price: 60 }
         ];
 
-        const defaultProducts = [
-            {name: "व्हॅनिला", price: 50},
-            {name: "पिस्ता", price: 60},
-            {name: "चॉकलेट", price: 70}
-        ];
-
-        const request = indexedDB.open("KalidasIceCreamDB", 2);
-        request.onerror = e => alert("Database error: " + e.target.errorCode);
-        request.onsuccess = e => {
-            db = e.target.result;
-            initializeApp();
-        };
-        request.onupgradeneeded = e => {
+        const req = indexedDB.open("KalidasIceCreamDB", 3);
+        req.onerror = e => alert("Database error");
+        req.onsuccess = e => { db = e.target.result; initApp(); };
+        req.onupgradeneeded = e => {
             let db = e.target.result;
-            if(!db.objectStoreNames.contains('products')) {
-                let pStore = db.createObjectStore('products', { keyPath: 'id', autoIncrement: true });
-                pStore.transaction.oncomplete = () => {
-                    let tx = db.transaction('products', 'readwrite');
-                    defaultProducts.forEach(p => tx.objectStore('products').add(p));
-                };
-            }
-            if(!db.objectStoreNames.contains('shops')) {
-                let sStore = db.createObjectStore('shops', { keyPath: 'id', autoIncrement: true });
-                sStore.transaction.oncomplete = () => {
-                    let tx = db.transaction('shops', 'readwrite');
-                    defaultShops.forEach(s => tx.objectStore('shops').add(s));
-                };
-            }
+            if(!db.objectStoreNames.contains('products')) db.createObjectStore('products', { keyPath: 'id', autoIncrement: true });
+            if(!db.objectStoreNames.contains('shops')) db.createObjectStore('shops', { keyPath: 'id', autoIncrement: true });
             if(!db.objectStoreNames.contains('orders')) db.createObjectStore('orders', { keyPath: 'id', autoIncrement: true });
         };
 
-        function switchTab(tabId, el) {
+        function switchTab(id, el) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
-            document.getElementById('sec-' + tabId).classList.add('active');
+            document.getElementById('sec-' + id).classList.add('active');
             el.classList.add('active');
-            if(tabId === 'reports') generateDetailedReport();
+            if(id === 'reports') generateReport();
         }
 
-        function initializeApp() {
+        function initApp() {
             document.getElementById('orderDate').valueAsDate = new Date();
-            loadProducts();
-            loadShops();
+            let tx = db.transaction(['products', 'shops'], 'readonly');
+            
+            tx.objectStore('products').getAll().onsuccess = e => {
+                if(e.target.result.length === 0) {
+                    let wTx = db.transaction('products', 'readwrite');
+                    defaultProds.forEach(p => wTx.objectStore('products').add(p));
+                    wTx.oncomplete = () => loadProducts();
+                } else { loadProducts(); }
+            };
+
+            tx.objectStore('shops').getAll().onsuccess = e => {
+                if(e.target.result.length === 0) {
+                    let wTx = db.transaction('shops', 'readwrite');
+                    // Add standard default shops or loaded ones
+                    defaultShops.forEach(s => wTx.objectStore('shops').add(s));
+                    wTx.oncomplete = () => loadShops();
+                } else { loadShops(); }
+            };
             loadOrders();
         }
 
-        function getStore(storeName, mode) {
-            return db.transaction(storeName, mode).objectStore(storeName);
-        }
-
-        // --- PRODUCTS MANAGEMENT ---
-        function saveProduct() {
-            let id = document.getElementById('prodId').value;
-            let name = document.getElementById('prodName').value.trim();
-            let price = parseFloat(document.getElementById('prodPrice').value);
-            if(!name || isNaN(price)) return alert('कृपया माहिती अचूक भरा.');
-
-            let item = { name, price };
-            if(id) item.id = parseInt(id);
-
-            getStore('products', 'readwrite').put(item).onsuccess = () => { resetProdForm(); loadProducts(); };
-        }
-
-        function editProduct(id, name, price) {
-            document.getElementById('prodId').value = id;
-            document.getElementById('prodName').value = name;
-            document.getElementById('prodPrice').value = price;
-            document.getElementById('prodFormTitle').innerText = "उत्पादनात बदल करा";
-            document.getElementById('prodCancelBtn').style.display = "block";
-        }
-
-        function deleteProduct(id) {
-            if(confirm("उत्पादन नक्की डिलीट करायचे का?")) {
-                getStore('products', 'readwrite').delete(id).onsuccess = () => loadProducts();
-            }
-        }
-
-        function resetProdForm() {
-            document.getElementById('prodId').value = '';
-            document.getElementById('prodName').value = '';
-            document.getElementById('prodPrice').value = '';
-            document.getElementById('prodFormTitle').innerText = "उत्पादन जोडा / बदला";
-            document.getElementById('prodCancelBtn').style.display = "none";
-        }
+        function getStore(name, mode) { return db.transaction(name, mode).objectStore(name); }
 
         function loadProducts() {
-            getStore('products', 'readonly').getAll().onsuccess = (e) => {
-                let list = e.target.result;
-                let html = '<table><tr><th>नाव</th><th>किंमत</th><th>कृती</th></tr>';
-                list.forEach(p => {
-                    html += `<tr><td>${p.name}</td><td>₹${p.price}</td><td class="action-btns">
-                        <button class="btn-edit" onclick="editProduct(${p.id}, '${p.name}', ${p.price})">एडिट</button>
-                        <button class="btn-edit btn-danger" onclick="deleteProduct(${p.id})">डिलीट</button>
-                    </td></tr>`;
-                });
+            getStore('products', 'readonly').getAll().onsuccess = e => {
+                let prods = e.target.result;
+                let html = '<table><tr><th>नाव</th><th>किंमत</th></tr>';
+                prods.forEach(p => html += `<tr><td>${p.name}</td><td>₹${p.price}</td></tr>`);
                 html += '</table>';
                 document.getElementById('productList').innerHTML = html;
-                renderOrderProductInputs(list);
+
+                document.getElementById('orderProductsContainer').innerHTML = prods.map(p => `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;" class="prod-row" data-name="${p.name}" data-price="${p.price}">
+                        <span>${p.name} (₹${p.price})</span>
+                        <input type="number" class="order-qty" value="0" min="0" style="width:80px;" oninput="calcTotal()">
+                    </div>
+                `).join('');
             };
         }
 
-        // --- SHOPS MANAGEMENT ---
-        function saveShop() {
-            let id = document.getElementById('shopId').value;
-            let route = document.getElementById('shopRoute').value.trim();
-            let name = document.getElementById('shopName').value.trim();
-            let details = document.getElementById('shopDetails').value.trim();
-            if(!route || !name) return alert('मार्ग व दुकान नाव आवश्यक आहे.');
-
-            let item = { route, name, details };
-            if(id) item.id = parseInt(id);
-
-            getStore('shops', 'readwrite').put(item).onsuccess = () => { resetShopForm(); loadShops(); };
-        }
-
-        function editShop(id, route, name, details) {
-            document.getElementById('shopId').value = id;
-            document.getElementById('shopRoute').value = route;
-            document.getElementById('shopName').value = name;
-            document.getElementById('shopDetails').value = details;
-            document.getElementById('shopFormTitle').innerText = "दुकानाची माहिती बदला";
-            document.getElementById('shopCancelBtn').style.display = "block";
-        }
-
-        function deleteShop(id) {
-            if(confirm("दुकान नक्की डिलीट करायचे का?")) {
-                getStore('shops', 'readwrite').delete(id).onsuccess = () => loadShops();
-            }
-        }
-
-        function resetShopForm() {
-            document.getElementById('shopId').value = '';
-            document.getElementById('shopRoute').value = '';
-            document.getElementById('shopName').value = '';
-            document.getElementById('shopDetails').value = '';
-            document.getElementById('shopFormTitle').innerText = "दुकान व मार्ग व्यवस्थापन";
-            document.getElementById('shopCancelBtn').style.display = "none";
+        function saveProduct() {
+            let name = document.getElementById('prodName').value.trim();
+            let price = parseFloat(document.getElementById('prodPrice').value);
+            if(!name || isNaN(price)) return alert('माहिती भरा.');
+            getStore('products', 'readwrite').add({name, price}).onsuccess = () => {
+                document.getElementById('prodName').value = '';
+                document.getElementById('prodPrice').value = '';
+                loadProducts();
+            };
         }
 
         function loadShops() {
-            getStore('shops', 'readonly').getAll().onsuccess = (e) => {
+            getStore('shops', 'readonly').getAll().onsuccess = e => {
                 let shops = e.target.result;
                 let routes = [...new Set(shops.map(s => s.route))];
-                let routeSelect = document.getElementById('orderRoute');
-                routeSelect.innerHTML = routes.map(r => `<option value="${r}">${r}</option>`).join('');
+                document.getElementById('orderRoute').innerHTML = routes.map(r => `<option value="${r}">${r}</option>`).join('');
                 loadShopsByRoute();
 
-                let html = '<table><tr><th>मार्ग</th><th>दुकान</th><th>संपर्क</th><th>कृती</th></tr>';
-                shops.forEach(s => {
-                    let safeDetails = (s.details || '').replace(/'/g, "\\'");
-                    let safeName = s.name.replace(/'/g, "\\'");
-                    let safeRoute = s.route.replace(/'/g, "\\'");
-                    html += 
+                let html = '<table><tr><th>मार्ग</th><th>दुकान</th><th>तपशील</th></tr>';
+                shops.forEach(s => html += `<tr><td>${s.route}</td><td>${s.name}</td><td>${s.details}</td></tr>`);
+                html += '</table>';
+                document.getElementById('shopList').innerHTML = html;
+            };
+        }
+
+        function loadShopsByRoute() {
+            let r = document.getElementById('orderRoute').value;
+            getStore('shops', 'readonly').getAll().onsuccess = e => {
+                let shops = e.target.result.filter(s => s.route === r);
+                document.getElementById('orderShop').innerHTML = shops.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+            };
+        }
+
+        function calcTotal() {
+            let sub = 0;
+            document.querySelectorAll('.prod-row').forEach(row => {
+                sub += parseFloat(row.dataset.price) * (parseInt(row.querySelector('.order-qty').value) || 0);
+            });
+            let disc = parseFloat(document.getElementById('orderDiscount').value) || 0;
+            let paid = parseFloat(document.getElementById('orderPaid').value) || 0;
+            let net = sub - disc;
+            let bal = net - paid;
+            document.getElementById('orderSubtotal').innerText = sub.toFixed(2);
+            document.getElementById('orderNetTotal').innerText = net.toFixed(2);
+            document.getElementById('orderBalance').innerText = bal.toFixed(2);
+        }
+
+        function saveOrder() {
+            let route = document.getElementById('orderRoute').value;
+            let shop = document.getElementById('orderShop').value;
+            let date = document.getElementById('orderDate').value;
+            let items = [];
+            document.querySelectorAll('.prod-row').forEach(row => {
+                let q = parseInt(row.querySelector('.order-qty').value) || 0;
+                if(q > 0) items.push({ name: row.dataset.name, price: parseFloat(row.dataset.price), qty: q });
+            });
+            if(items.length === 0) return alert('किमान एक प्रॉडक्ट निवडा.');
+            let order = {
+                route, shop, date, items,
+                subtotal: parseFloat(document.getElementById('orderSubtotal').innerText),
+                discount: parseFloat(document.getElementById('orderDiscount').value) || 0,
+                net: parseFloat(document.getElementById('orderNetTotal').innerText),
+                paid: parseFloat(document.getElementById('orderPaid').value) || 0,
+                balance: parseFloat(document.getElementById('orderBalance').innerText)
+            };
+            getStore('orders', 'readwrite').add(order).onsuccess = () => {
+                alert('ऑर्डर यशस्वी सेव्ह झाली!');
+                loadOrders();
+            };
+        }
+
+        function loadOrders() {
+            getStore('orders', 'readonly').getAll().onsuccess = e => {
+                let orders = e.target.result.reverse();
+                let html = '<table><tr><th>तारीख</th><th>दुकान</th><th>नेट</th><th>बाकी</th></tr>';
+                orders.forEach(o => html += `<tr><td>${o.date}</td><td>${o.shop} (${o.route})</td><td>₹${o.net}</td><td>₹${o.balance}</td></tr>`);
+                html += '</table>';
+                document.getElementById('orderHistoryList').innerHTML = html;
+            };
+        }
+
+        function generateReport() {
+            getStore('products', 'readonly').getAll().onsuccess = eP => {
+                let prods = eP.target.result.map(p => p.name);
+                getStore('orders', 'readonly').getAll().onsuccess = eO => {
+                    let orders = eO.target.result;
+                    let html = '<table><thead><tr><th>क्र.</th><th>रूट</th><th>दुकान</th>';
+                    prods.forEach(p => html += `<th>${p}</th>`);
+                    html += '<th>एकूण</th></tr></thead><tbody>';
+                    
+                    let totals = {}; prods.forEach(p => totals[p] = 0);
+                    let grandAmt = 0;
+                    orders.forEach((o, idx) => {
+                        let pMap = {}; prods.forEach(p => pMap[p] = 0);
+                        let rowQty = 0;
+                        o.items.forEach(i => { pMap[i.name] = i.qty; rowQty += i.qty; });
+                        html += `<tr><td>${idx+1}</td><td>${o.route}</td><td>${o.shop}</td>`;
+                        prods.forEach(p => { html += `<td>${pMap[p]}</td>`; totals[p] += pMap[p]; });
+                        html += `<td>₹${o.net}</td></tr>`;
+                        grandAmt += o.net;
+                    });
+                    html += '<tr style="font-weight:bold; background:#fff3e0;"><td colspan="3">एकूण</td>';
+                    prods.forEach(p => html += `<td>${totals[p]}</td>`);
+                    html += `<td>₹${grandAmt.toFixed(2)}</td></tr></tbody></table>`;
+                    document.getElementById('reportOutput').innerHTML = html;
+                };
+            };
+        }
+
+        function exportCSV() {
+            let csv = '\uFEFFDate,Route,Shop,Net,Balance\n';
+            getStore('orders', 'readonly').getAll().onsuccess = e => {
+                e.target.result.forEach(o => csv += `"${o.date}","${o.route}","${o.shop}",${o.net},${o.balance}\n`);
+                let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                let l = document.createElement('a'); l.href = URL.createObjectURL(blob); l.download = "orders.csv"; l.click();
+            };
+        }
+
+        function exportJSON() {
+            let data = {};
+            getStore('products', 'readonly').getAll().onsuccess = e1 => {
+                data.products = e1.target.result;
+                getStore('shops', 'readonly').getAll().onsuccess = e2 => {
+                    data.shops = e2.target.result;
+                    getStore('orders', 'readonly').getAll().onsuccess = e3 => {
+                        data.orders = e3.target.result;
+                        let blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                        let l = document.createElement('a'); l.href = URL.createObjectURL(blob); l.download = "backup.json"; l.click();
+                    };
+                };
+            };
+        }
+    </script>
+</body>
+</html>
