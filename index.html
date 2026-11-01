@@ -1,0 +1,159 @@
+<!doctype html>
+<html lang="mr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#14532d">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<title>Kalidas Ice Cream Order Book</title>
+<style>
+:root{font-family:system-ui,-apple-system,"Noto Sans Devanagari",sans-serif;color:#17211b;background:#f3f6f3}
+*{box-sizing:border-box}body{margin:0}header{background:#14532d;color:white;padding:18px 16px}
+h1{font-size:21px;margin:0 0 5px}header p{margin:0;font-size:13px;opacity:.9}
+main{max-width:850px;margin:auto;padding:14px}.card{background:white;border:1px solid #dce5dc;border-radius:14px;padding:14px;margin-bottom:13px}
+h2{font-size:17px;margin:0 0 12px}.hint{font-size:12px;color:#59665c;line-height:1.5}
+label{display:block;font-size:13px;font-weight:650;margin:10px 0 5px}
+input,select,button{font:inherit}input,select{width:100%;min-height:43px;padding:9px 10px;border:1px solid #bac8bc;border-radius:9px;background:white}
+button,.filebtn{border:0;border-radius:9px;background:#166534;color:white;padding:11px 13px;font-weight:650;min-height:42px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;text-align:center}
+button.secondary,.filebtn.secondary{background:#e6eee7;color:#19432a;border:1px solid #cad8cc}
+button.danger{background:#9f2727}.actions{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.products{display:grid;grid-template-columns:1fr 1fr;gap:10px}.product{padding:8px;border:1px solid #e0e7e1;border-radius:10px}.product label{margin:0 0 5px}.product input{min-height:40px}
+table{width:100%;border-collapse:collapse;font-size:13px}th,td{border-bottom:1px solid #e1e8e2;padding:8px;text-align:left;vertical-align:top}th{background:#f3f7f3}
+.tablewrap{overflow-x:auto}.order{padding:10px 0;border-bottom:1px solid #e0e7e1}.order:last-child{border-bottom:0}.order strong{display:block}.small{font-size:12px;color:#56635a}
+.status{font-size:12px;padding:7px 9px;background:#edf6ee;border-radius:8px;color:#1e5a2d;margin-top:10px}
+@media(min-width:620px){.products{grid-template-columns:repeat(4,1fr)}}
+</style>
+</head>
+<body>
+<header><h1>Kalidas Ice Cream Order Book</h1><p>ऑफलाइन ऑर्डर नोंद • वैयक्तिक वापर • डेटा या मोबाईलच्या ब्राउझरमध्ये</p></header>
+<main>
+<section class="card">
+<h2>1. दुकानांची यादी Import करा</h2>
+<p class="hint">CSV फाइलमध्ये हे कॉलम ठेवा: <b>route,shop_name,address,phone</b>. Excel मधून Save As → CSV UTF-8 निवडा. हा नमुना प्रथम वापरून पाहण्यासाठी खालील CSV डाउनलोड करा.</p>
+<div class="actions">
+<label class="filebtn secondary" for="csvFile">CSV Import करा</label><input id="csvFile" type="file" accept=".csv,text/csv" hidden>
+<button class="secondary" id="sampleBtn">नमुना CSV डाउनलोड</button>
+<button class="secondary" id="exportShops">दुकाने Export</button>
+</div>
+<div class="status" id="shopStatus">दुकानांची यादी अजून Import केलेली नाही. तुम्ही दुकान हातानेही जोडू शकता.</div>
+<div class="grid">
+<div><label for="newRoute">रूट</label><input id="newRoute" placeholder="उदा. Kolgaon"></div>
+<div><label for="newShop">दुकानाचे नाव</label><input id="newShop" placeholder="दुकानाचे नाव"></div>
+<div><label for="newAddress">पत्ता</label><input id="newAddress" placeholder="गाव / पत्ता"></div>
+<div><label for="newPhone">मोबाईल नंबर</label><input id="newPhone" inputmode="tel" placeholder="मोबाईल नंबर"></div>
+</div>
+<div class="actions"><button id="addShop">दुकान जोडा</button></div>
+</section>
+
+<section class="card">
+<h2>2. आजची ऑर्डर नोंदवा</h2>
+<div class="grid">
+<div><label for="orderDate">तारीख</label><input id="orderDate" type="date"></div>
+<div><label for="routeFilter">रूट निवडा</label><select id="routeFilter"><option value="">सर्व रूट</option></select></div>
+</div>
+<label for="shopSelect">दुकान निवडा</label><select id="shopSelect"><option value="">आधी दुकान Import करा किंवा जोडा</option></select>
+<div class="hint" id="shopDetails"></div>
+<h3 style="font-size:14px;margin:15px 0 8px">प्रॉडक्टची Quantity</h3>
+<div class="products" id="productInputs"></div>
+<label for="notes">नोंद (ऐच्छिक)</label><input id="notes" placeholder="उदा. उद्या डिलिव्हरी">
+<div class="actions"><button id="saveOrder">ऑर्डर सेव्ह करा</button><button class="secondary" id="clearQty">Quantity साफ करा</button></div>
+<div class="status" id="orderStatus">ऑर्डर सेव्ह केल्यावर ती खाली दिसेल.</div>
+</section>
+
+<section class="card">
+<h2>3. दिवसाचा प्रॉडक्टनुसार एकूण हिशोब</h2>
+<p class="hint">खालील तारीख आणि रूट फिल्टरनुसार प्रॉडक्टच्या एकूण Quantity मोजल्या जातील.</p>
+<div id="productTotals" class="tablewrap"></div>
+<div class="actions"><button class="secondary" id="exportTotals">एकूण हिशोब CSV</button></div>
+</section>
+<section class="card">
+<h2>4. रूटनुसार स्वतंत्र रिपोर्ट</h2>
+<div class="grid">
+<div><label for="reportDate">रिपोर्टची तारीख</label><input id="reportDate" type="date"></div>
+<div><label for="reportRoute">रूट निवडा</label><select id="reportRoute"><option value="">सर्व रूट</option></select></div>
+</div>
+<div id="routeReport" class="tablewrap"></div>
+<div class="actions"><button class="secondary" id="exportRouteReport">या रिपोर्टची CSV</button></div>
+</section>
+<section class="card">
+<h2>5. सेव्ह केलेल्या ऑर्डर्स</h2>
+<div class="grid">
+<div><label for="ordersDateFilter">तारीखेनुसार पाहा</label><input id="ordersDateFilter" type="date"></div>
+<div><label for="ordersRouteFilter">रूटनुसार पाहा</label><select id="ordersRouteFilter"><option value="">सर्व रूट</option></select></div>
+</div>
+<div class="actions"><button id="exportOrders">ऑर्डर्स CSV Export</button><button class="secondary" id="backup">पूर्ण बॅकअप डाउनलोड</button><label class="filebtn secondary" for="restoreFile">बॅकअप Restore</label><input id="restoreFile" type="file" accept=".json,application/json" hidden></div>
+<div id="ordersList" style="margin-top:10px"></div>
+</section>
+<section class="card">
+<h2>महत्त्वाची सूचना</h2>
+<p class="hint">डेटा याच ब्राउझरमध्ये सेव्ह होतो. ब्राउझरचा डेटा Clear केल्यास ऑर्डर्स जाऊ शकतात—म्हणून रोज बॅकअप डाउनलोड करा. Home Screen install आणि पहिल्या भेटीनंतर पूर्ण ऑफलाइन वापरासाठी HTTPS होस्टिंग आवश्यक आहे.</p>
+</section>
+</main>
+<script>
+const PRODUCTS=["Vanilla","Pista","Strawberry","Ripple","Mango","Family Pack Vanilla","Family Pack Mango","Kaju Candy","Mawa Candy","Other"];
+const $=id=>document.getElementById(id);
+const read=(key,def)=>{try{return JSON.parse(localStorage.getItem(key))??def}catch(e){return def}};
+let shops=read("ki_shops",[]), orders=read("ki_orders",[]);
+const today=new Date(); $("orderDate").value=new Date(today.getTime()-today.getTimezoneOffset()*60000).toISOString().slice(0,10);
+$("ordersDateFilter").value=$("orderDate").value;
+function save(){localStorage.setItem("ki_shops",JSON.stringify(shops));localStorage.setItem("ki_orders",JSON.stringify(orders));}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function csvParse(text){let rows=[],row=[],field="",q=false;for(let i=0;i<text.length;i++){let c=text[i];if(c=='"'&&q&&text[i+1]=='"'){field+='"';i++}else if(c=='"')q=!q;else if(c==','&&!q){row.push(field);field=""}else if((c=='\n'||c=='\r')&&!q){if(c=='\r'&&text[i+1]=='\n')i++;row.push(field);if(row.some(x=>x.trim()))rows.push(row);row=[];field=""}else field+=c}row.push(field);if(row.some(x=>x.trim()))rows.push(row);return rows}
+function csvDownload(filename,rows){let csv=rows.map(r=>r.map(v=>{let s=String(v??"");return /[",\n\r]/.test(s)?'"'+s.replace(/"/g,'""')+'"':s}).join(",")).join("\r\n");let blob=new Blob(["\ufeff"+csv],{type:"text/csv;charset=utf-8"}),url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=filename;a.click();setTimeout(()=>URL.revokeObjectURL(url),1000)}
+function refresh(){
+ const routes=[...new Set(shops.map(s=>s.route).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+ for(const id of ["routeFilter","ordersRouteFilter"]){let old=$(id).value;$(id).innerHTML='<option value="">सर्व रूट</option>'+routes.map(r=>`<option>${esc(r)}</option>`).join("");if(routes.includes(old))$(id).value=old}
+ const rf=$("routeFilter").value, available=shops.filter(s=>!rf||s.route===rf),prev=$("shopSelect").value;
+ $("shopSelect").innerHTML='<option value="">दुकान निवडा</option>'+available.map(s=>`<option value="${esc(s.id)}">${esc(s.shop_name)} — ${esc(s.route)}</option>`).join("");
+ if(available.some(s=>s.id===prev))$("shopSelect").value=prev;
+ $("shopStatus").textContent=`एकूण दुकाने: ${shops.length} | रूट: ${routes.length}`;
+ $("productInputs").innerHTML=PRODUCTS.map((p,i)=>`<div class="product"><label for="p${i}">${esc(p)}</label><input id="p${i}" type="number" min="0" step="1" inputmode="numeric" placeholder="0"></div>`).join("");
+ showShop();showOrders();showReports();
+}
+function showShop(){let s=shops.find(x=>x.id===$("shopSelect").value);$("shopDetails").textContent=s?[s.address,s.phone].filter(Boolean).join(" • "):""}
+function filteredOrders(date,route){return orders.filter(o=>(!date||o.date===date)&&(!route||o.route===route))}
+function showOrders(){
+ let date=$("ordersDateFilter").value,route=$("ordersRouteFilter").value;
+ let list=filteredOrders(date,route).slice().reverse();
+ $("ordersList").innerHTML=list.length?list.map(o=>`<div class="order"><strong>${esc(o.shop_name)} <span class="small">(${esc(o.date)})</span></strong><div class="small">रूट: ${esc(o.route)} ${o.notes?"• "+esc(o.notes):""}</div><div>${Object.entries(o.items).map(([k,v])=>`${esc(k)}: ${esc(v)}`).join(" | ")}</div><div class="actions"><button class="secondary" onclick="editOrder('${o.id}')">पुन्हा भरा</button><button class="danger" onclick="deleteOrder('${o.id}')">Delete</button></div></div>`).join(""):'<p class="hint">या फिल्टरमध्ये ऑर्डर नाही.</p>';
+}
+
+function showReports(){
+ const routes=[...new Set(shops.map(s=>s.route).filter(Boolean))].sort((a,b)=>a.localeCompare(b));
+ const old=$("reportRoute").value;
+ $("reportRoute").innerHTML='<option value="">सर्व रूट</option>'+routes.map(r=>`<option>${esc(r)}</option>`).join("");
+ if(routes.includes(old))$("reportRoute").value=old;
+ const date=$("reportDate").value||$("orderDate").value;
+ const route=$("reportRoute").value;
+ const list=filteredOrders(date,route);
+ const totals=Object.fromEntries(PRODUCTS.map(p=>[p,0]));
+ list.forEach(o=>Object.entries(o.items||{}).forEach(([p,q])=>{if(p in totals)totals[p]+=Number(q)||0}));
+ $("productTotals").innerHTML=`<p><b>तारीख:</b> ${esc(date)} &nbsp; <b>ऑर्डर्स:</b> ${list.length}</p><table><thead><tr><th>प्रॉडक्ट</th><th>एकूण Quantity</th></tr></thead><tbody>${PRODUCTS.map(p=>`<tr><td>${esc(p)}</td><td>${totals[p]}</td></tr>`).join("")}</tbody></table>`;
+ $("routeReport").innerHTML=list.length?`<p><b>${esc(route||"सर्व रूट")}</b> • ${esc(date)} • ${list.length} ऑर्डर्स</p><table><thead><tr><th>दुकान</th><th>रूट</th><th>प्रॉडक्ट</th><th>Quantity</th></tr></thead><tbody>${list.map(o=>Object.entries(o.items||{}).map(([p,q])=>`<tr><td>${esc(o.shop_name)}</td><td>${esc(o.route)}</td><td>${esc(p)}</td><td>${esc(q)}</td></tr>`).join("")).join("")}</tbody></table>`:'<p class="hint">या तारीखेसाठी ऑर्डर्स नाहीत.</p>';
+}
+function exportTotals(){const date=$("reportDate").value||$("orderDate").value,route=$("reportRoute").value,list=filteredOrders(date,route),totals=Object.fromEntries(PRODUCTS.map(p=>[p,0]));list.forEach(o=>Object.entries(o.items||{}).forEach(([p,q])=>{if(p in totals)totals[p]+=Number(q)||0}));csvDownload("kalidas_product_totals.csv",[["date","route","product","total_quantity"],...PRODUCTS.map(p=>[date,route||"All routes",p,totals[p]])])}
+function exportRouteReport(){const date=$("reportDate").value||$("orderDate").value,route=$("reportRoute").value,list=filteredOrders(date,route);csvDownload("kalidas_route_report.csv",[["date","route","shop_name","address","phone","product","quantity","notes"],...list.flatMap(o=>Object.entries(o.items||{}).map(([p,q])=>[o.date,o.route,o.shop_name,o.address,o.phone,p,q,o.notes||""]))])}
+$("reportDate").value=$("orderDate").value;
+$("reportDate").onchange=showReports;$("reportRoute").onchange=showReports;
+$("exportTotals").onclick=exportTotals;$("exportRouteReport").onclick=exportRouteReport;
+
+function resetQty(){PRODUCTS.forEach((p,i)=>$("p"+i).value="");$("notes").value=""}
+$("csvFile").addEventListener("change",async e=>{let f=e.target.files[0];if(!f)return;let rows=csvParse(await f.text());if(rows.length<2){alert("CSV मध्ये header आणि किमान एक दुकान असावे.");return}let headers=rows.shift().map(x=>x.trim().toLowerCase().replace(/[\s-]+/g,"_"));let idx=names=>headers.findIndex(h=>names.includes(h));let ri=idx(["route","root","रूट"]),si=idx(["shop_name","shop","दुकानाचे_नाव","दुकान"]),ai=idx(["address","पत्ता"]),pi=idx(["phone","mobile","contact","contact_number","मोबाईल"]);if(si<0){alert("shop_name नावाचा कॉलम आवश्यक आहे. नमुना CSV वापरा.");return}let imported=rows.map(r=>({id:crypto.randomUUID(),route:(ri>=0?r[ri]:"")?.trim()||"Other",shop_name:(r[si]||"").trim(),address:ai>=0?(r[ai]||"").trim():"",phone:pi>=0?(r[pi]||"").trim():""})).filter(s=>s.shop_name);if(!confirm(`${imported.length} दुकाने Import करायची? सध्याची यादी बदलून नवीन यादी ठेवली जाईल.`))return;shops=imported;save();refresh();e.target.value=""});
+$("sampleBtn").onclick=()=>csvDownload("kalidas_shops_sample.csv",[["route","shop_name","address","phone"],["Kolgaon","Mehak General Store","Kolgaon",""],["Kolgaon","Ajlan General Store","Kolgaon",""],["Akeri","Bhagat General Store","Akeri",""]]);
+$("exportShops").onclick=()=>csvDownload("kalidas_shops.csv",[["route","shop_name","address","phone"],...shops.map(s=>[s.route,s.shop_name,s.address,s.phone])]);
+$("addShop").onclick=()=>{let route=$("newRoute").value.trim(),name=$("newShop").value.trim();if(!route||!name){alert("रूट आणि दुकानाचे नाव भरा.");return}shops.push({id:crypto.randomUUID(),route,shop_name:name,address:$("newAddress").value.trim(),phone:$("newPhone").value.trim()});save();["newRoute","newShop","newAddress","newPhone"].forEach(id=>$(id).value="");refresh()};
+$("routeFilter").onchange=refresh;$("shopSelect").onchange=showShop;
+$("clearQty").onclick=resetQty;
+$("saveOrder").onclick=()=>{let s=shops.find(x=>x.id===$("shopSelect").value);if(!s){alert("कृपया दुकान निवडा.");return}let items={};PRODUCTS.forEach((p,i)=>{let v=Number($("p"+i).value);if(v>0)items[p]=v});if(!Object.keys(items).length){alert("किमान एका प्रॉडक्टची Quantity भरा.");return}orders.push({id:crypto.randomUUID(),date:$("orderDate").value||new Date().toISOString().slice(0,10),route:s.route,shop_id:s.id,shop_name:s.shop_name,address:s.address,phone:s.phone,items,notes:$("notes").value.trim(),saved_at:new Date().toISOString()});save();$("orderStatus").textContent=`ऑर्डर सेव्ह झाली: ${s.shop_name}`;resetQty();showOrders()};
+$("ordersDateFilter").onchange=showOrders;$("ordersRouteFilter").onchange=showOrders;
+window.deleteOrder=id=>{if(confirm("ही ऑर्डर delete करायची?")){orders=orders.filter(o=>o.id!==id);save();showOrders()}};
+window.editOrder=id=>{let o=orders.find(x=>x.id===id);if(!o)return;$("orderDate").value=o.date;$("routeFilter").value=o.route;refresh();$("shopSelect").value=o.shop_id;showShop();resetQty();PRODUCTS.forEach((p,i)=>$("p"+i).value=o.items[p]||"");$("notes").value=o.notes||"";window.scrollTo({top:0,behavior:"smooth"});$("orderStatus").textContent="ऑर्डर फॉर्ममध्ये भरली आहे. पुन्हा सेव्ह केल्यास नवीन नोंद तयार होईल."};
+$("exportOrders").onclick=()=>{let head=["date","route","shop_name","address","phone",...PRODUCTS,"notes"];csvDownload("kalidas_orders.csv",[head,...orders.map(o=>[o.date,o.route,o.shop_name,o.address,o.phone,...PRODUCTS.map(p=>o.items[p]||0),o.notes])])};
+$("backup").onclick=()=>{let b=new Blob([JSON.stringify({shops,orders,version:1},null,2)],{type:"application/json"}),u=URL.createObjectURL(b),a=document.createElement("a");a.href=u;a.download="kalidas_backup.json";a.click();setTimeout(()=>URL.revokeObjectURL(u),1000)};
+$("restoreFile").onchange=async e=>{let f=e.target.files[0];if(!f)return;try{let d=JSON.parse(await f.text());if(!Array.isArray(d.shops)||!Array.isArray(d.orders))throw Error();if(!confirm("सध्याचा डेटा बदलून बॅकअप Restore करायचा?"))return;shops=d.shops;orders=d.orders;save();refresh();alert("बॅकअप Restore झाला.")}catch(err){alert("ही योग्य बॅकअप JSON फाइल नाही.")}e.target.value=""};
+refresh();
+if('serviceWorker' in navigator && location.protocol.startsWith('http')){window.addEventListener('load',()=>navigator.serviceWorker.register('./sw.js').catch(()=>{}));}
+</script>
+</body>
+</html>
