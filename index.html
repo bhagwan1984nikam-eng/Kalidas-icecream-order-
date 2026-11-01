@@ -10,6 +10,7 @@
             --primary: #d81b60;
             --primary-light: #f8bbd0;
             --secondary: #00897b;
+            --danger: #d32f2f;
             --bg-color: #fafafa;
             --card-bg: #ffffff;
             --text-main: #212121;
@@ -22,7 +23,7 @@
         .logo-area { display: flex; align-items: center; gap: 10px; }
         .logo-area img { width: 40px; height: 40px; border-radius: 50%; background: white; padding: 2px; }
         h1 { font-size: 1.2rem; font-weight: 600; }
-        .container { padding: 15px; max-width: 800px; margin: auto; }
+        .container { padding: 15px; max-width: 900px; margin: auto; }
         .nav-tabs { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; border-top: 1px solid var(--border); box-shadow: 0 -2px 5px rgba(0,0,0,0.05); z-index: 1000; }
         .nav-tab { flex: 1; text-align: center; padding: 10px 5px; font-size: 0.75rem; color: var(--text-muted); cursor: pointer; border: none; background: none; }
         .nav-tab.active { color: var(--primary); font-weight: bold; border-top: 3px solid var(--primary); }
@@ -32,22 +33,27 @@
         .form-group { margin-bottom: 12px; }
         label { display: block; font-size: 0.85rem; font-weight: 600; margin-bottom: 5px; color: var(--text-main); }
         input, select, textarea { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 0.95rem; }
+        .row-2 { display: flex; gap: 10px; }
+        .row-2 .form-group { flex: 1; }
         button.btn { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 6px; font-size: 0.95rem; font-weight: 600; cursor: pointer; width: 100%; margin-top: 5px; }
         button.btn-secondary { background: var(--secondary); }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.85rem; }
-        th, td { border: 1px solid var(--border); padding: 8px; text-align: left; }
+        button.btn-danger { background: var(--danger); padding: 5px 10px; font-size: 0.8rem; margin-top: 0; width: auto; }
+        button.btn-edit { background: #f57c00; padding: 5px 10px; font-size: 0.8rem; margin-top: 0; width: auto; color: white; border: none; border-radius: 4px; cursor: pointer; }
+        .table-responsive { overflow-x: auto; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th, td { border: 1px solid var(--border); padding: 8px; text-align: center; }
         th { background: #f5f5f5; }
-        .badge { display: inline-block; padding: 3px 8px; border-radius: 12px; font-size: 0.7rem; font-weight: bold; background: var(--primary-light); color: var(--primary); }
+        tr.total-row { background: #fff3e0; font-weight: bold; }
+        .action-btns { display: flex; gap: 5px; justify-content: center; }
     </style>
 </head>
 <body>
 
     <header>
         <div class="logo-area">
-            <img src="https://via.placeholder.com/150/d81b60/ffffff?text=K" alt="Kalidas Logo" id="appLogo">
-            <h1>कालिदास आईस्क्रीम ऑर्डर</h1>
+            <img src="https://via.placeholder.com/150/d81b60/ffffff?text=K" alt="Kalidas Logo">
+            <h1>कालिदास आईस्क्रीम ऑर्डर ॲप</h1>
         </div>
-        <button id="installBtn" style="display:none; background:white; color:var(--primary); border:none; padding:5px 10px; border-radius:4px; font-weight:bold; font-size:0.8rem;">Install</button>
     </header>
 
     <div class="container">
@@ -88,48 +94,92 @@
 
             <div class="card">
                 <h3>इतिहास व पावत्या (Order History)</h3>
-                <div id="orderHistoryList"></div>
+                <div class="table-responsive" id="orderHistoryList"></div>
             </div>
         </div>
 
         <!-- 2. Product Management Section -->
         <div id="sec-products" class="section">
             <div class="card">
-                <h2>उत्पादन व्यवस्थापन (Products)</h2>
+                <h2 id="prodFormTitle">उत्पादन जोडा / बदला</h2>
+                <input type="hidden" id="prodId">
                 <div class="form-group"><label>उत्पादनाचे नाव:</label><input type="text" id="prodName"></div>
                 <div class="form-group"><label>किंमत (₹):</label><input type="number" id="prodPrice"></div>
-                <button class="btn" onclick="saveProduct()">उत्पादन जोडा</button>
-                <div id="productList" style="margin-top: 15px;"></div>
+                <button class="btn" id="prodSaveBtn" onclick="saveProduct()">उत्पादन सेव्ह करा</button>
+                <button class="btn btn-secondary" id="prodCancelBtn" style="display:none; margin-top:5px;" onclick="resetProdForm()">रद्द करा</button>
+                <div class="table-responsive" id="productList"></div>
             </div>
         </div>
 
         <!-- 3. Shop Management Section -->
         <div id="sec-shops" class="section">
             <div class="card">
-                <h2>दुकान व मार्ग व्यवस्थापन (Shops & Routes)</h2>
+                <h2 id="shopFormTitle">दुकान व मार्ग व्यवस्थापन</h2>
+                <div style="background: #e0f2f1; padding: 10px; border-radius: 6px; margin-bottom: 15px;">
+                    <label style="color: #00695c;">📁 `shops.csv` इम्पोर्ट करा:</label>
+                    <input type="file" id="csvFileInput" accept=".csv" style="margin-top: 5px;" onchange="importShopsCSV(event)">
+                </div>
+                <hr style="margin: 15px 0; border:0; border-top:1px solid var(--border);">
+                <input type="hidden" id="shopId">
                 <div class="form-group"><label>मार्गाचे नाव (Route):</label><input type="text" id="shopRoute"></div>
                 <div class="form-group"><label>दुकानाचे नाव:</label><input type="text" id="shopName"></div>
-                <div class="form-group"><label>मोबाईल नंबर / पत्ता:</label><input type="text" id="shopDetails"></div>
-                <button class="btn" onclick="saveShop()">दुकान जोडा</button>
-                <div id="shopList" style="margin-top: 15px;"></div>
+                <div class="form-group"><label>पत्ता / संपर्क:</label><input type="text" id="shopDetails"></div>
+                <button class="btn" id="shopSaveBtn" onclick="saveShop()">दुकान सेव्ह करा</button>
+                <button class="btn btn-secondary" id="shopCancelBtn" style="display:none; margin-top:5px;" onclick="resetShopForm()">रद्द करा</button>
+                <div class="table-responsive" id="shopList"></div>
             </div>
         </div>
 
-        <!-- 4. Reports Section -->
+        <!-- 4. Reports & Backup Section -->
         <div id="sec-reports" class="section">
             <div class="card">
-                <h2>अहवाल व बॅकअप (Reports & Backup)</h2>
-                <div class="form-group"><label>रिपोर्ट प्रकार:</label>
-                    <select id="reportType">
-                        <option value="daily">दैनिक रिपोर्ट (Daily)</option>
-                        <option value="route">मार्गानुसार (Route-wise)</option>
-                        <option value="product">उत्पादनानुसार (Product-wise)</option>
+                <h2>अहवाल फिल्टर (Report Filters)</h2>
+                <div class="form-group">
+                    <label>कालावधी (Date Filter):</label>
+                    <select id="reportDateType" onchange="toggleDateInputs()">
+                        <option value="today">आजचा रिपोर्ट (Today)</option>
+                        <option value="yesterday">कालचा रिपोर्ट (Yesterday)</option>
+                        <option value="specific">विशिष्ट तारीख (Specific Date)</option>
+                        <option value="range">तारीख ते तारीख (Date Range)</option>
+                        <option value="all">सर्व तारखा (All Time)</option>
                     </select>
                 </div>
-                <button class="btn btn-secondary" onclick="generateReport()">अहवाल पहा</button>
-                <button class="btn" style="margin-top: 10px;" onclick="exportCSV()">Excel CSV डाउनलोड करा</button>
-                <button class="btn btn-secondary" style="margin-top: 10px; background:#d32f2f;" onclick="exportJSONBackup()">JSON बॅकअप घ्या</button>
-                <div id="reportOutput" style="margin-top: 15px; overflow-x: auto;"></div>
+                <div class="row-2" id="dateInputsArea" style="display:none;">
+                    <div class="form-group" id="startDateGroup">
+                        <label>तारीख (पासून):</label>
+                        <input type="date" id="reportStartDate">
+                    </div>
+                    <div class="form-group" id="endDateGroup" style="display:none;">
+                        <label>तारीख (पर्यंत):</label>
+                        <input type="date" id="reportEndDate">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label>रिपोर्टचा प्रकार (Filter By):</label>
+                    <select id="reportGroupType">
+                        <option value="route_shop">रूट व दुकाननिहाय (Route & Shop)</option>
+                        <option value="all_routes">सर्व रूटचा एकत्रित रिपोर्ट (All Routes Summary)</option>
+                    </select>
+                </div>
+                <button class="btn btn-secondary" onclick="generateDetailedReport()">अहवाल तयार करा</button>
+            </div>
+
+            <div class="card">
+                <h2>अहवाल (Generated Report)</h2>
+                <div class="table-responsive" id="reportOutput"></div>
+                <button class="btn" style="margin-top: 15px;" onclick="exportReportCSV()">Excel CSV मध्ये Export करा</button>
+            </div>
+
+            <div class="card" style="background:#fff3e0;">
+                <h2>बॅकअप आणि डेटा सुरक्षितता</h2>
+                <p style="font-size:0.85rem; margin-bottom:10px;">तुमचा संपूर्ण डेटा सुरक्षित ठेवण्यासाठी बॅकअप डाउनलोड किंवा रीस्टोर करा.</p>
+                <button class="btn" style="background:#00897b;" onclick="exportJSONBackup()">JSON Backup डाउनलोड करा</button>
+                
+                <div style="margin-top: 12px;">
+                    <label><strong>JSON बॅकअप फाईल Restore करा:</strong></label>
+                    <input type="file" id="jsonImportInput" accept=".json" style="margin-top: 5px;" onchange="importJSONBackup(event)">
+                </div>
             </div>
         </div>
     </div>
@@ -138,14 +188,14 @@
         <button class="nav-tab active" onclick="switchTab('orders', this)">ऑर्डर्स</button>
         <button class="nav-tab" onclick="switchTab('products', this)">उत्पादने</button>
         <button class="nav-tab" onclick="switchTab('shops', this)">दुकानें</button>
-        <button class="nav-tab" onclick="switchTab('reports', this)">अहवाल</button>
+        <button class="nav-tab" onclick="switchTab('reports', this)">अहवाल & बॅकअप</button>
     </nav>
 
     <script>
-        // Basic IndexedDB setup & App Logic
         let db;
+        let lastGeneratedReportData = null;
+
         const request = indexedDB.open("KalidasIceCreamDB", 1);
-        
         request.onerror = e => alert("Database error: " + e.target.errorCode);
         request.onsuccess = e => {
             db = e.target.result;
@@ -163,7 +213,7 @@
             document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
             document.getElementById('sec-' + tabId).classList.add('active');
             el.classList.add('active');
-            if(tabId === 'orders') loadOrderForm();
+            if(tabId === 'reports') generateDetailedReport();
         }
 
         function initializeApp() {
@@ -173,65 +223,118 @@
             loadOrders();
         }
 
-        // Generic DB Helper
         function getStore(storeName, mode) {
             return db.transaction(storeName, mode).objectStore(storeName);
         }
 
-        // Products Logic
+        // --- PRODUCTS MANAGEMENT ---
         function saveProduct() {
-            let name = document.getElementById('prodName').value;
+            let id = document.getElementById('prodId').value;
+            let name = document.getElementById('prodName').value.trim();
             let price = parseFloat(document.getElementById('prodPrice').value);
-            if(!name || isNaN(price)) return alert('कृपया योग्य माहिती भरा.');
-            let req = getStore('products', 'readwrite').add({ name, price });
-            req.onsuccess = () => {
-                document.getElementById('prodName').value = '';
-                document.getElementById('prodPrice').value = '';
-                loadProducts();
-            };
+            if(!name || isNaN(price)) return alert('कृपया माहिती अचूक भरा.');
+
+            let item = { name, price };
+            if(id) item.id = parseInt(id);
+
+            let req = getStore('products', 'readwrite').put(item);
+            req.onsuccess = () => { resetProdForm(); loadProducts(); };
+        }
+
+        function editProduct(id, name, price) {
+            document.getElementById('prodId').value = id;
+            document.getElementById('prodName').value = name;
+            document.getElementById('prodPrice').value = price;
+            document.getElementById('prodFormTitle').innerText = "उत्पादनात बदल करा";
+            document.getElementById('prodCancelBtn').style.display = "block";
+        }
+
+        function deleteProduct(id) {
+            if(confirm("उत्पादन नक्की डिलीट करायचे का?")) {
+                getStore('products', 'readwrite').delete(id).onsuccess = () => loadProducts();
+            }
+        }
+
+        function resetProdForm() {
+            document.getElementById('prodId').value = '';
+            document.getElementById('prodName').value = '';
+            document.getElementById('prodPrice').value = '';
+            document.getElementById('prodFormTitle').innerText = "उत्पादन जोडा / बदला";
+            document.getElementById('prodCancelBtn').style.display = "none";
         }
 
         function loadProducts() {
-            let store = getStore('products', 'readonly');
-            let req = store.getAll();
-            req.onsuccess = () => {
-                let list = req.result;
-                let html = '<table><tr><th>नाव</th><th>किंमत</th></tr>';
-                list.forEach(p => html += `<tr><td>${p.name}</td><td>₹${p.price}</td></tr>`);
+            getStore('products', 'readonly').getAll().onsuccess = (e) => {
+                let list = e.target.result;
+                let html = '<table><tr><th>नाव</th><th>किंमत</th><th>कृती</th></tr>';
+                list.forEach(p => {
+                    html += `<tr><td>${p.name}</td><td>₹${p.price}</td><td class="action-btns">
+                        <button class="btn-edit" onclick="editProduct(${p.id}, '${p.name}', ${p.price})">एडिट</button>
+                        <button class="btn-edit btn-danger" onclick="deleteProduct(${p.id})">डिलीट</button>
+                    </td></tr>`;
+                });
                 html += '</table>';
                 document.getElementById('productList').innerHTML = html;
                 renderOrderProductInputs(list);
             };
         }
 
-        // Shops & Routes Logic
+        // --- SHOPS MANAGEMENT ---
         function saveShop() {
-            let route = document.getElementById('shopRoute').value;
-            let name = document.getElementById('shopName').value;
-            let details = document.getElementById('shopDetails').value;
-            if(!route || !name) return alert('मार्ग आणि दुकान नाव आवश्यक आहे.');
-            let req = getStore('shops', 'readwrite').add({ route, name, details });
-            req.onsuccess = () => {
-                document.getElementById('shopRoute').value = '';
-                document.getElementById('shopName').value = '';
-                document.getElementById('shopDetails').value = '';
-                loadShops();
-            };
+            let id = document.getElementById('shopId').value;
+            let route = document.getElementById('shopRoute').value.trim();
+            let name = document.getElementById('shopName').value.trim();
+            let details = document.getElementById('shopDetails').value.trim();
+            if(!route || !name) return alert('मार्ग व दुकान नाव आवश्यक आहे.');
+
+            let item = { route, name, details };
+            if(id) item.id = parseInt(id);
+
+            getStore('shops', 'readwrite').put(item).onsuccess = () => { resetShopForm(); loadShops(); };
+        }
+
+        function editShop(id, route, name, details) {
+            document.getElementById('shopId').value = id;
+            document.getElementById('shopRoute').value = route;
+            document.getElementById('shopName').value = name;
+            document.getElementById('shopDetails').value = details;
+            document.getElementById('shopFormTitle').innerText = "दुकानाची माहिती बदला";
+            document.getElementById('shopCancelBtn').style.display = "block";
+        }
+
+        function deleteShop(id) {
+            if(confirm("दुकान नक्की डिलीट करायचे का?")) {
+                getStore('shops', 'readwrite').delete(id).onsuccess = () => loadShops();
+            }
+        }
+
+        function resetShopForm() {
+            document.getElementById('shopId').value = '';
+            document.getElementById('shopRoute').value = '';
+            document.getElementById('shopName').value = '';
+            document.getElementById('shopDetails').value = '';
+            document.getElementById('shopFormTitle').innerText = "दुकान व मार्ग व्यवस्थापन";
+            document.getElementById('shopCancelBtn').style.display = "none";
         }
 
         function loadShops() {
-            let store = getStore('shops', 'readonly');
-            let req = store.getAll();
-            req.onsuccess = () => {
-                let shops = req.result;
+            getStore('shops', 'readonly').getAll().onsuccess = (e) => {
+                let shops = e.target.result;
                 let routes = [...new Set(shops.map(s => s.route))];
-                
                 let routeSelect = document.getElementById('orderRoute');
                 routeSelect.innerHTML = routes.map(r => `<option value="${r}">${r}</option>`).join('');
                 loadShopsByRoute();
 
-                let html = '<table><tr><th>मार्ग</th><th>दुकान</th><th>तपशील</th></tr>';
-                shops.forEach(s => html += `<tr><td>${s.route}</td><td>${s.name}</td><td>${s.details}</td></tr>`);
+                let html = '<table><tr><th>मार्ग</th><th>दुकान</th><th>संपर्क</th><th>कृती</th></tr>';
+                shops.forEach(s => {
+                    let safeDetails = (s.details || '').replace(/'/g, "\\'");
+                    let safeName = s.name.replace(/'/g, "\\'");
+                    let safeRoute = s.route.replace(/'/g, "\\'");
+                    html += `<tr><td>${s.route}</td><td>${s.name}</td><td>${s.details || ''}</td><td class="action-btns">
+                        <button class="btn-edit" onclick="editShop(${s.id}, '${safeRoute}', '${safeName}', '${safeDetails}')">एडिट</button>
+                        <button class="btn-edit btn-danger" onclick="deleteShop(${s.id})">डिलीट</button>
+                    </td></tr>`;
+                });
                 html += '</table>';
                 document.getElementById('shopList').innerHTML = html;
             };
@@ -239,19 +342,44 @@
 
         function loadShopsByRoute() {
             let selectedRoute = document.getElementById('orderRoute').value;
-            let store = getStore('shops', 'readonly');
-            let req = store.getAll();
-            req.onsuccess = () => {
-                let shops = req.result.filter(s => s.route === selectedRoute);
-                let shopSelect = document.getElementById('orderShop');
-                shopSelect.innerHTML = shops.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+            getStore('shops', 'readonly').getAll().onsuccess = (e) => {
+                let shops = e.target.result.filter(s => s.route === selectedRoute);
+                document.getElementById('orderShop').innerHTML = shops.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
             };
         }
 
+        function importShopsCSV(event) {
+            let file = event.target.files[0];
+            if(!file) return;
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                let text = e.target.result;
+                let lines = text.split('\n');
+                let transaction = db.transaction('shops', 'readwrite');
+                let store = transaction.objectStore('shops');
+                let count = 0;
+                for(let i = 1; i < lines.length; i++) {
+                    let line = lines[i].trim();
+                    if(!line) continue;
+                    let row = line.split(',');
+                    if(row.length >= 4) {
+                        store.add({
+                            name: row[0].replace(/^"|"$/g, '').trim(),
+                            details: (row[1] + ' | ' + row[2]).replace(/^"|"$/g, '').trim(),
+                            route: row[3].replace(/^"|"$/g, '').trim() || 'General'
+                        });
+                        count++;
+                    }
+                }
+                transaction.oncomplete = () => { alert(count + ' दुकाने जोडली गेली!'); loadShops(); };
+            };
+            reader.readAsText(file, 'utf-8');
+        }
+
+        // --- ORDER ENTRY & CALCULATIONS ---
         function renderOrderProductInputs(products) {
-            let container = document.getElementById('orderProductsContainer');
-            container.innerHTML = products.map(p => `
-                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;" class="prod-row" data-id="${p.id}" data-price="${p.price}" data-name="${p.name}">
+            document.getElementById('orderProductsContainer').innerHTML = products.map(p => `
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;" class="prod-row" data-price="${p.price}" data-name="${p.name}">
                     <span>${p.name} (₹${p.price})</span>
                     <input type="number" class="order-qty" value="0" min="0" style="width: 80px;" oninput="calculateOrderTotal()">
                 </div>
@@ -259,9 +387,8 @@
         }
 
         function calculateOrderTotal() {
-            let rows = document.querySelectorAll('.prod-row');
             let subtotal = 0;
-            rows.forEach(r => {
+            document.querySelectorAll('.prod-row').forEach(r => {
                 let price = parseFloat(r.getAttribute('data-price'));
                 let qty = parseInt(r.querySelector('.order-qty').value) || 0;
                 subtotal += price * qty;
@@ -280,44 +407,37 @@
             let route = document.getElementById('orderRoute').value;
             let shop = document.getElementById('orderShop').value;
             let date = document.getElementById('orderDate').value;
-            if(!shop) return alert('कृपया दुकान निवडा.');
+            if(!shop) return alert('दुकान निवडा.');
 
             let items = [];
-            let rows = document.querySelectorAll('.prod-row');
-            rows.forEach(r => {
+            document.querySelectorAll('.prod-row').forEach(r => {
                 let qty = parseInt(r.querySelector('.order-qty').value) || 0;
                 if(qty > 0) {
-                    items.push({
-                        name: r.getAttribute('data-name'),
-                        price: parseFloat(r.getAttribute('data-price')),
-                        qty: qty
-                    });
+                    items.push({ name: r.getAttribute('data-name'), price: parseFloat(r.getAttribute('data-price')), qty });
                 }
             });
+            if(items.length === 0) return alert('किमान एक प्रॉडक्ट निवडा.');
 
-            if(items.length === 0) return alert('किमान एक उत्पादन निवडा.');
+            let order = {
+                route, shop, date, items,
+                subtotal: parseFloat(document.getElementById('orderSubtotal').innerText),
+                discount: parseFloat(document.getElementById('orderDiscount').value) || 0,
+                net: parseFloat(document.getElementById('orderNetTotal').innerText),
+                paid: parseFloat(document.getElementById('orderPaid').value) || 0,
+                balance: parseFloat(document.getElementById('orderBalance').innerText)
+            };
 
-            let subtotal = parseFloat(document.getElementById('orderSubtotal').innerText);
-            let discount = parseFloat(document.getElementById('orderDiscount').value) || 0;
-            let net = parseFloat(document.getElementById('orderNetTotal').innerText);
-            let paid = parseFloat(document.getElementById('orderPaid').value) || 0;
-            let balance = parseFloat(document.getElementById('orderBalance').innerText);
-
-            let order = { route, shop, date, items, subtotal, discount, net, paid, balance };
-            let req = getStore('orders', 'readwrite').add(order);
-            req.onsuccess = () => {
-                alert('ऑर्डर यशस्वीरित्या सेव्ह झाली!');
+            getStore('orders', 'readwrite').add(order).onsuccess = () => {
+                alert('ऑर्डर यशस्वी सेव्ह झाली!');
                 loadOrders();
             };
         }
 
         function loadOrders() {
-            let store = getStore('orders', 'readonly');
-            let req = store.getAll();
-            req.onsuccess = () => {
-                let orders = req.result;
-                let html = '<table><tr><th>तारीख</th><th>दुकान</th><th>नेट रक्कम</th><th>बाकी</th></tr>';
-                orders.reverse().forEach(o => {
+            getStore('orders', 'readonly').getAll().onsuccess = (e) => {
+                let orders = e.target.result.reverse();
+                let html = '<table><tr><th>तारीख</th><th>दुकान (मार्ग)</th><th>नेट रक्कम</th><th>बाकी</th></tr>';
+                orders.forEach(o => {
                     html += `<tr><td>${o.date}</td><td>${o.shop} (${o.route})</td><td>₹${o.net}</td><td>₹${o.balance}</td></tr>`;
                 });
                 html += '</table>';
@@ -325,50 +445,207 @@
             };
         }
 
-        function generateReport() {
-            let type = document.getElementById('reportType').value;
-            let store = getStore('orders', 'readonly');
-            let req = store.getAll();
-            req.onsuccess = () => {
-                let orders = req.result;
-                let html = '<table><tr><th>तारीख</th><th>मार्ग</th><th>दुकान</th><th>एकूण</th><th>बाकी</th></tr>';
-                let totalAmount = 0;
-                orders.forEach(o => {
-                    totalAmount += o.net;
-                    html += `<tr><td>${o.date}</td><td>${o.route}</td><td>${o.shop}</td><td>₹${o.net}</td><td>₹${o.balance}</td></tr>`;
-                });
-                html += `<tr><td colspan="3"><b>एकूण ग्रँड टोटल</b></td><td colspan="2"><b>₹${totalAmount.toFixed(2)}</b></td></tr></table>`;
-                document.getElementById('reportOutput').innerHTML = html;
+        // --- DETAILED REPORT GENERATION ---
+        function toggleDateInputs() {
+            let type = document.getElementById('reportDateType').value;
+            let area = document.getElementById('dateInputsArea');
+            let endGrp = document.getElementById('endDateGroup');
+            
+            if(type === 'specific') {
+                area.style.display = 'flex';
+                endGrp.style.display = 'none';
+            } else if(type === 'range') {
+                area.style.display = 'flex';
+                endGrp.style.display = 'block';
+            } else {
+                area.style.display = 'none';
             }
         }
 
-        function exportCSV() {
-            let store = getStore('orders', 'readonly');
-            let req = store.getAll();
-            req.onsuccess = () => {
-                let orders = req.result;
-                let csv = '\uFEFFDate,Route,Shop,Subtotal,Discount,Net,Paid,Balance\n';
-                orders.forEach(o => {
-                    csv += `"${o.date}","${o.route}","${o.shop}",${o.subtotal},${o.discount},${o.net},${o.paid},${o.balance}\n`;
-                });
-                let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                let link = document.createElement("a");
-                link.href = URL.createObjectURL(blob);
-                link.download = "kalidas_orders.csv";
-                link.click();
+        function generateDetailedReport() {
+            let dateType = document.getElementById('reportDateType').value;
+            let groupType = document.getElementById('reportGroupType').value;
+
+            // Fetch All Products and Orders
+            getStore('products', 'readonly').getAll().onsuccess = (eProd) => {
+                let allProducts = eProd.target.result.map(p => p.name);
+
+                getStore('orders', 'readonly').getAll().onsuccess = (eOrd) => {
+                    let orders = eOrd.target.result;
+                    
+                    // Filter Orders by Date
+                    let today = new Date().toISOString().split('T')[0];
+                    let yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+
+                    let filteredOrders = orders.filter(o => {
+                        if(dateType === 'today') return o.date === today;
+                        if(dateType === 'yesterday') return o.date === yesterday;
+                        if(dateType === 'specific') return o.date === document.getElementById('reportStartDate').value;
+                        if(dateType === 'range') {
+                            let s = document.getElementById('reportStartDate').value;
+                            let e = document.getElementById('reportEndDate').value;
+                            return o.date >= s && o.date <= e;
+                        }
+                        return true;
+                    });
+
+                    // Build Report Output Table
+                    let productTotals = {};
+                    allProducts.forEach(p => productTotals[p] = 0);
+
+                    let html = '<table><thead><tr><th>क्र.</th>';
+                    if(groupType === 'all_routes') {
+                        html += '<th>रूट</th>';
+                    } else {
+                        html += '<th>रूट</th><th>दुकान</th>';
+                    }
+
+                    allProducts.forEach(p => html += `<th>${p}</th>`);
+                    html += '<th>एकूण नग</th><th>एकूण रक्कम (₹)</th></tr></thead><tbody>';
+
+                    let rowNum = 1;
+                    let grandQty = 0;
+                    let grandAmount = 0;
+
+                    if(groupType === 'all_routes') {
+                        // Group by Route
+                        let routeSummary = {};
+                        filteredOrders.forEach(o => {
+                            if(!routeSummary[o.route]) {
+                                routeSummary[o.route] = { totalNet: 0, prods: {} };
+                                allProducts.forEach(p => routeSummary[o.route].prods[p] = 0);
+                            }
+                            routeSummary[o.route].totalNet += o.net;
+                            o.items.forEach(it => {
+                                if(routeSummary[o.route].prods[it.name] !== undefined) {
+                                    routeSummary[o.route].prods[it.name] += it.qty;
+                                }
+                            });
+                        });
+
+                        Object.keys(routeSummary).forEach(rName => {
+                            let rData = routeSummary[rName];
+                            let rowQtyTotal = 0;
+                            html += `<tr><td>${rowNum++}</td><td>${rName}</td>`;
+                            allProducts.forEach(p => {
+                                let q = rData.prods[p] || 0;
+                                html += `<td>${q}</td>`;
+                                productTotals[p] += q;
+                                rowQtyTotal += q;
+                            });
+                            html += `<td><b>${rowQtyTotal}</b></td><td><b>₹${rData.totalNet}</b></td></tr>`;
+                            grandQty += rowQtyTotal;
+                            grandAmount += rData.totalNet;
+                        });
+
+                    } else {
+                        // Detailed Shop Wise
+                        filteredOrders.forEach(o => {
+                            let rowQtyTotal = 0;
+                            let shopProds = {};
+                            allProducts.forEach(p => shopProds[p] = 0);
+                            o.items.forEach(it => { shopProds[it.name] = it.qty; });
+
+                            html += `<tr><td>${rowNum++}</td><td>${o.route}</td><td>${o.shop}</td>`;
+                            allProducts.forEach(p => {
+                                let q = shopProds[p] || 0;
+                                html += `<td>${q}</td>`;
+                                productTotals[p] += q;
+                                rowQtyTotal += q;
+                            });
+                            html += `<td><b>${rowQtyTotal}</b></td><td><b>₹${o.net}</b></td></tr>`;
+                            grandQty += rowQtyTotal;
+                            grandAmount += o.net;
+                        });
+                    }
+
+                    // TOTAL ROW AT BOTTOM
+                    html += '<tr class="total-row"><td colspan="' + (groupType === 'all_routes' ? 2 : 3) + '">एकूण (TOTAL)</td>';
+                    allProducts.forEach(p => {
+                        html += `<td>${productTotals[p]}</td>`;
+                    });
+                    html += `<td>${grandQty}</td><td>₹${grandAmount.toFixed(2)}</td></tr>`;
+                    html += '</tbody></table>';
+
+                    document.getElementById('reportOutput').innerHTML = html;
+
+                    // Save data for CSV Export
+                    lastGeneratedReportData = { allProducts, filteredOrders, groupType, productTotals, grandQty, grandAmount };
+                };
             };
         }
 
+        // --- BACKUP & CSV EXPORT FUNCTIONS ---
+        function exportReportCSV() {
+            if(!lastGeneratedReportData) return alert('आधी अहवाल तयार करा.');
+            let d = lastGeneratedReportData;
+            let csv = '\uFEFFक्र.,रूट,' + (d.groupType === 'all_routes' ? '' : 'दुकान,') + d.allProducts.join(',') + ',एकूण नग,एकूण रक्कम\n';
+
+            let rowNum = 1;
+            d.filteredOrders.forEach(o => {
+                let shopProds = {};
+                d.allProducts.forEach(p => shopProds[p] = 0);
+                let rowQty = 0;
+                o.items.forEach(it => { shopProds[it.name] = it.qty; rowQty += it.qty; });
+
+                csv += `${rowNum++},"${o.route}",` + (d.groupType === 'all_routes' ? '' : `"${o.shop}",`);
+                d.allProducts.forEach(p => csv += `${shopProds[p]},`);
+                csv += `${rowQty},${o.net}\n`;
+            });
+
+            let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            let link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = "kalidas_report.csv";
+            link.click();
+        }
+
         function exportJSONBackup() {
-            let store = getStore('orders', 'readonly');
-            let req = store.getAll();
-            req.onsuccess = () => {
-                let blob = new Blob([JSON.stringify(req.result, null, 2)], { type: 'application/json' });
-                let link = document.createElement("a");
-                link.href = URL.createObjectURL(blob);
-                link.download = "kalidas_backup.json";
-                link.click();
+            let backupData = {};
+            getStore('products', 'readonly').getAll().onsuccess = (e1) => {
+                backupData.products = e1.target.result;
+                getStore('shops', 'readonly').getAll().onsuccess = (e2) => {
+                    backupData.shops = e2.target.result;
+                    getStore('orders', 'readonly').getAll().onsuccess = (e3) => {
+                        backupData.orders = e3.target.result;
+
+                        let blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+                        let link = document.createElement("a");
+                        link.href = URL.createObjectURL(blob);
+                        link.download = "kalidas_full_backup.json";
+                        link.click();
+                    };
+                };
             };
+        }
+
+        function importJSONBackup(event) {
+            let file = event.target.files[0];
+            if(!file) return;
+
+            let reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    let data = JSON.parse(e.target.result);
+                    if(data.products && data.shops && data.orders) {
+                        let tx = db.transaction(['products', 'shops', 'orders'], 'readwrite');
+                        
+                        data.products.forEach(p => tx.objectStore('products').put(p));
+                        data.shops.forEach(s => tx.objectStore('shops').put(s));
+                        data.orders.forEach(o => tx.objectStore('orders').put(o));
+
+                        tx.oncomplete = () => {
+                            alert("JSON बॅकअप यशस्वीरित्या Restore झाला!");
+                            initializeApp();
+                        };
+                    } else {
+                        alert("अयोग्य बॅकअप फाईल!");
+                    }
+                } catch(err) {
+                    alert("JSON फाईल वाचताना अडचण आली.");
+                }
+            };
+            reader.readAsText(file);
         }
     </script>
 </body>
