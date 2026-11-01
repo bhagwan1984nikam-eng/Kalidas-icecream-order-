@@ -127,7 +127,7 @@
             { name: "चॉकलेट", price: 60 }
         ];
 
-        const req = indexedDB.open("KalidasIceCreamDB", 8);
+        const req = indexedDB.open("KalidasIceCreamDB", 9);
         req.onerror = e => alert("Database error");
         req.onsuccess = e => { db = e.target.result; initApp(); };
         req.onupgradeneeded = e => {
@@ -388,7 +388,7 @@
                 getStore('orders', 'readonly').getAll().onsuccess = eO => {
                     let orders = eO.target.result;
                     let html = '<table><thead><tr><th>क्र.</th><th>रूट</th><th>दुकान</th>';
-                    prods.forEach(p => html += `<th>${p}</th>`);
+                    prods.forEach(p => html += `<th>${p} (नग)</th>`);
                     html += '<th>एकूण नग</th><th>एकूण रक्कम (₹)</th></tr></thead><tbody>';
                     
                     let totals = {}; prods.forEach(p => totals[p] = 0);
