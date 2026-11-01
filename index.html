@@ -65,7 +65,14 @@ let detailH=['तारीख','रूट','दुकान',...db.products.map(
 let totalQty=os.reduce((n,o)=>n+qty(o),0),totalAmt=os.reduce((n,o)=>n+amount(o),0);
 let html='<html><meta charset="utf-8"><body><h1>Kalidas Ice Cream - Daily Order Report</h1><h3>तारीख: '+esc(d)+'</h3><h3>एकूण ऑर्डर: '+os.length+' | Quantity: '+totalQty+' | एकूण रक्कम: '+esc(money(totalAmt))+'</h3>'+mk('दुकाननिहाय ऑर्डर',detailH,shopRows)+mk('प्रॉडक्टनिहाय एकूण',['प्रॉडक्ट','Quantity','रक्कम'],productRows)+'</body></html>';
 download('Kalidas_Daily_Order_'+d+'.xls',html,'application/vnd.ms-excel;charset=utf-8');
-}
+}<button class="alt" onclick="document.getElementById('shopCsv').click()">दुकाने CSV Import</button>
+
+<input
+ id="shopCsv"
+ type="file"
+ accept=".csv,text/csv,text/plain,application/vnd.ms-excel"
+ style="position:absolute;width:1px;height:1px;opacity:0.01"
+ onchange="importShops(event)">
 function exportExcel(){let os=filtered(),sh=[...new Set(os.map(o=>o.shopId))],shopRows=sh.map(id=>{let s=db.shops.find(x=>x.id===id)||{},a=os.filter(o=>o.shopId===id);return[s.route,s.name,a.length,a.reduce((n,o)=>n+qty(o),0),a.reduce((n,o)=>n+amount(o),0)];}),pr=db.products.map(p=>[p.name,os.reduce((n,o)=>n+(Number(o.quantities?.[p.id])||0),0),os.reduce((n,o)=>n+(Number(o.quantities?.[p.id])||0)*(Number(o.prices?.[p.id]??p.price)||0),0)]),rt=[...new Set(os.map(o=>(db.shops.find(s=>s.id===o.shopId)||{}).route||'रूट नाही'))].map(r=>{let a=os.filter(o=>((db.shops.find(s=>s.id===o.shopId)||{}).route||'रूट नाही')===r);return[r,a.length,a.reduce((n,o)=>n+qty(o),0),a.reduce((n,o)=>n+amount(o),0)];});
 let mk=(title,h,rows)=>`<h2>${title}</h2><table><tr>${h.map(x=>'<th>'+esc(x)+'</th>').join('')}</tr>${rows.map(r=>'<tr>'+r.map(x=>'<td>'+esc(x)+'</td>').join('')+'</tr>').join('')}</table><br>`;
 let dh=['Date','Route','Shop',...db.products.map(p=>p.name),'Total Quantity','Total Amount'],dr=os.map(o=>{let s=db.shops.find(x=>x.id===o.shopId)||{};return[o.date,s.route,s.name,...db.products.map(p=>o.quantities?.[p.id]||0),qty(o),amount(o)];});
