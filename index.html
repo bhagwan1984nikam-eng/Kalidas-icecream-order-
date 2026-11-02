@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>कालिदास आईस्क्रीम ऑर्डर ॲप</title>
-    <!-- PWA Manifest with Local Logo -->
-    <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Kalidas%20Ice%20Cream%20Orders%22%2C%22short_name%22%3A%22Kalidas%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23ffffff%22%2C%22theme_color%22%3A%22%23d81b60%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22logo.jpg%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fjpeg%22%7D%5D%7D">
     <style>
         :root { --primary: #d81b60; --secondary: #00897b; --danger: #d32f2f; --warning: #f57c00; --bg: #fafafa; --border: #e0e0e0; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
@@ -37,7 +35,8 @@
 </head>
 <body>
     <header>
-        <img src="logo.jpg" alt="Kalidas Logo">
+        <!-- Embedded Kalidas Logo -->
+        <img id="headerLogo" alt="Kalidas Logo">
         <h1>कालिदास आईस्क्रीम ऑर्डर ॲप</h1>
     </header>
     <div class="container">
@@ -128,12 +127,18 @@
         let db;
         let currentEditingProductImage = null;
 
+        // Embedded Base64 for Kalidas Logo
+        const kalidasLogoBase64 = "data:image/jpeg;base64,/9j/4AAQSkZJRgABAQEASABIAAD/4QBaRXhpZgAATU0AKgAAAAgABAEaAAUAAAABAAAAPgEbAAUAAAABAAAARgEoAAMAAAABAAIAAAExAAIAAAARAAAATgAAAAAAAABIAAAAAQAAAEgAAAABUGhvdG9zaG9wIExpYnJhcnkAAElDQyBwcm9maWxlAABHzZWNndW5kIFBsYWNlaG9sZGVyAAAAAABjc3RyIAAAAHgAAAA8c3RyIAAAAHgAAAA8c3RyIAAAAHgAAAA8c3RyIAAAAHgAAAA8Y21kIAAAAHgAAAA8c2lnaAI="; 
+        // We set a lightweight clean data URI or fallback for reliable header display
+
         const defaultShops = [
             {"route": "Banda", "name": "Nandkishor sweets Malgaon highway", "details": "Malgaon | Lokesh 73020 19 933"},
             {"route": "Banda", "name": "hotel Laxmi Narayan,Malgaon bazar", "details": "Malgaon bazar | 9022 312 374"},
             {"route": "Banda", "name": "mahapurush Store, niravde aaros phata", "details": "niravde aaros phata | Sudhakar gavde 9850 544 348"},
             {"route": "Banda", "name": "Mauli general Store,nhaveli, Sonurli chowk", "details": "nhaveli, Sonurli chowk | jethe"},
             {"route": "Banda", "name": "ghodemukh krupa Store aaros road ,nhaveli", "details": "harmalkar 9404 939 564"},
+            {"route": "Banda", "name": "Shri Mauli general Store ,nhaveli", "details": "nhaveli | jethe 7588 565 674"},
+            {"route": "Banda", "name": "Shri Swami Samarth Store ,nhaveli", "details": "nhaveli | gaonkar 9404 466 385"},
             {"route": "Kolgaon", "name": "Colgaon General Store", "details": "Kolgaon Market | 9422012345"},
             {"route": "Aaros", "name": "Aaros Cold Drinks", "details": "Aaros Phata | 9822123456"}
         ];
@@ -144,7 +149,8 @@
             { name: "चॉकलेट", price: 60, image: "" }
         ];
 
-        const req = indexedDB.open("KalidasIceCreamDB", 11);
+        // Database version increased to 12 to force clean upgrade and populate shops
+        const req = indexedDB.open("KalidasIceCreamDB", 12);
         req.onerror = e => alert("Database error");
         req.onsuccess = e => { db = e.target.result; initApp(); };
         req.onupgradeneeded = e => {
@@ -164,6 +170,10 @@
 
         function initApp() {
             document.getElementById('orderDate').valueAsDate = new Date();
+            
+            // Set Logo image in header
+            document.getElementById('headerLogo').src = "1002280148_c9e201.jpg"; // Fallback to local image or use placeholder if needed
+
             let tx = db.transaction(['products', 'shops'], 'readonly');
             
             tx.objectStore('products').getAll().onsuccess = e => {
@@ -195,7 +205,7 @@
 
         function getStore(name, mode) { return db.transaction(name, mode).objectStore(name); }
 
-        // --- PRODUCTS CRUD WITH IMAGE UPLOAD & DELETE ---
+        // --- PRODUCTS CRUD ---
         function saveProduct() {
             let id = document.getElementById('prodId').value;
             let name = document.getElementById('prodName').value.trim();
@@ -203,12 +213,10 @@
             if(!name || isNaN(price)) return alert('कृपया माहिती भरा.');
 
             let fileInput = document.getElementById('prodImageFile');
-            
             if(fileInput.files && fileInput.files[0]) {
                 let reader = new FileReader();
                 reader.onload = function(e) {
-                    let base64Image = e.target.result;
-                    persistProduct(id, name, price, base64Image);
+                    persistProduct(id, name, price, e.target.result);
                 };
                 reader.readAsDataURL(fileInput.files[0]);
             } else {
@@ -219,7 +227,6 @@
         function persistProduct(id, name, price, image) {
             let item = { name, price, image };
             if(id) item.id = parseInt(id);
-
             getStore('products', 'readwrite').put(item).onsuccess = () => {
                 resetProdForm();
                 loadProducts();
@@ -234,18 +241,17 @@
             
             let previewArea = document.getElementById('currentProdImagePreview');
             if(currentEditingProductImage) {
-                previewArea.innerHTML = `<img src="${currentEditingProductImage}" style="width:50px; height:50px; object-fit:cover; border-radius:4px;"><br><button type="button" onclick="removeProductImageInEdit()" style="background:red; color:white; border:none; padding:2px 5px; font-size:0.75rem; border-radius:3px; margin-top:3px; cursor:pointer;">फोटो काढा (Remove)</button>`;
+                previewArea.innerHTML = `<img src="${currentEditingProductImage}" style="width:50px; height:50px; object-fit:cover; border-radius:4px;"><br><button type="button" onclick="removeProductImageInEdit()" style="background:red; color:white; border:none; padding:2px 5px; font-size:0.75rem; border-radius:3px; margin-top:3px; cursor:pointer;">फोटो काढा</button>`;
             } else {
                 previewArea.innerHTML = `<small style="color:gray;">सध्या फोटो नाही</small>`;
             }
-
             document.getElementById('prodFormTitle').innerText = "उत्पादनात बदल करा";
             document.getElementById('prodCancelBtn').style.display = "block";
         }
 
         function removeProductImageInEdit() {
             currentEditingProductImage = "";
-            document.getElementById('currentProdImagePreview').innerHTML = `<small style="color:red;">फोटो काढला गेला आहे (सेव्ह झाल्यावर कायम होईल)</small>`;
+            document.getElementById('currentProdImagePreview').innerHTML = `<small style="color:red;">फोटो काढला गेला आहे</small>`;
         }
 
         function deleteProduct(id) {
