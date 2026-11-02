@@ -129,11 +129,17 @@
                 <div class="flex flex-wrap justify-between items-center mb-3 gap-2">
                     <h2 class="text-base font-bold text-gray-800"><i class="fa-solid fa-store text-brand-600 mr-2"></i>दुकान व्यवस्थापन</h2>
                     <div class="flex flex-wrap gap-2">
+                        <!-- CSV File Upload Button -->
+                        <label class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer flex items-center shadow">
+                            <i class="fa-solid fa-file-arrow-up mr-1"></i> CSV अपलोड करा
+                            <input type="file" id="upload-csv-file" accept=".csv,.txt" onchange="importShopsFromCSVFile(event)" class="hidden">
+                        </label>
+                        <!-- CSV Export / Download Button -->
                         <button onclick="exportShopsToCSV()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium flex items-center shadow">
                             <i class="fa-solid fa-file-excel mr-1"></i> CSV डाऊनलोड करा
                         </button>
                         <button onclick="togglePasteModal()" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium flex items-center">
-                            <i class="fa-solid fa-paste mr-1"></i> shops.txt पेस्ट करा
+                            <i class="fa-solid fa-paste mr-1"></i> डेटा पेस्ट करा
                         </button>
                         <button onclick="openShopModal()" class="bg-brand-600 hover:bg-brand-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium flex items-center">
                             <i class="fa-solid fa-plus mr-1"></i> नवीन दुकान
@@ -142,7 +148,7 @@
                 </div>
 
                 <div id="paste-data-container" class="hidden bg-gray-50 p-3 border rounded-lg mb-3 space-y-2">
-                    <p class="text-xs font-bold text-gray-700">shops.txt मधील डेटा खालील क्रमाने पेस्ट करा: <br><span class="text-brand-600">Shop Name, Address, Phone, Route</span></p>
+                    <p class="text-xs font-bold text-gray-700">shops.txt / CSV मधील डेटा खालील क्रमाने पेस्ट करा: <br><span class="text-brand-600">Shop Name, Address, Phone, Route</span></p>
                     <textarea id="csv-paste-input" rows="4" class="w-full p-2 text-xs border rounded-lg bg-white font-mono" placeholder="Nandkishor sweets, Malgaon, 7302019933, Banda..."></textarea>
                     <div class="flex justify-end gap-2">
                         <button onclick="togglePasteModal()" class="px-3 py-1 border rounded text-xs">रद्द करा</button>
@@ -259,7 +265,7 @@
         </div>
     </div>
 
-    <!-- Modal for Product Add/Edit (Image Upload Enabled) -->
+    <!-- Modal for Product Add/Edit -->
     <div id="product-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl max-w-sm w-full p-4 space-y-3">
             <h3 id="product-modal-title" class="font-bold text-base text-gray-800">नवीन प्रॉडक्ट जोडा</h3>
@@ -292,7 +298,7 @@
     <!-- Core App Logic -->
     <script>
         let db;
-        const DB_NAME = 'KalidasOrderTakingAppDB_V5';
+        const DB_NAME = 'KalidasOrderTakingAppDB_V6';
         const DB_VERSION = 1;
 
         const request = indexedDB.open(DB_NAME, DB_VERSION);
@@ -374,6 +380,7 @@
             };
         }
 
+        // CSV Export/Download Feature
         function exportShopsToCSV() {
             const tx = db.transaction(['shops'], 'readonly');
             tx.objectStore('shops').getAll().onsuccess = (e) => {
@@ -401,6 +408,32 @@
                 link.click();
                 document.body.removeChild(link);
             };
+        }
+
+        // CSV File Import Feature
+        function importShopsFromCSVFile(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const text = e.target.result;
+                const shops = parseCSVText(text);
+                if (shops.length === 0) {
+                    alert('फायलीमधून डेटा वाचता आला नाही. कृपया योग्य CSV फॉरमॅट तपासा.');
+                    return;
+                }
+                const tx = db.transaction(['shops'], 'readwrite');
+                const store = tx.objectStore('shops');
+                shops.forEach(s => store.add(s));
+                tx.oncomplete = () => {
+                    alert(`${shops.length} दुकाने फाईलवरून यशस्वीरित्या सेव्ह झाली!`);
+                    renderShops();
+                    loadRoutesDropdown();
+                    event.target.value = '';
+                };
+            };
+            reader.readAsText(file);
         }
 
         function togglePasteModal() {
@@ -685,7 +718,6 @@
             }
         }
 
-        // Products CRUD with Image Upload Support
         function renderProducts() {
             const tx = db.transaction(['products'], 'readonly');
             tx.objectStore('products').getAll().onsuccess = (e) => {
@@ -756,7 +788,7 @@
                     closeProductModal();
                     renderProducts();
                     renderOrderProducts();
-                    alert('प्रॉडक्ट फोटोसह यशस्वीरित्या सेव्ह झाले!');
+                    alert('प्रॉडक्ट फोटोसह सेव्ह झाले!');
                 };
             };
 
@@ -851,7 +883,6 @@
                     <tbody>
             `;
 
-            orders.files = []; // safe guard
             orders.forEach((o, index) => {
                 html += `
                     <tr class="border-b hover:bg-gray-50">
