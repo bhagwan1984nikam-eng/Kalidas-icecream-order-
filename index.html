@@ -175,7 +175,7 @@
                         <!-- CSV File Upload Button -->
                         <label class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer flex items-center">
                             <i class="fa-solid fa-file-arrow-up mr-1"></i> CSV अपलोड करा
-                            <input type="file" id="import-shops-csv" accept=".csv" onchange="importShopsCSV(event)" class="hidden">
+                            <input type="file" id="import-shops-csv" accept=".csv, text/csv, application/vnd.ms-excel, text/plain, application/csv, */*" ...> accept=".csv" onchange="importShopsCSV(event)" class="hidden">
                         </label>
                         <button onclick="openShopModal()" class="bg-brand-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium flex items-center">
                             <i class="fa-solid fa-plus mr-1"></i> नवीन दुकान
