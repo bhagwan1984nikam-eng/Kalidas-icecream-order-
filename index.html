@@ -172,11 +172,9 @@
                 <div class="flex flex-wrap justify-between items-center mb-3 gap-2">
                     <h2 class="text-base font-bold text-gray-800"><i class="fa-solid fa-store text-brand-600 mr-2"></i>दुकान व्यवस्थापन</h2>
                     <div class="flex flex-wrap gap-2">
-                        <!-- Direct Paste Option Modal Toggle -->
                         <button onclick="togglePasteModal()" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium flex items-center">
                             <i class="fa-solid fa-paste mr-1"></i> डेटा पेस्ट करा
                         </button>
-                        <!-- File Upload Button -->
                         <label class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer flex items-center">
                             <i class="fa-solid fa-file-arrow-up mr-1"></i> फाईल अपलोड
                             <input type="file" id="import-shops-file" accept="*/*" onchange="importShopsFromFile(event)" class="hidden">
@@ -189,7 +187,7 @@
 
                 <!-- Paste CSV Modal / Inline Area -->
                 <div id="paste-data-container" class="hidden bg-gray-50 p-3 border rounded-lg mb-3 space-y-2">
-                    <p class="text-xs font-bold text-gray-700">shops.txt / CSV मधील मजकूर खाली पेस्ट करा:</p>
+                    <p class="text-xs font-bold text-gray-700">shops.txt मधील मजकूर खाली पेस्ट करा:</p>
                     <textarea id="csv-paste-input" rows="4" class="w-full p-2 text-xs border rounded-lg bg-white font-mono" placeholder="Shop Name,Address,Phone,Route..."></textarea>
                     <div class="flex justify-end gap-2">
                         <button onclick="togglePasteModal()" class="px-3 py-1 border rounded text-xs">रद्द करा</button>
@@ -316,7 +314,7 @@
     <script>
         let db;
         const DB_NAME = 'KalidasIceCreamDB';
-        const DB_VERSION = 1;
+        const DB_VERSION = 2; // Incremented version to clear old shops data automatically
 
         const request = indexedDB.open(DB_NAME, DB_VERSION);
 
@@ -331,15 +329,14 @@
 
         request.onupgradeneeded = (event) => {
             db = event.target.result;
-            if (!db.objectStoreNames.contains('products')) {
-                db.createObjectStore('products', { keyPath: 'id', autoIncrement: true });
-            }
-            if (!db.objectStoreNames.contains('shops')) {
-                db.createObjectStore('shops', { keyPath: 'id', autoIncrement: true });
-            }
-            if (!db.objectStoreNames.contains('orders')) {
-                db.createObjectStore('orders', { keyPath: 'id', autoIncrement: true });
-            }
+            // Re-create stores cleanly to remove dummy data
+            if (db.objectStoreNames.contains('products')) db.deleteObjectStore('products');
+            if (db.objectStoreNames.contains('shops')) db.deleteObjectStore('shops');
+            if (db.objectStoreNames.contains('orders')) db.deleteObjectStore('orders');
+
+            db.createObjectStore('products', { keyPath: 'id', autoIncrement: true });
+            db.createObjectStore('shops', { keyPath: 'id', autoIncrement: true });
+            db.createObjectStore('orders', { keyPath: 'id', autoIncrement: true });
         };
 
         function initializeApp() {
@@ -356,8 +353,9 @@
         }
 
         function seedDefaultDataIfNeeded(callback) {
-            const transaction = db.transaction(['products'], 'readwrite');
+            const transaction = db.transaction(['products', 'shops'], 'readwrite');
             const productStore = transaction.objectStore('products');
+            const shopStore = transaction.objectStore('shops');
             
             productStore.getAll().onsuccess = (e) => {
                 if (e.target.result.length === 0) {
@@ -376,24 +374,214 @@
                     ];
                     defaultProducts.forEach(p => productStore.add(p));
                 }
-                callback();
+            };
+
+            // Automatically load ONLY your verified shops from shops.txt
+            shopStore.getAll().onsuccess = (e) => {
+                if (e.target.result.length === 0) {
+                    const cleanShops = [
+                        {"name": "Nandkishor sweets Malgaon highway", "route": "Banda", "village": "Malgaon", "address": "Malgaon", "phone": "Lokesh  73020 19 933", "owner": ""},
+                        {"name": "hotel Laxmi Narayan,Malgaon bazar", "route": "Banda", "village": "Malgaon bazar", "address": "Malgaon bazar", "phone": "9022 312 374", "owner": ""},
+                        {"name": "mahapurush Store, niravde aaros phata", "route": "Banda", "village": "niravde aaros phata", "address": "niravde aaros phata", "phone": "Sudhakar gavde   9850 544 348", "owner": ""},
+                        {"name": "Mauli general Store,nhaveli, Sonurli chowk", "route": "Banda", "village": "nhaveli, Sonurli chowk", "address": "nhaveli, Sonurli chowk", "phone": "jethe", "owner": ""},
+                        {"name": "ghodemukh krupa Store aaros road ,nhaveli", "route": "Banda", "village": "Banda", "address": "", "phone": "harmalkar 9404 939 564", "owner": ""},
+                        {"name": "MatruChhaya Store sateli", "route": "Banda", "village": "Banda", "address": "", "phone": "mandar Tembkar 8275198492", "owner": ""},
+                        {"name": "Vaishanv kirana Satarda bazar, Satarda ", "route": "Banda", "village": "Banda", "address": "", "phone": "Tembkar 9420818879", "owner": ""},
+                        {"name": "Jay Rajeshwar sweet bakery Satarda Bazar", "route": "Banda", "village": "Banda", "address": "", "phone": "", "owner": ""},
+                        {"name": "hotel cum dhaba , pedane road satarda ", "route": "Banda", "village": "Banda", "address": "", "phone": "Manjrekar 9923013425", "owner": ""},
+                        {"name": "Supriya paripatte Madura road, Ghogalwadi Satarda ", "route": "Banda", "village": "Banda", "address": "", "phone": "9405649945", "owner": ""},
+                        {"name": "Jay Bhawani general Store parabwadi Madura", "route": "Banda", "village": "Banda", "address": "", "phone": "8275 31 5141", "owner": ""},
+                        {"name": "Om Sai general Store ,Madura titha", "route": "Banda", "village": "Banda", "address": "", "phone": "", "owner": ""},
+                        {"name": "Sateri mauli, madura titha ", "route": "Banda", "village": "Banda", "address": "", "phone": "Pawaskar 9405690135", "owner": ""},
+                        {"name": "alvi bright super bazar Madura titha", "route": "Banda", "village": "Banda", "address": "", "phone": "", "owner": ""},
+                        {"name": "Shri Mauli general Store, Ronapal road", "route": "Banda", "village": "Banda", "address": "", "phone": "Bhogate 9403366148", "owner": ""},
+                        {"name": "nathkrupa general Store, Sherley, near school", "route": "Banda", "village": "Banda", "address": "", "phone": "", "owner": ""},
+                        {"name": "Vaibhav Lakshmi ,Sherley, Banda road", "route": "Banda", "village": "Banda", "address": "", "phone": "", "owner": ""},
+                        {"name": "Mahalaxmi general Store ,Sherley, Banda road", "route": "Banda", "village": "Banda", "address": "", "phone": "shirsath 9405925716 / 9403045554", "owner": ""},
+                        {"name": "Eknath duri SherLe Banda road", "route": "Banda", "village": "Banda", "address": "", "phone": "", "owner": ""},
+                        {"name": "kalyan bhuvan cold drink katta Banda", "route": "Banda", "village": "Banda", "address": "", "phone": "", "owner": ""},
+                        {"name": "Bandeswar mauli ,katta ,Banda ", "route": "Banda", "village": "Banda", "address": "", "phone": "9420208819", "owner": ""},
+                        {"name": "frosty land, Banda, near Banda High School", "route": "Banda", "village": "Banda", "address": "", "phone": "Tanvi kanekar 9657121133", "owner": ""},
+                        {"name": "walake cold drink bandeswar mandir , Banda ", "route": "Banda", "village": "Banda", "address": "", "phone": "", "owner": ""},
+                        {"name": "Bandeswar telecom , opp. bandeshwar Mandir", "route": "Banda", "village": "Banda", "address": "", "phone": "788 772 4427", "owner": ""},
+                        {"name": "annpurna super bazar patraDevi road Banda", "route": "Banda", "village": "Banda", "address": "", "phone": "", "owner": ""},
+                        {"name": "Sai Shraddha patradevi road Banda", "route": "Banda", "village": "Banda", "address": "", "phone": "aakerkar 7748844084", "owner": ""},
+                        {"name": "Deepak cold drink fish market Banda", "route": "Banda", "village": "Banda", "address": "", "phone": "kesarkar  9673357797", "owner": ""},
+                        {"name": "Mauli general Store, insuli ,near insuli High School", "route": "Banda", "village": "Banda", "address": "", "phone": "7588862554", "owner": ""},
+                        {"name": "G.G. kesarkar Degve", "route": "Dodamarg", "village": "Degve", "address": "Degve", "phone": "9 420 845 140", "owner": ""},
+                        {"name": "swayambhu general Store Degve", "route": "Dodamarg", "village": "Degve", "address": "Degve", "phone": "Guru keSarkar758 865 8179", "owner": ""},
+                        {"name": "Swami Samarth ,Morgaon ", "route": "Dodamarg", "village": "Morgaon", "address": "Morgaon", "phone": "uttam gawas 9405571287", "owner": ""},
+                        {"name": "Santosh general Store, Morgaon ", "route": "Dodamarg", "village": "Morgaon", "address": "Morgaon", "phone": "karpe 9404035561", "owner": ""},
+                        {"name": "Gauresh kirana , Morgaon , गावठाणवाडी ", "route": "Dodamarg", "village": "Morgaon", "address": "Morgaon", "phone": "Thakur 9322583446", "owner": ""},
+                        {"name": "Janaki general Store, aadali ", "route": "Dodamarg", "village": "aadali", "address": "aadali", "phone": "gawakar 9403297971", "owner": ""},
+                        {"name": "Swami Samarth ugade road , kalane ", "route": "Dodamarg", "village": "kalane", "address": "kalane", "phone": "pranita naik 8766047048", "owner": ""},
+                        {"name": "shubh Lakshmi kirana ,kalane ", "route": "Dodamarg", "village": "kalane", "address": "kalane", "phone": "rakesh degavekar  9423833625", "owner": ""},
+                        {"name": "mahalaxmi general Store, sasoli ", "route": "Dodamarg", "village": "sasoli", "address": "sasoli", "phone": "shetye 9022031147", "owner": ""},
+                        {"name": "D. S. mini market, vanishi kudase,", "route": "Dodamarg", "village": "vanishi kudase", "address": "vanishi kudase", "phone": "sanjana sangurdekar 9370958934", "owner": ""},
+                        {"name": "atharv sweet Mart ,bhedashi (खालची)", "route": "Dodamarg", "village": "bhedashi (खालची)", "address": "bhedashi (खालची)", "phone": "mithun belekar 7304856565", "owner": ""},
+                        {"name": "Bhavani Sweet Mart ,bhedashi (खालची)", "route": "Dodamarg", "village": "bhedashi (खालची)", "address": "bhedashi (खालची)", "phone": "Nilesh kubade 9284176326", "owner": ""},
+                        {"name": "Damodar upahargruh, bhedashi (खालची)", "route": "Dodamarg", "village": "bhedashi (खालची)", "address": "bhedashi (खालची)", "phone": "savarnkar 9405944282", "owner": ""},
+                        {"name": "meghamalhar cold drink, वरची भेडशी ", "route": "Dodamarg", "village": "वरची भेडशी", "address": "वरची भेडशी", "phone": "swapnil bondre 7057719669", "owner": ""},
+                        {"name": "Damodar Cold drink,वरची भेडशी", "route": "Dodamarg", "village": "वरची भेडशी", "address": "वरची भेडशी", "phone": "", "owner": ""},
+                        {"name": "priya super Bazar वरची भेडशी", "route": "Dodamarg", "village": "वरची भेडशी", "address": "वरची भेडशी", "phone": "juvekar 9421265163", "owner": ""},
+                        {"name": "Juvekar general Store वरची भेडशी", "route": "Dodamarg", "village": "वरची भेडशी", "address": "वरची भेडशी", "phone": "utkarsh 7038888855", "owner": ""},
+                        {"name": "Laxmi bekary वरची भेडशी", "route": "Dodamarg", "village": "वरची भेडशी", "address": "वरची भेडशी", "phone": "7558806747", "owner": ""},
+                        {"name": "ashvin general Store वरची भेडशी", "route": "Dodamarg", "village": "वरची भेडशी", "address": "वरची भेडशी", "phone": "9420208326", "owner": ""},
+                        {"name": "hotel vishvtara 9423302312", "route": "Dodamarg", "village": "Dodamarg", "address": "", "phone": "9423302312", "owner": ""},
+                        {"name": "The yeshvi cafe , awada", "route": "Dodamarg", "village": "awada", "address": "awada", "phone": "Kishan singh 9722083627", "owner": ""},
+                        {"name": "vaibhav general Store, vaigantad ", "route": "Dodamarg", "village": "vaigantad", "address": "vaigantad", "phone": "", "owner": ""},
+                        {"name": "Hiravati general Store vaigantad", "route": "Dodamarg", "village": "vaigantad", "address": "vaigantad", "phone": "sunita naik 9403938756", "owner": ""},
+                        {"name": "Velankanni general Store , konalkatta ", "route": "Dodamarg", "village": "konalkatta", "address": "konalkatta", "phone": "9421000994", "owner": ""},
+                        {"name": "Pravin general Store , konalkatta ", "route": "Dodamarg", "village": "konalkatta", "address": "konalkatta", "phone": "9405086802", "owner": ""},
+                        {"name": "sairaj general Store konalkatta, londhewadi", "route": "Dodamarg", "village": "konalkatta", "address": "konalkatta, londhewadi", "phone": "vishvas londhe", "owner": ""},
+                        {"name": "vinayak super bazar , Tilari ", "route": "Dodamarg", "village": "Tilari", "address": "Tilari", "phone": "", "owner": ""},
+                        {"name": "Pavanai market Usap titha", "route": "Dodamarg", "village": "Usap titha", "address": "Usap titha", "phone": "Santosh Naik 8805905349", "owner": ""},
+                        {"name": "Gunavanti super bazar Usap road", "route": "Dodamarg", "village": "Usap road", "address": "Usap road", "phone": "", "owner": ""},
+                        {"name": "Gawas Cold drink Zarebambar", "route": "Dodamarg", "village": "Zarebambar", "address": "Zarebambar", "phone": "Sanjay gavas 9421262694", "owner": ""},
+                        {"name": "khandoba general Store , Zarebambar ", "route": "Dodamarg", "village": "Zarebambar", "address": "Zarebambar", "phone": "", "owner": ""},
+                        {"name": "Devrai cold drink ,Zarebambar ", "route": "Dodamarg", "village": "Zarebambar", "address": "Zarebambar", "phone": "dipak gavas 9422738229", "owner": ""},
+                        {"name": "Shriram super bazar  Dodamarg", "route": "Dodamarg", "village": "Dodamarg", "address": "Dodamarg", "phone": "9860210091", "owner": ""},
+                        {"name": "bashnkari super Bazar , Dodamarg ", "route": "Dodamarg", "village": "Dodamarg", "address": "Dodamarg", "phone": "mahadev savant 9421003832", "owner": ""},
+                        {"name": "Patil tredars Dodamarg", "route": "Dodamarg", "village": "Dodamarg", "address": "Dodamarg", "phone": "Bhagirath 9860210091", "owner": ""},
+                        {"name": "Nidhi cold drink ,Dodamarg", "route": "Dodamarg", "village": "Dodamarg", "address": "Dodamarg", "phone": "", "owner": ""},
+                        {"name": "Sandesh Mhavlankar ,Dodamarg", "route": "Dodamarg", "village": "Dodamarg", "address": "Dodamarg", "phone": "9923119296", "owner": ""},
+                        {"name": "Sai onkar cold drink ,Aai road ", "route": "Dodamarg", "village": "Dodamarg", "address": "Aai road", "phone": "Gavade 8080200441", "owner": ""},
+                        {"name": "trishika hotel, Aai road ", "route": "Dodamarg", "village": "Dodamarg", "address": "Aai road", "phone": "sandip gavas 8007991216", "owner": ""},
+                        {"name": "mahalaxmi suprer bazar, Bus stand road, Dodamarg", "route": "Dodamarg", "village": "Dodamarg", "address": "Bus stand road, Dodamarg", "phone": "shirsath 8390031813", "owner": ""},
+                        {"name": "Mandar super bazar , Bus stand road,Dodamarg", "route": "Dodamarg", "village": "Dodamarg", "address": "Bus stand road,Dodamarg", "phone": "9130969771", "owner": ""},
+                        {"name": "Himalay cold drink Dodamarg", "route": "Dodamarg", "village": "Dodamarg", "address": "Dodamarg", "phone": "Suresh malikar 915870 7040", "owner": ""},
+                        {"name": "premanand cold drink ,Dodamarg", "route": "Dodamarg", "village": "Dodamarg", "address": "Dodamarg", "phone": "", "owner": ""},
+                        {"name": "Sunil general Store Maneri", "route": "Dodamarg", "village": "Maneri", "address": "Maneri", "phone": "Naik 9405086547", "owner": ""},
+                        {"name": "narvekar general Store Maneri", "route": "Dodamarg", "village": "Maneri", "address": "Maneri", "phone": "942 114 8406", "owner": ""},
+                        {"name": "sadguru Store Bhoyache kervde , Church samor", "route": "Mangaon", "village": "Mangaon", "address": "Bhoyache kervde", "phone": "Toraskar.  782 205 2117", "owner": ""},
+                        {"name": "Suchita tailor mangaon tarfe Tulasuli", "route": "Mangaon", "village": "mangaon tarfe Tulasuli", "address": "mangaon tarfe Tulasuli", "phone": "Tulasulkar 9623 748 347", "owner": ""},
+                        {"name": "Shri Swami Samarth mangaon tarfe Tulasuli lingeshwar Mandir", "route": "Mangaon", "village": "mangaon tarfe Tulasuli", "address": "lingeshwar Mandir", "phone": "Nagesh Warang 7972 951520", "owner": ""},
+                        {"name": "Lavanya general Store Tulasuli", "route": "Mangaon", "village": "Tulasuli", "address": "Tulasuli", "phone": "parab 7588478153", "owner": ""},
+                        {"name": "Sadhna Store lingeshwar High School Tulasuli", "route": "Mangaon", "village": "Tulasuli", "address": "lingeshwar High School", "phone": "Dhuri, 88887 77239", "owner": ""},
+                        {"name": "R.N. bhaji centre, Nanache stop, mangaon ", "route": "Mangaon", "village": "mangaon", "address": "Nanache stop", "phone": "", "owner": ""},
+                        {"name": "Bhumika general Store Nanche stop", "route": "Mangaon", "village": "Mangaon", "address": "Nanche stop", "phone": "Neha Bhosle 9370917533", "owner": ""},
+                        {"name": "Bhai Bhai general Store, mangaon ", "route": "Mangaon", "village": "mangaon", "address": "mangaon", "phone": "", "owner": ""},
+                        {"name": "Gurunath cold drink mangaon bazar", "route": "Mangaon", "village": "mangaon", "address": "mangaon bazar", "phone": "korgaonkar 9404 94325 0", "owner": ""},
+                        {"name": "Dattanath cold drink, mangaon Bazaar", "route": "Mangaon", "village": "mangaon", "address": "mangaon Bazaar", "phone": "narvekar 8169664969", "owner": ""},
+                        {"name": "Lakshmi kirana amberi", "route": "Mangaon", "village": "amberi", "address": "amberi", "phone": "Mhadgut 9404 915674", "owner": ""},
+                        {"name": "kesarkar masale vados", "route": "Mangaon", "village": "vados", "address": "vados", "phone": "9422 514 421", "owner": ""},
+                        {"name": "Arun tea house vados", "route": "Mangaon", "village": "vados", "address": "vados", "phone": "Santosh Sawant 827 566 3569", "owner": ""},
+                        {"name": "dattaram general Store Gothos", "route": "Mangaon", "village": "Gothos", "address": "Gothos", "phone": "kadam 7744041276", "owner": ""},
+                        {"name": "Mauli general Store Gothos", "route": "Mangaon", "village": "Gothos", "address": "Gothos", "phone": "8669104554", "owner": ""},
+                        {"name": "Nilesh general Store Gothos", "route": "Mangaon", "village": "Gothos", "address": "Gothos", "phone": "7745829110", "owner": ""},
+                        {"name": "narvekar general Store ,Khirmale", "route": "Mangaon", "village": "Khirmale", "address": "Khirmale", "phone": "9420 963 301", "owner": ""},
+                        {"name": "Bikaner bakery, zarap ", "route": "Kudal", "village": "zarap", "address": "zarap", "phone": "9660944649 mukesh", "owner": ""},
+                        {"name": "Ramache dukaan, Gudhipur ", "route": "Kudal", "village": "Gudhipur", "address": "Gudhipur", "phone": "730 325 5652", "owner": ""},
+                        {"name": "Aapala Bazar, Kudal ", "route": "Kudal", "village": "Kudal", "address": "Kudal", "phone": "", "owner": ""},
+                        {"name": "Dhanlaxmi sweets , malvan road", "route": "Kudal", "village": "Kudal", "address": "malvan road", "phone": "Dinesh 9975939632", "owner": ""},
+                        {"name": "Kudaleshwar ice cream, Kudal ", "route": "Kudal", "village": "Kudal", "address": "Kudal", "phone": "7775860235", "owner": ""},
+                        {"name": "Shri Swami Samarth cold drink, opp. bharat gas", "route": "Kudal", "village": "Kudal", "address": "opp. bharat gas", "phone": "Badekar 9422963794", "owner": ""},
+                        {"name": "Rawool Bandhu , KelbaiWadi", "route": "Kudal", "village": "Kudal", "address": "KelbaiWadi", "phone": "", "owner": ""},
+                        {"name": "Jay Bhawani general Store,Tupkatwadi", "route": "Kudal", "village": "Kudal", "address": "Tupkatwadi", "phone": "Abhijeet Sawant 9420001768", "owner": ""},
+                        {"name": "Guru kripa kirana Tupkatwadi", "route": "Kudal", "village": "Kudal", "address": "Tupkatwadi", "phone": "Bhogte 9767592594", "owner": ""},
+                        {"name": "pateshwar cold drink oppo bus stand Kudal", "route": "Kudal", "village": "Kudal", "address": "oppo bus stand Kudal", "phone": "", "owner": ""},
+                        {"name": "Ballal general Store, Kudal ", "route": "Kudal", "village": "Kudal", "address": "Kudal", "phone": "9673 723 612", "owner": ""},
+                        {"name": "Gajanan cold drink Pan bazar", "route": "Kudal", "village": "Kudal", "address": "Pan bazar", "phone": "Jamsandekar 9405924582", "owner": ""},
+                        {"name": "Samrat coldering fish market Kudal", "route": "Kudal", "village": "Kudal", "address": "fish market Kudal", "phone": "", "owner": ""},
+                        {"name": "Mahalaxmi general Store kalapnaka", "route": "Kudal", "village": "Kudal", "address": "kalapnaka", "phone": "Yogesh 90 490 84383", "owner": ""},
+                        {"name": "Sadguru tea stall ,pavashi", "route": "Kudal", "village": "pavashi", "address": "pavashi", "phone": "8275770777", "owner": ""},
+                        {"name": "Vighnharta general Store ,pavashi markandeya Mandir", "route": "Kudal", "village": "pavashi", "address": "markandeya Mandir", "phone": "patade 9356 796 895", "owner": ""},
+                        {"name": "Kesarkar cold drink Vetal bambarada", "route": "Kudal", "village": "Vetal bambarada", "address": "Vetal bambarada", "phone": "9404751222/ 8605267426", "owner": ""},
+                        {"name": "Sravani stationery vetal bambarada", "route": "Kudal", "village": "Vetal bambarada", "address": "Vetal bambarada", "phone": "Sandhya Pawar 9403838190", "owner": ""},
+                        {"name": "Jai Vetoba , vetal bambarada", "route": "Kudal", "village": "Vetal bambarada", "address": "Vetal bambarada", "phone": "", "owner": ""},
+                        {"name": "Mahalaxmi general Store Sawant Park Vetalbambara", "route": "Kudal", "village": "Vetalbambara", "address": "Sawant Park", "phone": "9545 714 245", "owner": ""},
+                        {"name": "bhakti kangan, hirlok", "route": "Kudal", "village": "hirlok", "address": "hirlok", "phone": "Ekavade 952 929 8749", "owner": ""},
+                        {"name": "Mahalaxmi general Store hirlok", "route": "Kudal", "village": "hirlok", "address": "hirlok", "phone": "teli 98 343 12007", "owner": ""},
+                        {"name": "chinmay traders, Hirlok High School", "route": "Kudal", "village": "hirlok", "address": "Hirlok High School", "phone": "parb 9324549796", "owner": ""},
+                        {"name": "Adarsh general Store kolgaon titha", "route": "SawantWadi", "village": "kolgaon", "address": "kolgaon titha", "phone": "", "owner": ""},
+                        {"name": "Sateri footwear kolgaon", "route": "SawantWadi", "village": "kolgaon", "address": "kolgaon", "phone": "", "owner": ""},
+                        {"name": "Gavas general Store near mutton shop kolgaon", "route": "SawantWadi", "village": "kolgaon", "address": "near mutton shop", "phone": "", "owner": ""},
+                        {"name": "hotel bhumika Prasanna near kolgaon ITI", "route": "SawantWadi", "village": "kolgaon", "address": "near kolgaon ITI", "phone": "", "owner": ""},
+                        {"name": "kerkar general Store bhatwadi", "route": "SawantWadi", "village": "bhatwadi", "address": "bhatwadi", "phone": "", "owner": ""},
+                        {"name": "Prabhat laundry bhatwadi", "route": "SawantWadi", "village": "bhatwadi", "address": "bhatwadi", "phone": "9702 282 816", "owner": ""},
+                        {"name": "charbhuja bakery gavali titha", "route": "SawantWadi", "village": "SawantWadi", "address": "gavali titha", "phone": "", "owner": ""},
+                        {"name": "naath jal  Otawnekar bus stand Sawantwadi", "route": "SawantWadi", "village": "SawantWadi", "address": "Otawnekar bus stand", "phone": "", "owner": ""},
+                        {"name": "trupti cool drink bus stand Sawantwadi", "route": "SawantWadi", "village": "SawantWadi", "address": "bus stand", "phone": "", "owner": ""},
+                        {"name": "maloba general Store sabniswada", "route": "SawantWadi", "village": "SawantWadi", "address": "sabniswada", "phone": "", "owner": ""},
+                        {"name": "Parker general Store sabniswada", "route": "SawantWadi", "village": "SawantWadi", "address": "sabniswada", "phone": "", "owner": ""},
+                        {"name": "Topale cold drink near Renuka hotel", "route": "SawantWadi", "village": "SawantWadi", "address": "near Renuka hotel", "phone": "", "owner": ""},
+                        {"name": "Nidhi general Store Birodakartemb , Dwarka Nagari", "route": "SawantWadi", "village": "SawantWadi", "address": "Birodakartemb", "phone": "Shailesh Shirke 84 4 691 9106", "owner": ""},
+                        {"name": "Marathe general Store charatha road", "route": "SawantWadi", "village": "SawantWadi", "address": "charatha road", "phone": "9420 564 934", "owner": ""},
+                        {"name": "Archana ice cream parlour charata", "route": "SawantWadi", "village": "charata", "address": "charata", "phone": "", "owner": ""},
+                        {"name": "Pratik general Store near dr. Sawant", "route": "SawantWadi", "village": "SawantWadi", "address": "near dr. Sawant", "phone": "9421 190455", "owner": ""},
+                        {"name": "Swami Samarth general Store, justin Nagar ", "route": "SawantWadi", "village": "SawantWadi", "address": "justin Nagar", "phone": "Rane 9420 930 114", "owner": ""},
+                        {"name": "Shri Swami krupa  gawade Shet road", "route": "SawantWadi", "village": "SawantWadi", "address": "gawade Shet road", "phone": "manjarekar 7030 390451", "owner": ""},
+                        {"name": "bhumika general Store Otawne", "route": "SawantWadi", "village": "Otawne", "address": "Otawne", "phone": "", "owner": ""},
+                        {"name": "bhumika general Store majgaon kashalikar garage", "route": "SawantWadi", "village": "majgaon", "address": "kashalikar garage", "phone": "", "owner": ""},
+                        {"name": "Sai Baba super Bazar majgaon Nala", "route": "SawantWadi", "village": "majgaon", "address": "majgaon Nala", "phone": "", "owner": ""},
+                        {"name": "Bhogan general Store mazgaon Nala", "route": "SawantWadi", "village": "majgaon", "address": "mazgaon Nala", "phone": "9423 302 276", "owner": ""},
+                        {"name": "Dalavi general Store diamond hall Majgaon", "route": "SawantWadi", "village": "majgaon", "address": "diamond hall Majgaon", "phone": "", "owner": ""},
+                        {"name": "hotel tiffin tahsildar karyalay Sawantwadi", "route": "SawantWadi", "village": "SawantWadi", "address": "tahsildar karyalay", "phone": "", "owner": ""},
+                        {"name": "Vishvanil general Store Sawantwadi", "route": "SawantWadi", "village": "SawantWadi", "address": "Sawantwadi", "phone": "", "owner": ""},
+                        {"name": "Mahalaxmi suprer bazar Sawantwadi jail", "route": "SawantWadi", "village": "SawantWadi", "address": "Sawantwadi jail", "phone": "", "owner": ""},
+                        {"name": "Aryan Cold drink near milagiris High School", "route": "SawantWadi", "village": "SawantWadi", "address": "near milagiris High School", "phone": "94045 02559", "owner": ""},
+                        {"name": "Mauli general Store near milagiris High School", "route": "SawantWadi", "village": "SawantWadi", "address": "near milagiris High School", "phone": "", "owner": ""},
+                        {"name": "samartha Prabha general Store behind milagiris High school", "route": "SawantWadi", "village": "SawantWadi", "address": "behind milagiris High school", "phone": "avate 823779 5949", "owner": ""},
+                        {"name": "Aba padte cold drink old Panchayat samiti", "route": "SawantWadi", "village": "SawantWadi", "address": "old Panchayat samiti", "phone": "94225 9623", "owner": ""},
+                        {"name": "kudatarKar cold drink", "route": "SawantWadi", "village": "SawantWadi", "address": "", "phone": "", "owner": ""},
+                        {"name": "Bidre cold drink aadinarayan Mangal karyaly", "route": "SawantWadi", "village": "SawantWadi", "address": "aadinarayan Mangal karyaly", "phone": "8446 913043", "owner": ""},
+                        {"name": "Milind general Store Bazar", "route": "SawantWadi", "village": "SawantWadi", "address": "Bazar", "phone": "", "owner": ""},
+                        {"name": "fresh juice and cold drink Bazar", "route": "SawantWadi", "village": "SawantWadi", "address": "Bazar", "phone": "", "owner": ""},
+                        {"name": "Rajaram cold drink Bazar", "route": "SawantWadi", "village": "SawantWadi", "address": "Bazar", "phone": "9158 781 661", "owner": ""},
+                        {"name": "Bhavani hotel kalsulkar High School", "route": "SawantWadi", "village": "SawantWadi", "address": "kalsulkar High School", "phone": "", "owner": ""},
+                        {"name": "mishal general Store juna bazar", "route": "SawantWadi", "village": "SawantWadi", "address": "juna bazar", "phone": "", "owner": ""},
+                        {"name": "Maya cold drink mathewada", "route": "SawantWadi", "village": "SawantWadi", "address": "mathewada", "phone": "", "owner": ""},
+                        {"name": "C .R. Thakur near Hussaini masjid", "route": "SawantWadi", "village": "SawantWadi", "address": "near Hussaini masjid", "phone": "", "owner": ""},
+                        {"name": "भगत जनरल स्टोअर ,आकेरी", "route": "kalambist", "village": "आकेरी", "address": "आकेरी", "phone": "8411991294—", "owner": ""},
+                        {"name": "श्रीकृष्ण हॉटेल, आकेरी", "route": "kalambist", "village": "आकेरी", "address": "आकेरी", "phone": "9404104801", "owner": ""},
+                        {"name": "जयराम हॉटेल, कोलगाव तिठा", "route": "kalambist", "village": "कोलगाव तिठा", "address": "कोलगाव तिठा", "phone": "9421983189", "owner": ""},
+                        {"name": "उज्वला भाजी सेंटर,कोलगाव", "route": "kalambist", "village": "कोलगाव", "address": "कोलगाव", "phone": "9404930303—", "owner": ""},
+                        {"name": "मेहक जनरल स्टोअर,कोलगाव", "route": "kalambist", "village": "कोलगाव", "address": "कोलगाव", "phone": "9423178792—", "owner": ""},
+                        {"name": "अजलान जनरल स्टोअर,कोलगाव", "route": "kalambist", "village": "कोलगाव", "address": "कोलगाव", "phone": "—", "owner": ""},
+                        {"name": "PS Khan, कोलगाव", "route": "kalambist", "village": "कोलगाव", "address": "कोलगाव निरुखे", "phone": "—", "owner": ""},
+                        {"name": "शुभम जनरल स्टोअर, पेडवेवाडी", "route": "kalambist", "village": "पेडवेवाडी", "address": "पेडवेवाडी", "phone": "9421770363—", "owner": ""},
+                        {"name": "महालक्ष्मी आईस्क्रीम,पेडवेवाडी", "route": "kalambist", "village": "पेडवेवाडी", "address": "पेडवेवाडी", "phone": "—", "owner": ""},
+                        {"name": "रवळनाथ जनरल स्टोअर, पेडवेवाडी", "route": "kalambist", "village": "पेडवेवाडी", "address": "पेडवेवाडी", "phone": "—9403366363", "owner": ""},
+                        {"name": "हॉटेल भावई, माडखोल", "route": "kalambist", "village": "माडखोल", "address": "माडखोल", "phone": "7588336560—", "owner": ""},
+                        {"name": "पावणाई भाजी सेंटर, माडखोल", "route": "kalambist", "village": "माडखोल", "address": "माडखोल", "phone": "संतोष नाईक", "owner": ""},
+                        {"name": "आदर्श जनरल स्टोअर, माडखोल", "route": "kalambist", "village": "माडखोल", "address": "माडखोल", "phone": "9405925958-—", "owner": ""},
+                        {"name": "माजी सैनिक जनरल स्टोअर, माडखोल", "route": "kalambist", "village": "माडखोल", "address": "माडखोल", "phone": "—", "owner": ""},
+                        {"name": "अर्चना जनरल स्टोअर, माडखोल", "route": "kalambist", "village": "माडखोल", "address": "माडखोल", "phone": "8446607543", "owner": ""},
+                        {"name": "गुरुकृपा किराणा, सांगेली", "route": "kalambist", "village": "सांगेली", "address": "सांगेली", "phone": "9552042685", "owner": ""},
+                        {"name": "एस. एस. कटलरी, सांगेली", "route": "kalambist", "village": "सांगेली", "address": "सांगेली", "phone": "9421937490", "owner": ""},
+                        {"name": "लाड कोल्ड्रिंक, सांगेली", "route": "kalambist", "village": "सांगेली", "address": "सांगेली", "phone": "7774905089", "owner": ""},
+                        {"name": "वर्दम जनरल स्टोअर, सावरवाड", "route": "kalambist", "village": "सावरवाड", "address": "सावरवाड", "phone": "9420291099", "owner": ""},
+                        {"name": "कृष्णा बेकरी,कलंबिस्त", "route": "kalambist", "village": "कलंबिस्त", "address": "कलंबिस्त", "phone": "9663194810—", "owner": ""},
+                        {"name": "भालचंद्र कृपा, कलंबिस्त", "route": "kalambist", "village": "कलंबिस्त", "address": "कलंबिस्त", "phone": "शिरसाट,9421190563—", "owner": ""},
+                        {"name": "लिंगेश्वर किराणा, कलंबिस्त", "route": "kalambist", "village": "कलंबिस्त", "address": "कलंबिस्त", "phone": "9405330268", "owner": ""},
+                        {"name": "श्री स्वामी समर्थ मेडिकल, कलंबिस्त", "route": "kalambist", "village": "कलंबिस्त", "address": "कलंबिस्त", "phone": "—", "owner": ""},
+                        {"name": "प्रशांत जनरल स्टोअर, दानोली", "route": "kalambist", "village": "दानोली", "address": "दानोली", "phone": "9405220792", "owner": ""},
+                        {"name": "मनोहर प्रिंटिंग प्रेस, धवडकी", "route": "kalambist", "village": "धवडकी", "address": "धवडकी", "phone": "—", "owner": ""},
+                        {"name": "त्रिमूर्ती जनरल स्टोअर, धवडकी", "route": "kalambist", "village": "धवडकी", "address": "धवडकी", "phone": "पंकज गोवेकर,9529668516—", "owner": ""},
+                        {"name": "पांडुरंग हॉटेल, माडखोल फुगीवाडी", "route": "kalambist", "village": "माडखोल", "address": "फुगीवाडी", "phone": "9403509986—", "owner": ""},
+                        {"name": "सिद्धेश जनरल स्टोअर, माडखोल फुगीवाडी", "route": "kalambist", "village": "माडखोल", "address": "फुगीवाडी", "phone": "—", "owner": ""},
+                        {"name": "संत राऊळ महाराज जनरल स्टोअर माडखोल फुगीवाडी", "route": "kalambist", "village": "माडखोल", "address": "फुगीवाडी", "phone": "तायशेटे माडखोल, 8806920890", "owner": ""},
+                        {"name": "कालिका कोल्ड्रिंक,कारिवडे कट्टा", "route": "kalambist", "village": "कारिवडे कट्टा", "address": "कारिवडे कट्टा", "phone": "अभिजीत पोकळे 7350478669", "owner": ""},
+                        {"name": "कालिका जनरल स्टोअर, कारिवडे कट्टा", "route": "kalambist", "village": "कारिवडे कट्टा", "address": "कारिवडे कट्टा", "phone": "प्रशांत राणे 7276915203", "owner": ""},
+                        {"name": "मोहन स्वार कुणकेरी", "route": "kalambist", "village": "कुणकेरी", "address": "कुणकेरी", "phone": "9404173132", "owner": ""}
+                    ];
+                    cleanShops.forEach(s => shopStore.add(s));
+                }
             };
         }
 
+        // CSV/Text Paste and Upload Logic
         function togglePasteModal() {
             const container = document.getElementById('paste-data-container');
             container.classList.toggle('hidden');
         }
 
-        // CSV Parsing Logic with Support for Quotes
         function parseCSVText(text) {
             const lines = text.split(/\r\n|\n/);
             let parsed = [];
             for (let i = 0; i < lines.length; i++) {
                 let line = lines[i].trim();
                 if (!line) continue;
-                
-                // Advanced CSV regex pattern to handle quotes
                 let regex = /(?:^|,)(?:"([^"]*)"|([^,]*))/g;
                 let matches = [];
                 let match;
@@ -401,13 +589,11 @@
                     let val = match[1] !== undefined ? match[1] : match[2];
                     matches.push(val ? val.trim() : '');
                 }
-
                 if (matches.length >= 4) {
                     let name = matches[0];
                     let address = matches[1];
                     let phone = matches[2];
                     let route = matches[3];
-
                     if (name && name !== 'Shop Name' && name !== 'nan') {
                         parsed.push({
                             name: name,
