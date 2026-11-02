@@ -129,10 +129,13 @@
                 <div class="flex flex-wrap justify-between items-center mb-3 gap-2">
                     <h2 class="text-base font-bold text-gray-800"><i class="fa-solid fa-store text-brand-600 mr-2"></i>दुकान व्यवस्थापन</h2>
                     <div class="flex flex-wrap gap-2">
+                        <button onclick="exportShopsToCSV()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium flex items-center shadow">
+                            <i class="fa-solid fa-file-excel mr-1"></i> CSV डाऊनलोड करा
+                        </button>
                         <button onclick="togglePasteModal()" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium flex items-center">
                             <i class="fa-solid fa-paste mr-1"></i> shops.txt पेस्ट करा
                         </button>
-                        <button onclick="openShopModal()" class="bg-brand-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium flex items-center">
+                        <button onclick="openShopModal()" class="bg-brand-600 hover:bg-brand-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium flex items-center">
                             <i class="fa-solid fa-plus mr-1"></i> नवीन दुकान
                         </button>
                     </div>
@@ -256,7 +259,7 @@
         </div>
     </div>
 
-    <!-- Modal for Product Add/Edit -->
+    <!-- Modal for Product Add/Edit (Image Upload Enabled) -->
     <div id="product-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-xl max-w-sm w-full p-4 space-y-3">
             <h3 id="product-modal-title" class="font-bold text-base text-gray-800">नवीन प्रॉडक्ट जोडा</h3>
@@ -274,6 +277,10 @@
                     <label class="block text-xs font-medium text-gray-600">प्रॉडक्ट कोड</label>
                     <input type="text" id="prod-code" required class="w-full p-2 border rounded-lg text-sm">
                 </div>
+                <div>
+                    <label class="block text-xs font-medium text-gray-600">प्रॉडक्ट फोटो (Image)</label>
+                    <input type="file" id="prod-image-file" accept="image/*" class="w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700">
+                </div>
                 <div class="flex justify-end space-x-2 pt-2">
                     <button type="button" onclick="closeProductModal()" class="px-3 py-1.5 border rounded-lg text-xs">रद्द करा</button>
                     <button type="submit" class="bg-brand-600 text-white px-4 py-1.5 rounded-lg text-xs font-medium">सेव्ह करा</button>
@@ -285,7 +292,7 @@
     <!-- Core App Logic -->
     <script>
         let db;
-        const DB_NAME = 'KalidasOrderTakingAppDB';
+        const DB_NAME = 'KalidasOrderTakingAppDB_V5';
         const DB_VERSION = 1;
 
         const request = indexedDB.open(DB_NAME, DB_VERSION);
@@ -333,17 +340,17 @@
             productStore.getAll().onsuccess = (e) => {
                 if (e.target.result.length === 0) {
                     const defaultProducts = [
-                        { name: 'काजू', price: 200, code: 'KJU001' },
-                        { name: 'मावा', price: 180, code: 'MAV002' },
-                        { name: 'व्हॅनिला', price: 150, code: 'VAN003' },
-                        { name: 'पिस्ता', price: 200, code: 'PIS004' },
-                        { name: 'स्ट्रॉबेरी कप', price: 100, code: 'STR005' },
-                        { name: 'मँगो', price: 180, code: 'MAN006' },
-                        { name: 'बटरस्कॉच', price: 220, code: 'BUT007' },
-                        { name: 'एस आर सी आर', price: 250, code: 'SRC008' },
-                        { name: 'कोन गडबड', price: 120, code: 'KON009' },
-                        { name: 'फॅमिली पॅक व्हॅनिला', price: 350, code: 'FPV010' },
-                        { name: 'फॅमिली पॅक मँगो', price: 350, code: 'FPM011' }
+                        { name: 'काजू', price: 200, code: 'KJU001', image: '' },
+                        { name: 'मावा', price: 180, code: 'MAV002', image: '' },
+                        { name: 'व्हॅनिला', price: 150, code: 'VAN003', image: '' },
+                        { name: 'पिस्ता', price: 200, code: 'PIS004', image: '' },
+                        { name: 'स्ट्रॉबेरी कप', price: 100, code: 'STR005', image: '' },
+                        { name: 'मँगो', price: 180, code: 'MAN006', image: '' },
+                        { name: 'बटरस्कॉच', price: 220, code: 'BUT007', image: '' },
+                        { name: 'एस आर सी आर', price: 250, code: 'SRC008', image: '' },
+                        { name: 'कोन गडबड', price: 120, code: 'KON009', image: '' },
+                        { name: 'फॅमिली पॅक व्हॅनिला', price: 350, code: 'FPV010', image: '' },
+                        { name: 'फॅमिली पॅक मँगो', price: 350, code: 'FPM011', image: '' }
                     ];
                     defaultProducts.forEach(p => productStore.add(p));
                 }
@@ -351,7 +358,6 @@
 
             shopStore.getAll().onsuccess = (e) => {
                 if (e.target.result.length === 0) {
-                    // Pre-load default clean shops with strict order: name, address, phone, route
                     const defaultShops = [
                         { name: "Nandkishor sweets Malgaon highway", address: "Malgaon", phone: "7302019933", route: "Banda" },
                         { name: "hotel Laxmi Narayan,Malgaon bazar", address: "Malgaon bazar", phone: "9022312374", route: "Banda" },
@@ -368,11 +374,39 @@
             };
         }
 
+        function exportShopsToCSV() {
+            const tx = db.transaction(['shops'], 'readonly');
+            tx.objectStore('shops').getAll().onsuccess = (e) => {
+                const shops = e.target.result;
+                if (shops.length === 0) {
+                    alert('डाऊनलोड करण्यासाठी कोणतीही दुकाने उपलब्ध नाहीत.');
+                    return;
+                }
+                let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
+                csvContent += "Shop Name,Address,Phone,Route\n";
+
+                shops.forEach(s => {
+                    let name = `"${(s.name || '').replace(/"/g, '""')}"`;
+                    let address = `"${(s.address || '').replace(/"/g, '""')}"`;
+                    let phone = `"${(s.phone || '').replace(/"/g, '""')}"`;
+                    let route = `"${(s.route || '').replace(/"/g, '""')}"`;
+                    csvContent += `${name},${address},${phone},${route}\n`;
+                });
+
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", `Kalidas_Shops_List_${new Date().toISOString().split('T')[0]}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            };
+        }
+
         function togglePasteModal() {
             document.getElementById('paste-data-container').classList.toggle('hidden');
         }
 
-        // Parse format: shop name, address, phone, route
         function parseCSVText(text) {
             const lines = text.split(/\r\n|\n/);
             let parsed = [];
@@ -435,7 +469,6 @@
             activeBtn.classList.remove('border-transparent', 'text-gray-500');
         }
 
-        // Render Shops in correct sequence: Shop Name, Address, Phone, Route
         function renderShops() {
             const query = document.getElementById('shop-search').value.toLowerCase();
             const tx = db.transaction(['shops'], 'readonly');
@@ -555,6 +588,7 @@
                 const container = document.getElementById('order-products-container');
                 container.innerHTML = products.map(p => `
                     <div class="bg-gray-50 p-2 border rounded-lg flex flex-col items-center">
+                        ${p.image ? `<img src="${p.image}" class="w-12 h-12 object-cover rounded mb-1 border">` : `<div class="w-12 h-12 bg-gray-200 rounded mb-1 flex items-center justify-center text-gray-400 text-xs"><i class="fa-solid fa-ice-cream"></i></div>`}
                         <label class="block text-xs font-semibold text-gray-700 truncate w-full text-center">${p.name}</label>
                         <span class="text-[10px] text-gray-500 mb-1">₹${p.price}</span>
                         <input type="number" min="0" value="0" data-id="${p.id}" data-price="${p.price}" data-name="${p.name}" oninput="calculateOrderTotal()" class="order-qty-input w-full p-1.5 border rounded text-center text-sm bg-white font-bold">
@@ -651,7 +685,7 @@
             }
         }
 
-        // Products CRUD
+        // Products CRUD with Image Upload Support
         function renderProducts() {
             const tx = db.transaction(['products'], 'readonly');
             tx.objectStore('products').getAll().onsuccess = (e) => {
@@ -659,13 +693,16 @@
                 const container = document.getElementById('products-list');
                 container.innerHTML = products.map(p => `
                     <div class="flex justify-between items-center p-3 border rounded-lg bg-gray-50 text-sm">
-                        <div>
-                            <p class="font-bold text-gray-800">${p.name} <span class="text-xs text-gray-500">(${p.code})</span></p>
-                            <p class="text-xs text-brand-600 font-semibold">₹${p.price}</p>
+                        <div class="flex items-center space-x-3">
+                            ${p.image ? `<img src="${p.image}" class="w-12 h-12 object-cover rounded-lg border shadow-sm">` : `<div class="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center text-gray-400"><i class="fa-solid fa-ice-cream"></i></div>`}
+                            <div>
+                                <p class="font-bold text-gray-800">${p.name} <span class="text-xs text-gray-500">(${p.code})</span></p>
+                                <p class="text-xs text-brand-600 font-semibold">₹${p.price}</p>
+                            </div>
                         </div>
                         <div class="space-x-2">
-                            <button onclick="openProductModal(${p.id})" class="text-blue-600 text-xs p-1"><i class="fa-solid fa-pen"></i></button>
-                            <button onclick="deleteProduct(${p.id})" class="text-red-600 text-xs p-1"><i class="fa-solid fa-trash"></i></button>
+                            <button onclick="openProductModal(${p.id})" class="text-blue-600 text-xs p-1.5"><i class="fa-solid fa-pen"></i></button>
+                            <button onclick="deleteProduct(${p.id})" class="text-red-600 text-xs p-1.5"><i class="fa-solid fa-trash"></i></button>
                         </div>
                     </div>
                 `).join('') || '<p class="text-xs text-gray-500 text-center py-4">कोणतेही प्रॉडक्ट नाही.</p>';
@@ -677,6 +714,7 @@
             document.getElementById('prod-name').value = '';
             document.getElementById('prod-price').value = '';
             document.getElementById('prod-code').value = '';
+            document.getElementById('prod-image-file').value = '';
             
             if (id) {
                 document.getElementById('product-modal-title').innerText = 'प्रॉडक्ट एडिट करा';
@@ -701,22 +739,43 @@
         function saveProduct(e) {
             e.preventDefault();
             const id = document.getElementById('product-id').value;
-            const product = {
-                name: document.getElementById('prod-name').value,
-                price: parseFloat(document.getElementById('prod-price').value),
-                code: document.getElementById('prod-code').value
-            };
-            if (id) product.id = parseInt(id);
+            const name = document.getElementById('prod-name').value;
+            const price = parseFloat(document.getElementById('prod-price').value);
+            const code = document.getElementById('prod-code').value;
+            const imageFile = document.getElementById('prod-image-file').files[0];
 
-            const tx = db.transaction(['products'], 'readwrite');
-            const store = tx.objectStore('products');
-            const req = id ? store.put(product) : store.add(product);
+            const proceedSave = (imageUrl) => {
+                const product = { name, price, code, image: imageUrl || '' };
+                if (id) product.id = parseInt(id);
 
-            req.onsuccess = () => {
-                closeProductModal();
-                renderProducts();
-                renderOrderProducts();
+                const tx = db.transaction(['products'], 'readwrite');
+                const store = tx.objectStore('products');
+                const req = id ? store.put(product) : store.add(product);
+
+                req.onsuccess = () => {
+                    closeProductModal();
+                    renderProducts();
+                    renderOrderProducts();
+                    alert('प्रॉडक्ट फोटोसह यशस्वीरित्या सेव्ह झाले!');
+                };
             };
+
+            if (imageFile) {
+                const reader = new FileReader();
+                reader.onload = function(uploadEvent) {
+                    proceedSave(uploadEvent.target.result);
+                };
+                reader.readAsDataURL(imageFile);
+            } else {
+                if (id) {
+                    db.transaction(['products'], 'readonly').objectStore('products').get(parseInt(id)).onsuccess = (ev) => {
+                        const existing = ev.target.result;
+                        proceedSave(existing ? existing.image : '');
+                    };
+                } else {
+                    proceedSave('');
+                }
+            }
         }
 
         function deleteProduct(id) {
@@ -792,6 +851,7 @@
                     <tbody>
             `;
 
+            orders.files = []; // safe guard
             orders.forEach((o, index) => {
                 html += `
                     <tr class="border-b hover:bg-gray-50">
