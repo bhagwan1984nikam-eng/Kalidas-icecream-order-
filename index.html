@@ -4,8 +4,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>कालिदास आईस्क्रीम ऑर्डर ॲप</title>
-    <!-- Embedded Base64 PWA Manifest Icon -->
-    <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Kalidas%20Ice%20Cream%20Orders%22%2C%22short_name%22%3A%22Kalidas%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23ffffff%22%2C%22theme_color%22%3A%22%23d81b60%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg%3D%3D%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D">
+    <!-- PWA Manifest using icon.png -->
+    <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Kalidas%20Ice%20Cream%20Orders%22%2C%22short_name%22%3A%22Kalidas%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23ffffff%22%2C%22theme_color%22%3A%22%23d81b60%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22icon.png%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D">
     <style>
         :root { --primary: #d81b60; --secondary: #00897b; --danger: #d32f2f; --warning: #f57c00; --bg: #fafafa; --border: #e0e0e0; }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
@@ -37,8 +37,8 @@
 </head>
 <body>
     <header>
-        <!-- Embedded Kalidas Logo Data URI -->
-        <img id="headerLogo" alt="Kalidas Logo">
+        <!-- Using icon.png from the same directory -->
+        <img src="icon.png" alt="Kalidas Logo" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'><circle cx=\'50\' cy=\'50\' r=\'48\' fill=\'%23d81b60\'/><text x=\'50%\' y=\'55%\' font-size=\'40\' fill=\'white\' text-anchor=\'middle\' dominant-baseline=\'middle\'>K</text></svg>'">
         <h1>कालिदास आईस्क्रीम ऑर्डर ॲप</h1>
     </header>
     <div class="container">
@@ -129,11 +129,6 @@
         let db;
         let currentEditingProductImage = null;
 
-        // High-precision Base64 encoded Kalidas Ice Cream Logo
-        const kalidasLogoBase64 = "data:image/jpeg;base64," + 
-        "/9j/4AAQSkZJRgABAQEASABIAAD/4QBaRXhpZgAATU0AKgAAAAgABAEaAAUAAAABAAAAPgEbAAUAAAABAAAARgEoAAMAAAABAAIAAAExAAIAAAARAAAATgAAAAAAAABIAAAAAQAAAEgAAAABUGhvdG9zaG9wIExpYnJhcnkAAElDQyBwcm9maWxlAABHzZWNndW5kIFBsYWNlaG9sZGVyAAAAAABjc3RyIAAAAHgAAAA8c3RyIAAAAHgAAAA8c3RyIAAAAHgAAAA8c3RyIAAAAHgAAAA8Y21kIAAAAHgAAAA8c2lnaAI="; 
-        // We inject the exact base64 image data URI dynamically or use reliable fallback rendering
-
         const defaultShops = [
             {"route": "Banda", "name": "Nandkishor sweets Malgaon highway", "details": "Malgaon | Lokesh 73020 19 933"},
             {"route": "Banda", "name": "hotel Laxmi Narayan,Malgaon bazar", "details": "Malgaon bazar | 9022 312 374"},
@@ -144,13 +139,24 @@
             {"route": "Aaros", "name": "Aaros Cold Drinks", "details": "Aaros Phata | 9822123456"}
         ];
 
+        // Exact products list as requested with correct names and prices
         const defaultProds = [
-            { name: "व्हॅनिला", price: 50, image: "" },
-            { name: "पिस्ता", price: 60, image: "" },
-            { name: "चॉकलेट", price: 60, image: "" }
+            { name: "Kaju candy ₹10", price: 200, image: "" },
+            { name: "Mawa candy ₹15", price: 300, image: "" },
+            { name: "Gadabad", price: 150, image: "" },
+            { name: "Strawberry Cup 10", price: 200, image: "" },
+            { name: "Pista Cup 10", price: 200, image: "" },
+            { name: "Vanilla cup 10", price: 200, image: "" },
+            { name: "Mango Cup 20", price: 200, image: "" },
+            { name: "Buttercotch cup 20", price: 200, image: "" },
+            { name: "Sauce Ripple Cup 20", price: 200, image: "" },
+            { name: "Choco ripple Cup 20", price: 200, image: "" },
+            { name: "family pack vanilla", price: 85, image: "" },
+            { name: "Family pack mango", price: 125, image: "" }
         ];
 
-        const req = indexedDB.open("KalidasIceCreamDB", 13);
+        // Database version set to 14 to cleanly load default products and shops
+        const req = indexedDB.open("KalidasIceCreamDB", 14);
         req.onerror = e => alert("Database error");
         req.onsuccess = e => { db = e.target.result; initApp(); };
         req.onupgradeneeded = e => {
@@ -170,14 +176,6 @@
 
         function initApp() {
             document.getElementById('orderDate').valueAsDate = new Date();
-            
-            // Set Header Logo
-            let logoImg = document.getElementById('headerLogo');
-            logoImg.src = "1002280148_c9e201.jpg"; // Try loading local image first
-            logoImg.onerror = function() {
-                this.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><circle cx='50' cy='50' r='48' fill='%23d81b60'/><text x='50%' y='55%' font-size='40' fill='white' text-anchor='middle' dominant-baseline='middle'>K</text></svg>";
-            };
-
             let tx = db.transaction(['products', 'shops'], 'readonly');
             
             tx.objectStore('products').getAll().onsuccess = e => {
@@ -494,7 +492,6 @@
         function exportCSV() {
             let csv = '\uFEFFDate,Route,Shop,Net,Balance\n';
             getStore('orders', 'readonly').getAll().onsuccess = e => {
-                e.target.result.reload; // safe access
                 e.target.result.forEach(o => csv += `"${o.date}","${o.route}","${o.shop}",${o.net},${o.balance}\n`);
                 let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
                 let l = document.createElement('a'); l.href = URL.createObjectURL(blob); l.download = "orders.csv"; l.click();
