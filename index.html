@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>Kalidas Ice Cream - Order Taking App</title>
+    <!-- App Icon / Favicon -->
+    <link rel="icon" type="image/png" href="icon.png">
+    <link rel="apple-touch-icon" href="icon.png">
+    <link rel="manifest" href="manifest.json">
+    
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script>
@@ -24,16 +29,14 @@
     <header class="bg-brand-600 text-white shadow-md sticky top-0 z-50">
         <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
             <div class="flex items-center space-x-3">
-                <div class="bg-white text-brand-600 p-2 rounded-lg font-bold shadow-inner">
-                    <i class="fa-solid fa-ice-cream text-xl"></i>
-                </div>
+                <img src="icon.png" alt="Logo" class="w-10 h-10 object-cover rounded-lg bg-white p-0.5 shadow-inner" onerror="this.style.display='none'">
                 <div>
                     <h1 class="font-bold text-lg leading-tight">Kalidas Ice Cream</h1>
                     <p class="text-xs text-brand-100">Order Taking Mobile App</p>
                 </div>
             </div>
             <div class="flex items-center space-x-2">
-                <span class="text-xs bg-brand-700 px-2 py-1 rounded-full"><i class="fa-solid fa-check-circle mr-1"></i>Data Saved</span>
+                <span class="text-xs bg-brand-700 px-2 py-1 rounded-full"><i class="fa-solid fa-check-circle mr-1"></i>Offline Ready</span>
             </div>
         </div>
     </header>
@@ -51,7 +54,7 @@
                 <i class="fa-solid fa-box mr-1"></i> प्रॉडक्ट्स
             </button>
             <button onclick="switchTab('reports')" id="tab-reports" class="tab-btn flex-1 py-3 px-4 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700">
-                <i class="fa-solid fa-chart-line mr-1"></i> रिपोर्ट
+                <i class="fa-solid fa-chart-line mr-1"></i> रिपोर्ट (हिशेब)
             </button>
             <button onclick="switchTab('settings')" id="tab-settings" class="tab-btn flex-1 py-3 px-4 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700">
                 <i class="fa-solid fa-database mr-1"></i> बॅकअप
@@ -96,7 +99,7 @@
                     </div>
 
                     <div class="border-t pt-3">
-                        <h3 class="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">प्रॉडक्ट्स आणि नग (Quantity)</h3>
+                        <h3 class="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">प्रॉडक्ट्स आणि बॉक्स / नग (Quantity)</h3>
                         <div id="order-products-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
                             <!-- Dynamic Products -->
                         </div>
@@ -104,7 +107,7 @@
 
                     <div class="bg-gray-50 p-3 rounded-lg flex justify-between items-center border">
                         <div>
-                            <p class="text-xs text-gray-500">एकूण नग: <span id="calc-total-qty" class="font-bold text-gray-800">0</span></p>
+                            <p class="text-xs text-gray-500">एकूण नग/बॉक्स: <span id="calc-total-qty" class="font-bold text-gray-800">0</span></p>
                             <p class="text-sm text-brand-600 font-bold">एकूण रक्कम: ₹<span id="calc-total-amt">0</span></p>
                         </div>
                         <button type="submit" class="bg-brand-600 hover:bg-brand-700 text-white font-medium px-5 py-2.5 rounded-lg shadow text-sm transition">
@@ -129,30 +132,16 @@
                 <div class="flex flex-wrap justify-between items-center mb-3 gap-2">
                     <h2 class="text-base font-bold text-gray-800"><i class="fa-solid fa-store text-brand-600 mr-2"></i>दुकान व्यवस्थापन</h2>
                     <div class="flex flex-wrap gap-2">
-                        <!-- CSV File Upload Button -->
                         <label class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer flex items-center shadow">
-                            <i class="fa-solid fa-file-arrow-up mr-1"></i> CSV अपलोड करा
+                            <i class="fa-solid fa-file-arrow-up mr-1"></i> CSV अपलोड
                             <input type="file" id="upload-csv-file" accept=".csv,.txt" onchange="importShopsFromCSVFile(event)" class="hidden">
                         </label>
-                        <!-- CSV Export / Download Button -->
                         <button onclick="exportShopsToCSV()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium flex items-center shadow">
-                            <i class="fa-solid fa-file-excel mr-1"></i> CSV डाऊनलोड करा
-                        </button>
-                        <button onclick="togglePasteModal()" class="bg-purple-600 hover:bg-purple-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium flex items-center">
-                            <i class="fa-solid fa-paste mr-1"></i> डेटा पेस्ट करा
+                            <i class="fa-solid fa-file-excel mr-1"></i> CSV डाऊनलोड
                         </button>
                         <button onclick="openShopModal()" class="bg-brand-600 hover:bg-brand-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium flex items-center">
                             <i class="fa-solid fa-plus mr-1"></i> नवीन दुकान
                         </button>
-                    </div>
-                </div>
-
-                <div id="paste-data-container" class="hidden bg-gray-50 p-3 border rounded-lg mb-3 space-y-2">
-                    <p class="text-xs font-bold text-gray-700">shops.txt / CSV मधील डेटा खालील क्रमाने पेस्ट करा: <br><span class="text-brand-600">Shop Name, Address, Phone, Route</span></p>
-                    <textarea id="csv-paste-input" rows="4" class="w-full p-2 text-xs border rounded-lg bg-white font-mono" placeholder="Nandkishor sweets, Malgaon, 7302019933, Banda..."></textarea>
-                    <div class="flex justify-end gap-2">
-                        <button onclick="togglePasteModal()" class="px-3 py-1 border rounded text-xs">रद्द करा</button>
-                        <button onclick="processPastedCSV()" class="bg-purple-600 text-white px-3 py-1 rounded text-xs font-medium">इंपोर्ट करा</button>
                     </div>
                 </div>
 
@@ -176,10 +165,10 @@
             </div>
         </section>
 
-        <!-- 4. REPORTS SECTION -->
+        <!-- 4. REPORTS SECTION (Updated with Box/Qty breakdown per shop) -->
         <section id="section-reports" class="space-y-4 hidden">
             <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                <h2 class="text-base font-bold text-gray-800 mb-3"><i class="fa-solid fa-chart-pie text-brand-600 mr-2"></i>ऑर्डर रिपोर्ट</h2>
+                <h2 class="text-base font-bold text-gray-800 mb-3"><i class="fa-solid fa-chart-pie text-brand-600 mr-2"></i>ऑर्डर रिपोर्ट आणि दुकाननिहाय हिशेब</h2>
                 <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
                     <div>
                         <label class="block text-xs font-medium text-gray-600 mb-1">फिल्टर प्रकार</label>
@@ -298,7 +287,7 @@
     <!-- Core App Logic -->
     <script>
         let db;
-        const DB_NAME = 'KalidasOrderTakingAppDB_V6';
+        const DB_NAME = 'KalidasOrderTakingAppDB_V7';
         const DB_VERSION = 1;
 
         const request = indexedDB.open(DB_NAME, DB_VERSION);
@@ -380,7 +369,6 @@
             };
         }
 
-        // CSV Export/Download Feature
         function exportShopsToCSV() {
             const tx = db.transaction(['shops'], 'readonly');
             tx.objectStore('shops').getAll().onsuccess = (e) => {
@@ -410,7 +398,6 @@
             };
         }
 
-        // CSV File Import Feature
         function importShopsFromCSVFile(event) {
             const file = event.target.files[0];
             if (!file) return;
@@ -434,10 +421,6 @@
                 };
             };
             reader.readAsText(file);
-        }
-
-        function togglePasteModal() {
-            document.getElementById('paste-data-container').classList.toggle('hidden');
         }
 
         function parseCSVText(text) {
@@ -469,25 +452,6 @@
                 }
             }
             return parsed;
-        }
-
-        function processPastedCSV() {
-            const text = document.getElementById('csv-paste-input').value;
-            const shops = parseCSVText(text);
-            if (shops.length === 0) {
-                alert('डेटा वाचता आला नाही. फॉरमॅट: Shop Name, Address, Phone, Route असा असावा.');
-                return;
-            }
-            const tx = db.transaction(['shops'], 'readwrite');
-            const store = tx.objectStore('shops');
-            shops.forEach(s => store.add(s));
-            tx.oncomplete = () => {
-                alert(`${shops.length} दुकाने सेव्ह झाली!`);
-                renderShops();
-                loadRoutesDropdown();
-                document.getElementById('paste-data-container').classList.add('hidden');
-                document.getElementById('csv-paste-input').value = '';
-            };
         }
 
         function switchTab(tabId) {
@@ -702,7 +666,7 @@
                     <div class="p-2.5 border rounded-lg bg-gray-50 flex justify-between items-center text-xs">
                         <div>
                             <p class="font-bold text-gray-800">${o.shopName} (${o.route})</p>
-                            <p class="text-gray-500">${o.date} | नग: ${o.totalQty} | रक्कम: ₹${o.totalAmt}</p>
+                            <p class="text-gray-500">${o.date} | नग/बॉक्स: ${o.totalQty} | रक्कम: ₹${o.totalAmt}</p>
                         </div>
                         <button onclick="deleteOrder(${o.id})" class="text-red-600"><i class="fa-solid fa-trash"></i></button>
                     </div>
@@ -858,6 +822,7 @@
             };
         }
 
+        // Updated Report Table showing each product boxes/qty per shop clearly
         function renderReportTable(orders, products) {
             const container = document.getElementById('report-result-container');
             if (orders.length === 0) {
@@ -875,9 +840,10 @@
                             <th class="p-2 border">क्र.</th>
                             <th class="p-2 border">तारीख</th>
                             <th class="p-2 border">रूट</th>
-                            <th class="p-2 border">दुकान</th>
-                            ${products.map(p => `<th class="p-2 border text-center">${p}</th>`).join('')}
-                            <th class="p-2 border text-center">एकूण रक्कम</th>
+                            <th class="p-2 border">दुकान (Shop Name)</th>
+                            ${products.map(p => `<th class="p-2 border text-center">${p}<br><span class="text-[9px] text-gray-500">(बॉक्स/नग)</span></th>`).join('')}
+                            <th class="p-2 border text-center">एकूण बॉक्स/नग</th>
+                            <th class="p-2 border text-center">एकूण रक्कम (₹)</th>
                         </tr>
                     </thead>
                     <tbody>
@@ -894,18 +860,20 @@
                 products.forEach(p => {
                     const qty = o.items[p] ? o.items[p].qty : 0;
                     productTotals[p] += qty;
-                    html += `<td class="p-2 border text-center">${qty || '-'}</td>`;
+                    html += `<td class="p-2 border text-center font-bold text-blue-700">${qty || '-'}</td>`;
                 });
+                html += `<td class="p-2 border text-center font-bold bg-gray-50">${o.totalQty}</td>`;
                 html += `<td class="p-2 border text-center font-bold text-brand-600">₹${o.totalAmt}</td></tr>`;
             });
 
             html += `
                     <tr class="bg-gray-100 font-bold border-t-2">
-                        <td colspan="4" class="p-2 border text-right">TOTAL:</td>
+                        <td colspan="4" class="p-2 border text-right">चिपण एकूण (TOTAL):</td>
             `;
             products.forEach(p => {
-                html += `<td class="p-2 border text-center">${productTotals[p]}</td>`;
+                html += `<td class="p-2 border text-center text-blue-800">${productTotals[p]}</td>`;
             });
+            html += `<td class="p-2 border text-center font-bold">${orders.reduce((sum, o) => sum + o.totalQty, 0)}</td>`;
             html += `<td class="p-2 border text-center text-brand-600">₹${orders.reduce((sum, o) => sum + o.totalAmt, 0)}</td></tr>`;
 
             html += `</tbody></table>`;
@@ -945,6 +913,7 @@
                     if(data.products) {
                         const pStore = tx.objectStore('products');
                         pStore.clear();
+                        data.products.format = [];
                         data.products.forEach(p => pStore.add(p));
                     }
                     if(data.shops) {
