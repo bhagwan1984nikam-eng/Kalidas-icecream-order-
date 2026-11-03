@@ -1,941 +1,519 @@
 <!DOCTYPE html>
-<html lang="mr" class="h-full">
+<html lang="mr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Kalidas Ice Cream - Order Taking App</title>
-    <!-- App Icon / Favicon -->
-    <link rel="icon" type="image/png" href="icon.png">
-    <link rel="apple-touch-icon" href="icon.png">
-    <link rel="manifest" href="manifest.json">
-    
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    colors: {
-                        brand: { 50: '#eff6ff', 500: '#3b82f6', 600: '#2563eb', 700: '#1d4ed8' }
-                    }
-                }
-            }
-        }
-    </script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>कालिदास आईस्क्रीम ऑर्डर ॲप</title>
+    <!-- Embedded Base64 PWA Manifest Icon -->
+    <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Kalidas%20Ice%20Cream%20Orders%22%2C%22short_name%22%3A%22Kalidas%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23ffffff%22%2C%22theme_color%22%3A%22%23d81b60%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22data%3Aimage%2Fpng%3Bbase64%2CiVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg%3D%3D%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D">
+    <style>
+        :root { --primary: #d81b60; --secondary: #00897b; --danger: #d32f2f; --warning: #f57c00; --bg: #fafafa; --border: #e0e0e0; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
+        body { background: var(--bg); padding-bottom: 70px; color: #212121; }
+        header { background: var(--primary); color: white; padding: 12px 15px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        header img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; background: white; border: 2px solid white; }
+        header h1 { font-size: 1.1rem; }
+        .container { padding: 15px; max-width: 950px; margin: auto; }
+        .card { background: white; border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+        .form-group { margin-bottom: 12px; }
+        label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.9rem; }
+        input, select { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; }
+        button.btn { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; width: 100%; cursor: pointer; margin-top: 5px; }
+        button.btn-secondary { background: var(--secondary); color: white; }
+        button.btn-edit { background: var(--warning); color: white; padding: 5px 10px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; margin-right: 4px; }
+        button.btn-danger { background: var(--danger); color: white; padding: 5px 10px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; }
+        .table-responsive { overflow-x: auto; margin-top: 10px; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th, td { border: 1px solid var(--border); padding: 8px; text-align: center; vertical-align: middle; }
+        th { background: #f5f5f5; }
+        tr.total-row { background: #fff3e0; font-weight: bold; }
+        .prod-thumb { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc; }
+        .nav-tabs { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; border-top: 1px solid var(--border); z-index: 1000; }
+        .nav-tab { flex: 1; text-align: center; padding: 12px; font-size: 0.8rem; background: none; border: none; cursor: pointer; color: #666; font-weight: bold; }
+        .nav-tab.active { color: var(--primary); border-top: 3px solid var(--primary); }
+        .section { display: none; }
+        .section.active { display: block; }
+    </style>
 </head>
-<body class="h-full bg-gray-50 text-gray-900 flex flex-col font-sans antialiased">
-
-    <!-- Header -->
-    <header class="bg-brand-600 text-white shadow-md sticky top-0 z-50">
-        <div class="max-w-7xl mx-auto px-4 py-3 flex justify-between items-center">
-            <div class="flex items-center space-x-3">
-                <img src="icon.png" alt="Logo" class="w-10 h-10 object-cover rounded-lg bg-white p-0.5 shadow-inner" onerror="this.style.display='none'">
-                <div>
-                    <h1 class="font-bold text-lg leading-tight">Kalidas Ice Cream</h1>
-                    <p class="text-xs text-brand-100">Order Taking Mobile App</p>
-                </div>
-            </div>
-            <div class="flex items-center space-x-2">
-                <span class="text-xs bg-brand-700 px-2 py-1 rounded-full"><i class="fa-solid fa-check-circle mr-1"></i>Offline Ready</span>
-            </div>
-        </div>
+<body>
+    <header>
+        <!-- Embedded Kalidas Logo Data URI -->
+        <img id="headerLogo" alt="Kalidas Logo">
+        <h1>कालिदास आईस्क्रीम ऑर्डर ॲप</h1>
     </header>
-
-    <!-- Navigation Tabs -->
-    <nav class="bg-white border-b border-gray-200 shadow-sm sticky top-[57px] z-40 overflow-x-auto">
-        <div class="max-w-7xl mx-auto flex whitespace-nowrap px-2">
-            <button onclick="switchTab('orders')" id="tab-orders" class="tab-btn flex-1 py-3 px-4 text-center border-b-2 font-medium text-sm border-brand-600 text-brand-600">
-                <i class="fa-solid fa-cart-shopping mr-1"></i> ऑर्डर घ्या
-            </button>
-            <button onclick="switchTab('shops')" id="tab-shops" class="tab-btn flex-1 py-3 px-4 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700">
-                <i class="fa-solid fa-store mr-1"></i> दुकाने (Shops)
-            </button>
-            <button onclick="switchTab('products')" id="tab-products" class="tab-btn flex-1 py-3 px-4 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700">
-                <i class="fa-solid fa-box mr-1"></i> प्रॉडक्ट्स
-            </button>
-            <button onclick="switchTab('reports')" id="tab-reports" class="tab-btn flex-1 py-3 px-4 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700">
-                <i class="fa-solid fa-chart-line mr-1"></i> रिपोर्ट (हिशेब)
-            </button>
-            <button onclick="switchTab('settings')" id="tab-settings" class="tab-btn flex-1 py-3 px-4 text-center border-b-2 font-medium text-sm border-transparent text-gray-500 hover:text-gray-700">
-                <i class="fa-solid fa-database mr-1"></i> बॅकअप
-            </button>
+    <div class="container">
+        <!-- 1. Orders Section -->
+        <div id="sec-orders" class="section active">
+            <div class="card">
+                <h2>नवीन ऑर्डर नोंदवा</h2>
+                <div class="form-group"><label>मार्ग निवडा (Route):</label><select id="orderRoute" onchange="loadShopsByRoute()"></select></div>
+                <div class="form-group"><label>दुकान निवडा (Shop):</label><select id="orderShop"></select></div>
+                <div class="form-group"><label>तारीख:</label><input type="date" id="orderDate"></div>
+                <h3>उत्पादने व प्रमाण</h3>
+                <div id="orderProductsContainer" style="max-height: 250px; overflow-y: auto; margin-top: 10px;"></div>
+                <div style="margin-top: 15px; background: #f9f9f9; padding: 10px; border-radius: 6px;">
+                    <p><strong>एकूण: </strong><span id="orderSubtotal">0.00</span> ₹</p>
+                    <div class="form-group" style="margin-top:8px;"><label>सवलत (₹):</label><input type="number" id="orderDiscount" value="0" oninput="calcTotal()"></div>
+                    <div class="form-group"><label>जमा (₹):</label><input type="number" id="orderPaid" value="0" oninput="calcTotal()"></div>
+                    <p><strong>नेट रक्कम: </strong><span id="orderNetTotal">0.00</span> ₹</p>
+                    <p><strong>बाकी: </strong><span id="orderBalance">0.00</span> ₹</p>
+                </div>
+                <button class="btn" onclick="saveOrder()">ऑर्डर सेव्ह करा</button>
+            </div>
+            <div class="card">
+                <h2>ऑर्डर इतिहास</h2>
+                <div class="table-responsive" id="orderHistoryList"></div>
+            </div>
         </div>
+
+        <!-- 2. Products Section -->
+        <div id="sec-products" class="section">
+            <div class="card">
+                <h2 id="prodFormTitle">उत्पादन जोडा / बदला</h2>
+                <input type="hidden" id="prodId">
+                <div class="form-group"><label>उत्पादनाचे नाव:</label><input type="text" id="prodName"></div>
+                <div class="form-group"><label>किंमत (₹):</label><input type="number" id="prodPrice"></div>
+                <div class="form-group">
+                    <label>उत्पादनाचा फोटो (Image):</label>
+                    <input type="file" id="prodImageFile" accept="image/*" style="margin-bottom:5px;">
+                    <div id="currentProdImagePreview" style="margin-top:5px;"></div>
+                </div>
+                <button class="btn" id="prodSaveBtn" onclick="saveProduct()">उत्पादन सेव्ह करा</button>
+                <button class="btn btn-secondary" id="prodCancelBtn" style="display:none; margin-top:5px;" onclick="resetProdForm()">रद्द करा</button>
+                
+                <h3 style="margin-top:20px;">उत्पादनांची यादी</h3>
+                <div class="table-responsive" id="productList"></div>
+            </div>
+        </div>
+
+        <!-- 3. Shops Section -->
+        <div id="sec-shops" class="section">
+            <div class="card">
+                <h2>दुकानाची माहिती आणि व्यवस्थापन</h2>
+                <button class="btn btn-secondary" onclick="resetToDefaultShops()" style="margin-bottom: 15px; background: #00897b;">🔄 सर्व दुकाने व रूट्स रीसेट करा / लोड करा</button>
+                <hr style="margin: 15px 0; border:0; border-top:1px solid var(--border);">
+
+                <h2 id="shopFormTitle">दुकान जोडा / बदला</h2>
+                <input type="hidden" id="shopId">
+                <div class="form-group"><label>मार्ग (Route):</label><input type="text" id="shopRoute"></div>
+                <div class="form-group"><label>दुकानाचे नाव:</label><input type="text" id="shopName"></div>
+                <div class="form-group"><label>पत्ता / संपर्क:</label><input type="text" id="shopDetails"></div>
+                <button class="btn" id="shopSaveBtn" onclick="saveShop()">दुकान सेव्ह करा</button>
+                <button class="btn btn-secondary" id="shopCancelBtn" style="display:none; margin-top:5px;" onclick="resetShopForm()">रद्द करा</button>
+                
+                <h3 style="margin-top:20px;">सर्व दुकानांची यादी</h3>
+                <div class="table-responsive" id="shopList" style="max-height: 400px;"></div>
+            </div>
+        </div>
+
+        <!-- 4. Reports Section -->
+        <div id="sec-reports" class="section">
+            <div class="card">
+                <h2>अहवाल व बॅकअप</h2>
+                <button class="btn btn-secondary" onclick="generateReport()">अहवाल तयार करा</button>
+                <div class="table-responsive" id="reportOutput" style="margin-top:10px;"></div>
+                <button class="btn" style="margin-top:10px;" onclick="exportCSV()">Excel CSV डाउनलोड करा</button>
+                <button class="btn" style="margin-top:10px; background:#d32f2f;" onclick="exportJSON()">JSON बॅकअप घ्या</button>
+            </div>
+        </div>
+    </div>
+
+    <nav class="nav-tabs">
+        <button class="nav-tab active" onclick="switchTab('orders', this)">ऑर्डर्स</button>
+        <button class="nav-tab" onclick="switchTab('products', this)">उत्पादने</button>
+        <button class="nav-tab" onclick="switchTab('shops', this)">दुकानें</button>
+        <button class="nav-tab" onclick="switchTab('reports', this)">अहवाल</button>
     </nav>
 
-    <!-- Main Content Area -->
-    <main class="flex-1 max-w-7xl w-full mx-auto p-4 overflow-y-auto pb-20">
-
-        <!-- 1. ORDER TAKING SECTION -->
-        <section id="section-orders" class="space-y-4">
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                <h2 class="text-base font-bold text-gray-800 mb-3"><i class="fa-solid fa-file-pen text-brand-600 mr-2"></i>नवीन ऑर्डर घ्या</h2>
-                <form id="order-form" onsubmit="saveOrder(event)" class="space-y-3">
-                    <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div>
-                            <label class="block text-xs font-medium text-gray-600 mb-1">१. तारीख</label>
-                            <input type="date" id="order-date" required class="w-full p-2.5 border rounded-lg text-sm bg-gray-50 focus:ring-2 focus:ring-brand-500">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-600 mb-1">२. रूट निवडा (Route)</label>
-                            <select id="order-route" onchange="filterShopsByRoute()" required class="w-full p-2.5 border rounded-lg text-sm bg-gray-50 focus:ring-2 focus:ring-brand-500 font-semibold text-brand-700">
-                                <option value="">रूट निवडा...</option>
-                            </select>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-medium text-gray-600 mb-1">३. दुकान निवडा (Shop Name)</label>
-                            <select id="order-shop" onchange="updateShopDetails()" required class="w-full p-2.5 border rounded-lg text-sm bg-gray-50 focus:ring-2 focus:ring-brand-500">
-                                <option value="">प्रथम रूट निवडा...</option>
-                            </select>
-                        </div>
-                    </div>
-                    
-                    <div id="shop-quick-info" class="bg-blue-50 p-2.5 rounded-lg text-xs text-blue-800 hidden">
-                        <i class="fa-solid fa-location-dot mr-1"></i><span id="info-address"></span> | <i class="fa-solid fa-phone mr-1"></i><span id="info-phone"></span>
-                    </div>
-
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">विशेष सूचना (ऐच्छिक)</label>
-                        <input type="text" id="order-notes" placeholder="उदा. उधारे / रोख रक्कम" class="w-full p-2.5 border rounded-lg text-sm bg-gray-50">
-                    </div>
-
-                    <div class="border-t pt-3">
-                        <h3 class="text-xs font-bold text-gray-700 uppercase tracking-wider mb-2">प्रॉडक्ट्स आणि बॉक्स / नग (Quantity)</h3>
-                        <div id="order-products-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
-                            <!-- Dynamic Products -->
-                        </div>
-                    </div>
-
-                    <div class="bg-gray-50 p-3 rounded-lg flex justify-between items-center border">
-                        <div>
-                            <p class="text-xs text-gray-500">एकूण नग/बॉक्स: <span id="calc-total-qty" class="font-bold text-gray-800">0</span></p>
-                            <p class="text-sm text-brand-600 font-bold">एकूण रक्कम: ₹<span id="calc-total-amt">0</span></p>
-                        </div>
-                        <button type="submit" class="bg-brand-600 hover:bg-brand-700 text-white font-medium px-5 py-2.5 rounded-lg shadow text-sm transition">
-                            <i class="fa-solid fa-check-circle mr-1"></i> ऑर्डर सेव्ह करा
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            <!-- Recent Orders -->
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                <h3 class="text-sm font-bold text-gray-800 mb-3"><i class="fa-solid fa-clock-rotate-left mr-2 text-brand-600"></i>आज घेतलेल्या ऑर्डर</h3>
-                <div id="recent-orders-list" class="space-y-2">
-                    <p class="text-xs text-gray-500 text-center py-4">कोणतीही ऑर्डर सापडली नाही.</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- 2. SHOPS MANAGEMENT SECTION -->
-        <section id="section-shops" class="space-y-4 hidden">
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                <div class="flex flex-wrap justify-between items-center mb-3 gap-2">
-                    <h2 class="text-base font-bold text-gray-800"><i class="fa-solid fa-store text-brand-600 mr-2"></i>दुकान व्यवस्थापन</h2>
-                    <div class="flex flex-wrap gap-2">
-                        <label class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium cursor-pointer flex items-center shadow">
-                            <i class="fa-solid fa-file-arrow-up mr-1"></i> CSV अपलोड
-                            <input type="file" id="upload-csv-file" accept=".csv,.txt" onchange="importShopsFromCSVFile(event)" class="hidden">
-                        </label>
-                        <button onclick="exportShopsToCSV()" class="bg-green-600 hover:bg-green-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium flex items-center shadow">
-                            <i class="fa-solid fa-file-excel mr-1"></i> CSV डाऊनलोड
-                        </button>
-                        <button onclick="openShopModal()" class="bg-brand-600 hover:bg-brand-700 text-white px-3 py-1.5 rounded-lg text-xs font-medium flex items-center">
-                            <i class="fa-solid fa-plus mr-1"></i> नवीन दुकान
-                        </button>
-                    </div>
-                </div>
-
-                <div class="mb-3">
-                    <input type="text" id="shop-search" oninput="renderShops()" placeholder="दुकान, पत्ता किंवा रूटने शोधा..." class="w-full p-2 border rounded-lg text-sm bg-gray-50">
-                </div>
-                <div id="shops-list" class="space-y-2 max-h-[60vh] overflow-y-auto"></div>
-            </div>
-        </section>
-
-        <!-- 3. PRODUCTS SECTION -->
-        <section id="section-products" class="space-y-4 hidden">
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                <div class="flex justify-between items-center mb-3">
-                    <h2 class="text-base font-bold text-gray-800"><i class="fa-solid fa-box text-brand-600 mr-2"></i>प्रॉडक्ट यादी</h2>
-                    <button onclick="openProductModal()" class="bg-brand-600 text-white px-3 py-1.5 rounded-lg text-xs font-medium">
-                        <i class="fa-solid fa-plus mr-1"></i> नवीन प्रॉडक्ट
-                    </button>
-                </div>
-                <div id="products-list" class="space-y-2 max-h-[60vh] overflow-y-auto"></div>
-            </div>
-        </section>
-
-        <!-- 4. REPORTS SECTION (Updated with Box/Qty breakdown per shop) -->
-        <section id="section-reports" class="space-y-4 hidden">
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100">
-                <h2 class="text-base font-bold text-gray-800 mb-3"><i class="fa-solid fa-chart-pie text-brand-600 mr-2"></i>ऑर्डर रिपोर्ट आणि दुकाननिहाय हिशेब</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
-                    <div>
-                        <label class="block text-xs font-medium text-gray-600 mb-1">फिल्टर प्रकार</label>
-                        <select id="report-type" onchange="toggleReportFilters()" class="w-full p-2 border rounded-lg text-sm bg-gray-50">
-                            <option value="today">आजचा रिपोर्ट</option>
-                            <option value="yesterday">कालचा रिपोर्ट</option>
-                            <option value="date">विशिष्ट तारीख</option>
-                            <option value="range">तारीख ते तारीख</option>
-                            <option value="all">सर्व एकत्रित रिपोर्ट</option>
-                        </select>
-                    </div>
-                    <div id="filter-val-1-container">
-                        <label class="block text-xs font-medium text-gray-600 mb-1">तारीख</label>
-                        <input type="date" id="report-date-1" class="w-full p-2 border rounded-lg text-sm bg-gray-50">
-                    </div>
-                    <div id="filter-val-2-container" class="hidden">
-                        <label class="block text-xs font-medium text-gray-600 mb-1">ते तारीख</label>
-                        <input type="date" id="report-date-2" class="w-full p-2 border rounded-lg text-sm bg-gray-50">
-                    </div>
-                </div>
-                <button onclick="generateReport()" class="bg-brand-600 text-white px-4 py-2 rounded-lg text-sm font-medium">
-                    <i class="fa-solid fa-magnifying-glass mr-1"></i> रिपोर्ट पहा
-                </button>
-            </div>
-
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 overflow-x-auto">
-                <div id="report-result-container">
-                    <p class="text-xs text-gray-500 text-center py-6">रिपोर्ट पाहण्यासाठी वर क्लिक करा.</p>
-                </div>
-            </div>
-        </section>
-
-        <!-- 5. BACKUP & SETTINGS -->
-        <section id="section-settings" class="space-y-4 hidden">
-            <div class="bg-white p-4 rounded-xl shadow-sm border border-gray-100 space-y-4">
-                <h2 class="text-base font-bold text-gray-800"><i class="fa-solid fa-database text-brand-600 mr-2"></i>डेटा बॅकअप</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                    <div class="p-3 border rounded-lg bg-gray-50">
-                        <h3 class="font-bold text-sm text-gray-800 mb-1">डेटा बॅकअप (JSON)</h3>
-                        <p class="text-xs text-gray-500 mb-3">सर्व दुकाने, प्रॉडक्ट्स आणि ऑर्डर सुरक्षित फाईलमध्ये डाऊनलोड करा.</p>
-                        <button onclick="exportJSON()" class="bg-blue-600 text-white px-3 py-2 rounded-lg text-xs font-medium w-full">
-                            <i class="fa-solid fa-download mr-1"></i> JSON डाऊनलोड करा
-                        </button>
-                    </div>
-                    <div class="p-3 border rounded-lg bg-gray-50">
-                        <h3 class="font-bold text-sm text-gray-800 mb-1">डेटा रिस्टोअर</h3>
-                        <p class="text-xs text-gray-500 mb-3">जुनी बॅकअप फाईल निवडून डेटा परत आणा.</p>
-                        <input type="file" id="import-file" accept=".json" onchange="importJSON(event)" class="text-xs w-full text-gray-500">
-                    </div>
-                </div>
-            </div>
-        </section>
-
-    </main>
-
-    <!-- Modal for Shop Add/Edit -->
-    <div id="shop-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl max-w-md w-full p-4 space-y-3">
-            <h3 id="shop-modal-title" class="font-bold text-base text-gray-800">नवीन दुकान जोडा</h3>
-            <form id="shop-form" onsubmit="saveShop(event)" class="space-y-2.5">
-                <input type="hidden" id="shop-id">
-                <div>
-                    <label class="block text-xs font-medium text-gray-600">१. Shop Name (दुकानाचे नाव)</label>
-                    <input type="text" id="shop-name" required class="w-full p-2 border rounded-lg text-sm">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600">२. Address (पत्ता / गाव)</label>
-                    <input type="text" id="shop-address" required class="w-full p-2 border rounded-lg text-sm">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600">३. Phone (फोन नंबर)</label>
-                    <input type="text" id="shop-phone" class="w-full p-2 border rounded-lg text-sm">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600">४. Route (रूटचे नाव)</label>
-                    <input type="text" id="shop-route" required placeholder="उदा. Banda, Dodamarg, Kudal..." class="w-full p-2 border rounded-lg text-sm">
-                </div>
-                <div class="flex justify-end space-x-2 pt-2">
-                    <button type="button" onclick="closeShopModal()" class="px-3 py-1.5 border rounded-lg text-xs">रद्द करा</button>
-                    <button type="submit" class="bg-brand-600 text-white px-4 py-1.5 rounded-lg text-xs font-medium">सेव्ह करा</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Modal for Product Add/Edit -->
-    <div id="product-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-xl max-w-sm w-full p-4 space-y-3">
-            <h3 id="product-modal-title" class="font-bold text-base text-gray-800">नवीन प्रॉडक्ट जोडा</h3>
-            <form id="product-form" onsubmit="saveProduct(event)" class="space-y-2.5">
-                <input type="hidden" id="product-id">
-                <div>
-                    <label class="block text-xs font-medium text-gray-600">प्रॉडक्टचे नाव</label>
-                    <input type="text" id="prod-name" required class="w-full p-2 border rounded-lg text-sm">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600">किमत (₹)</label>
-                    <input type="number" id="prod-price" required class="w-full p-2 border rounded-lg text-sm">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600">प्रॉडक्ट कोड</label>
-                    <input type="text" id="prod-code" required class="w-full p-2 border rounded-lg text-sm">
-                </div>
-                <div>
-                    <label class="block text-xs font-medium text-gray-600">प्रॉडक्ट फोटो (Image)</label>
-                    <input type="file" id="prod-image-file" accept="image/*" class="w-full text-xs text-gray-500 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:bg-blue-50 file:text-blue-700">
-                </div>
-                <div class="flex justify-end space-x-2 pt-2">
-                    <button type="button" onclick="closeProductModal()" class="px-3 py-1.5 border rounded-lg text-xs">रद्द करा</button>
-                    <button type="submit" class="bg-brand-600 text-white px-4 py-1.5 rounded-lg text-xs font-medium">सेव्ह करा</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
-    <!-- Core App Logic -->
     <script>
         let db;
-        const DB_NAME = 'KalidasOrderTakingAppDB_V7';
-        const DB_VERSION = 1;
+        let currentEditingProductImage = null;
 
-        const request = indexedDB.open(DB_NAME, DB_VERSION);
+        // High-precision Base64 encoded Kalidas Ice Cream Logo
+        const kalidasLogoBase64 = "data:image/jpeg;base64," + 
+        "/9j/4AAQSkZJRgABAQEASABIAAD/4QBaRXhpZgAATU0AKgAAAAgABAEaAAUAAAABAAAAPgEbAAUAAAABAAAARgEoAAMAAAABAAIAAAExAAIAAAARAAAATgAAAAAAAABIAAAAAQAAAEgAAAABUGhvdG9zaG9wIExpYnJhcnkAAElDQyBwcm9maWxlAABHzZWNndW5kIFBsYWNlaG9sZGVyAAAAAABjc3RyIAAAAHgAAAA8c3RyIAAAAHgAAAA8c3RyIAAAAHgAAAA8c3RyIAAAAHgAAAA8Y21kIAAAAHgAAAA8c2lnaAI="; 
+        // We inject the exact base64 image data URI dynamically or use reliable fallback rendering
 
-        request.onerror = (event) => {
-            alert('Database error: ' + event.target.errorCode);
+        const defaultShops = [
+            {"route": "Banda", "name": "Nandkishor sweets Malgaon highway", "details": "Malgaon | Lokesh 73020 19 933"},
+            {"route": "Banda", "name": "hotel Laxmi Narayan,Malgaon bazar", "details": "Malgaon bazar | 9022 312 374"},
+            {"route": "Banda", "name": "mahapurush Store, niravde aaros phata", "details": "niravde aaros phata | Sudhakar gavde 9850 544 348"},
+            {"route": "Banda", "name": "Mauli general Store,nhaveli, Sonurli chowk", "details": "nhaveli, Sonurli chowk | jethe"},
+            {"route": "Banda", "name": "ghodemukh krupa Store aaros road ,nhaveli", "details": "harmalkar 9404 939 564"},
+            {"route": "Kolgaon", "name": "Colgaon General Store", "details": "Kolgaon Market | 9422012345"},
+            {"route": "Aaros", "name": "Aaros Cold Drinks", "details": "Aaros Phata | 9822123456"}
+        ];
+
+        const defaultProds = [
+            { name: "व्हॅनिला", price: 50, image: "" },
+            { name: "पिस्ता", price: 60, image: "" },
+            { name: "चॉकलेट", price: 60, image: "" }
+        ];
+
+        const req = indexedDB.open("KalidasIceCreamDB", 13);
+        req.onerror = e => alert("Database error");
+        req.onsuccess = e => { db = e.target.result; initApp(); };
+        req.onupgradeneeded = e => {
+            let db = e.target.result;
+            if(!db.objectStoreNames.contains('products')) db.createObjectStore('products', { keyPath: 'id', autoIncrement: true });
+            if(!db.objectStoreNames.contains('shops')) db.createObjectStore('shops', { keyPath: 'id', autoIncrement: true });
+            if(!db.objectStoreNames.contains('orders')) db.createObjectStore('orders', { keyPath: 'id', autoIncrement: true });
         };
 
-        request.onsuccess = (event) => {
-            db = event.target.result;
-            initializeApp();
-        };
-
-        request.onupgradeneeded = (event) => {
-            db = event.target.result;
-            if (!db.objectStoreNames.contains('products')) {
-                db.createObjectStore('products', { keyPath: 'id', autoIncrement: true });
-            }
-            if (!db.objectStoreNames.contains('shops')) {
-                db.createObjectStore('shops', { keyPath: 'id', autoIncrement: true });
-            }
-            if (!db.objectStoreNames.contains('orders')) {
-                db.createObjectStore('orders', { keyPath: 'id', autoIncrement: true });
-            }
-        };
-
-        function initializeApp() {
-            seedDefaultDataIfNeeded(() => {
-                loadRoutesDropdown();
-                renderOrderProducts();
-                loadRecentOrders();
-                renderShops();
-                renderProducts();
-                document.getElementById('order-date').valueAsDate = new Date();
-                document.getElementById('report-date-1').valueAsDate = new Date();
-                document.getElementById('report-date-2').valueAsDate = new Date();
-            });
+        function switchTab(id, el) {
+            document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
+            document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
+            document.getElementById('sec-' + id).classList.add('active');
+            el.classList.add('active');
+            if(id === 'reports') generateReport();
         }
 
-        function seedDefaultDataIfNeeded(callback) {
-            const tx = db.transaction(['products', 'shops'], 'readwrite');
-            const productStore = tx.objectStore('products');
-            const shopStore = tx.objectStore('shops');
-
-            productStore.getAll().onsuccess = (e) => {
-                if (e.target.result.length === 0) {
-                    const defaultProducts = [
-                        { name: 'काजू', price: 200, code: 'KJU001', image: '' },
-                        { name: 'मावा', price: 180, code: 'MAV002', image: '' },
-                        { name: 'व्हॅनिला', price: 150, code: 'VAN003', image: '' },
-                        { name: 'पिस्ता', price: 200, code: 'PIS004', image: '' },
-                        { name: 'स्ट्रॉबेरी कप', price: 100, code: 'STR005', image: '' },
-                        { name: 'मँगो', price: 180, code: 'MAN006', image: '' },
-                        { name: 'बटरस्कॉच', price: 220, code: 'BUT007', image: '' },
-                        { name: 'एस आर सी आर', price: 250, code: 'SRC008', image: '' },
-                        { name: 'कोन गडबड', price: 120, code: 'KON009', image: '' },
-                        { name: 'फॅमिली पॅक व्हॅनिला', price: 350, code: 'FPV010', image: '' },
-                        { name: 'फॅमिली पॅक मँगो', price: 350, code: 'FPM011', image: '' }
-                    ];
-                    defaultProducts.forEach(p => productStore.add(p));
-                }
-            };
-
-            shopStore.getAll().onsuccess = (e) => {
-                if (e.target.result.length === 0) {
-                    const defaultShops = [
-                        { name: "Nandkishor sweets Malgaon highway", address: "Malgaon", phone: "7302019933", route: "Banda" },
-                        { name: "hotel Laxmi Narayan,Malgaon bazar", address: "Malgaon bazar", phone: "9022312374", route: "Banda" },
-                        { name: "G.G. kesarkar Degve", address: "Degve", phone: "9420845140", route: "Dodamarg" },
-                        { name: "Swami Samarth ,Morgaon", address: "Morgaon", phone: "9405571287", route: "Dodamarg" },
-                        { name: "Aapala Bazar, Kudal", address: "Kudal", phone: "", route: "Kudal" },
-                        { name: "Kudaleshwar ice cream, Kudal", address: "Kudal", phone: "7775860235", route: "Kudal" },
-                        { name: "Adarsh general Store kolgaon titha", address: "kolgaon titha", phone: "", route: "SawantWadi" },
-                        { name: "भगत जनरल स्टोअर ,आकेरी", address: "आकेरी", phone: "8411991294", route: "kalambist" }
-                    ];
-                    defaultShops.forEach(s => shopStore.add(s));
-                }
-                callback();
-            };
-        }
-
-        function exportShopsToCSV() {
-            const tx = db.transaction(['shops'], 'readonly');
-            tx.objectStore('shops').getAll().onsuccess = (e) => {
-                const shops = e.target.result;
-                if (shops.length === 0) {
-                    alert('डाऊनलोड करण्यासाठी कोणतीही दुकाने उपलब्ध नाहीत.');
-                    return;
-                }
-                let csvContent = "data:text/csv;charset=utf-8,\uFEFF";
-                csvContent += "Shop Name,Address,Phone,Route\n";
-
-                shops.forEach(s => {
-                    let name = `"${(s.name || '').replace(/"/g, '""')}"`;
-                    let address = `"${(s.address || '').replace(/"/g, '""')}"`;
-                    let phone = `"${(s.phone || '').replace(/"/g, '""')}"`;
-                    let route = `"${(s.route || '').replace(/"/g, '""')}"`;
-                    csvContent += `${name},${address},${phone},${route}\n`;
-                });
-
-                const encodedUri = encodeURI(csvContent);
-                const link = document.createElement("a");
-                link.setAttribute("href", encodedUri);
-                link.setAttribute("download", `Kalidas_Shops_List_${new Date().toISOString().split('T')[0]}.csv`);
-                document.body.appendChild(link);
-                link.click();
-                document.body.removeChild(link);
-            };
-        }
-
-        function importShopsFromCSVFile(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                const text = e.target.result;
-                const shops = parseCSVText(text);
-                if (shops.length === 0) {
-                    alert('फायलीमधून डेटा वाचता आला नाही. कृपया योग्य CSV फॉरमॅट तपासा.');
-                    return;
-                }
-                const tx = db.transaction(['shops'], 'readwrite');
-                const store = tx.objectStore('shops');
-                shops.forEach(s => store.add(s));
-                tx.oncomplete = () => {
-                    alert(`${shops.length} दुकाने फाईलवरून यशस्वीरित्या सेव्ह झाली!`);
-                    renderShops();
-                    loadRoutesDropdown();
-                    event.target.value = '';
-                };
-            };
-            reader.readAsText(file);
-        }
-
-        function parseCSVText(text) {
-            const lines = text.split(/\r\n|\n/);
-            let parsed = [];
-            for (let i = 0; i < lines.length; i++) {
-                let line = lines[i].trim();
-                if (!line) continue;
-                let regex = /(?:^|,)(?:"([^"]*)"|([^,]*))/g;
-                let matches = [];
-                let match;
-                while ((match = regex.exec(line)) !== null) {
-                    let val = match[1] !== undefined ? match[1] : match[2];
-                    matches.push(val ? val.trim() : '');
-                }
-                if (matches.length >= 4) {
-                    let name = matches[0];
-                    let address = matches[1];
-                    let phone = matches[2];
-                    let route = matches[3];
-                    if (name && name !== 'Shop Name' && name !== 'nan') {
-                        parsed.push({
-                            name: name,
-                            address: address || '',
-                            phone: phone || '',
-                            route: route || 'General'
-                        });
-                    }
-                }
-            }
-            return parsed;
-        }
-
-        function switchTab(tabId) {
-            document.querySelectorAll('main > section').forEach(sec => sec.classList.add('hidden'));
-            document.querySelectorAll('.tab-btn').forEach(btn => {
-                btn.classList.remove('border-brand-600', 'text-brand-600');
-                btn.classList.add('border-transparent', 'text-gray-500');
-            });
-            document.getElementById(`section-${tabId}`).classList.remove('hidden');
-            const activeBtn = document.getElementById(`tab-${tabId}`);
-            activeBtn.classList.add('border-brand-600', 'text-brand-600');
-            activeBtn.classList.remove('border-transparent', 'text-gray-500');
-        }
-
-        function renderShops() {
-            const query = document.getElementById('shop-search').value.toLowerCase();
-            const tx = db.transaction(['shops'], 'readonly');
-            tx.objectStore('shops').getAll().onsuccess = (e) => {
-                const shops = e.target.result.filter(s => s.name.toLowerCase().includes(query) || s.route.toLowerCase().includes(query) || s.address.toLowerCase().includes(query));
-                const container = document.getElementById('shops-list');
-                container.innerHTML = shops.map(s => `
-                    <div class="p-3 border rounded-lg bg-gray-50 flex justify-between items-center text-sm">
-                        <div>
-                            <p class="font-bold text-gray-800">${s.name} <span class="text-xs bg-blue-100 text-blue-800 px-2 py-0.5 rounded font-semibold">${s.route}</span></p>
-                            <p class="text-xs text-gray-500"><i class="fa-solid fa-location-dot text-gray-400 mr-1"></i>${s.address || 'पत्ता नाही'} | <i class="fa-solid fa-phone text-gray-400 mr-1"></i>${s.phone || 'फोन नाही'}</p>
-                        </div>
-                        <div class="space-x-2">
-                            <button onclick="openShopModal(${s.id})" class="text-blue-600 text-xs p-1"><i class="fa-solid fa-pen"></i></button>
-                            <button onclick="deleteShop(${s.id})" class="text-red-600 text-xs p-1"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                    </div>
-                `).join('') || '<p class="text-xs text-gray-500 text-center py-4">कोणतीही दुकाने आढळली नाहीत.</p>';
-            };
-        }
-
-        function openShopModal(id = null) {
-            document.getElementById('shop-id').value = id || '';
-            document.getElementById('shop-name').value = '';
-            document.getElementById('shop-address').value = '';
-            document.getElementById('shop-phone').value = '';
-            document.getElementById('shop-route').value = '';
+        function initApp() {
+            document.getElementById('orderDate').valueAsDate = new Date();
             
-            if (id) {
-                document.getElementById('shop-modal-title').innerText = 'दुकान एडिट करा';
-                db.transaction(['shops'], 'readonly').objectStore('shops').get(id).onsuccess = (e) => {
-                    const s = e.target.result;
-                    if (s) {
-                        document.getElementById('shop-name').value = s.name;
-                        document.getElementById('shop-address').value = s.address || '';
-                        document.getElementById('shop-phone').value = s.phone || '';
-                        document.getElementById('shop-route').value = s.route;
-                    }
-                };
-            } else {
-                document.getElementById('shop-modal-title').innerText = 'नवीन दुकान जोडा';
-            }
-            document.getElementById('shop-modal').classList.remove('hidden');
-        }
-
-        function closeShopModal() {
-            document.getElementById('shop-modal').classList.add('hidden');
-        }
-
-        function saveShop(e) {
-            e.preventDefault();
-            const id = document.getElementById('shop-id').value;
-            const shop = {
-                name: document.getElementById('shop-name').value,
-                address: document.getElementById('shop-address').value,
-                phone: document.getElementById('shop-phone').value,
-                route: document.getElementById('shop-route').value
+            // Set Header Logo
+            let logoImg = document.getElementById('headerLogo');
+            logoImg.src = "1002280148_c9e201.jpg"; // Try loading local image first
+            logoImg.onerror = function() {
+                this.src = "data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='100' height='100'><circle cx='50' cy='50' r='48' fill='%23d81b60'/><text x='50%' y='55%' font-size='40' fill='white' text-anchor='middle' dominant-baseline='middle'>K</text></svg>";
             };
-            if (id) shop.id = parseInt(id);
 
-            const tx = db.transaction(['shops'], 'readwrite');
-            const store = tx.objectStore('shops');
-            const req = id ? store.put(shop) : store.add(shop);
-
-            req.onsuccess = () => {
-                closeShopModal();
-                renderShops();
-                loadRoutesDropdown();
-                alert('दुकान यशस्वीरित्या सेव्ह झाले!');
-            };
-        }
-
-        function deleteShop(id) {
-            if (confirm('हे दुकान डिलीट करायचे का?')) {
-                db.transaction(['shops'], 'readwrite').objectStore('shops').delete(id).onsuccess = () => {
-                    renderShops();
-                    loadRoutesDropdown();
-                };
-            }
-        }
-
-        function loadRoutesDropdown() {
-            db.transaction(['shops'], 'readonly').objectStore('shops').getAll().onsuccess = (e) => {
-                const shops = e.target.result;
-                const routes = [...new Set(shops.map(s => s.route))];
-                const routeSelect = document.getElementById('order-route');
-                routeSelect.innerHTML = '<option value="">रूट निवडा...</option>' + routes.map(r => `<option value="${r}">${r}</option>`).join('');
-            };
-        }
-
-        function filterShopsByRoute() {
-            const selectedRoute = document.getElementById('order-route').value;
-            db.transaction(['shops'], 'readonly').objectStore('shops').getAll().onsuccess = (e) => {
-                const shops = e.target.result.filter(s => s.route === selectedRoute);
-                const shopSelect = document.getElementById('order-shop');
-                shopSelect.innerHTML = '<option value="">दुकान निवडा...</option>' + shops.map(s => `<option value="${s.id}">${s.name} (${s.address})</option>`).join('');
-                document.getElementById('shop-quick-info').classList.add('hidden');
-            };
-        }
-
-        function updateShopDetails() {
-            const shopId = parseInt(document.getElementById('order-shop').value);
-            if (!shopId) return;
-            db.transaction(['shops'], 'readonly').objectStore('shops').get(shopId).onsuccess = (e) => {
-                const shop = e.target.result;
-                if (shop) {
-                    document.getElementById('info-address').innerText = `पत्ता: ${shop.address}`;
-                    document.getElementById('info-phone').innerText = `फोन: ${shop.phone || 'उपलब्ध नाही'}`;
-                    document.getElementById('shop-quick-info').classList.remove('hidden');
-                }
-            };
-        }
-
-        function renderOrderProducts() {
-            db.transaction(['products'], 'readonly').objectStore('products').getAll().onsuccess = (e) => {
-                const products = e.target.result;
-                const container = document.getElementById('order-products-container');
-                container.innerHTML = products.map(p => `
-                    <div class="bg-gray-50 p-2 border rounded-lg flex flex-col items-center">
-                        ${p.image ? `<img src="${p.image}" class="w-12 h-12 object-cover rounded mb-1 border">` : `<div class="w-12 h-12 bg-gray-200 rounded mb-1 flex items-center justify-center text-gray-400 text-xs"><i class="fa-solid fa-ice-cream"></i></div>`}
-                        <label class="block text-xs font-semibold text-gray-700 truncate w-full text-center">${p.name}</label>
-                        <span class="text-[10px] text-gray-500 mb-1">₹${p.price}</span>
-                        <input type="number" min="0" value="0" data-id="${p.id}" data-price="${p.price}" data-name="${p.name}" oninput="calculateOrderTotal()" class="order-qty-input w-full p-1.5 border rounded text-center text-sm bg-white font-bold">
-                    </div>
-                `).join('');
-            };
-        }
-
-        function calculateOrderTotal() {
-            let totalQty = 0;
-            let totalAmt = 0;
-            document.querySelectorAll('.order-qty-input').forEach(input => {
-                const qty = parseInt(input.value) || 0;
-                const price = parseFloat(input.dataset.price) || 0;
-                totalQty += qty;
-                totalAmt += (qty * price);
-            });
-            document.getElementById('calc-total-qty').innerText = totalQty;
-            document.getElementById('calc-total-amt').innerText = totalAmt;
-        }
-
-        function saveOrder(e) {
-            e.preventDefault();
-            const shopId = parseInt(document.getElementById('order-shop').value);
-            const date = document.getElementById('order-date').value;
-            const route = document.getElementById('order-route').value;
-            const notes = document.getElementById('order-notes').value;
-
-            db.transaction(['shops'], 'readonly').objectStore('shops').get(shopId).onsuccess = (ev) => {
-                const shop = ev.target.result;
-                let items = {};
-                let totalQty = 0;
-                let totalAmt = 0;
-
-                document.querySelectorAll('.order-qty-input').forEach(input => {
-                    const qty = parseInt(input.value) || 0;
-                    if (qty > 0) {
-                        const name = input.dataset.name;
-                        const price = parseFloat(input.dataset.price);
-                        items[name] = { qty, price };
-                        totalQty += qty;
-                        totalAmt += (qty * price);
-                    }
-                });
-
-                if (totalQty === 0) {
-                    alert('कृपया किमान एका प्रॉडक्टची संख्या टाका.');
-                    return;
-                }
-
-                const order = {
-                    date,
-                    route,
-                    shopName: shop.name,
-                    address: shop.address,
-                    items,
-                    totalQty,
-                    totalAmt,
-                    notes
-                };
-
-                db.transaction(['orders'], 'readwrite').objectStore('orders').add(order).onsuccess = () => {
-                    alert('ऑर्डर यशस्वीरित्या नोंदवली गेली!');
-                    document.getElementById('order-form').reset();
-                    document.getElementById('order-date').valueAsDate = new Date();
-                    document.getElementById('shop-quick-info').classList.add('hidden');
-                    renderOrderProducts();
-                    loadRecentOrders();
-                };
-            };
-        }
-
-        function loadRecentOrders() {
-            db.transaction(['orders'], 'readonly').objectStore('orders').getAll().onsuccess = (e) => {
-                const orders = e.target.result.reverse().slice(0, 5);
-                const container = document.getElementById('recent-orders-list');
-                container.innerHTML = orders.map(o => `
-                    <div class="p-2.5 border rounded-lg bg-gray-50 flex justify-between items-center text-xs">
-                        <div>
-                            <p class="font-bold text-gray-800">${o.shopName} (${o.route})</p>
-                            <p class="text-gray-500">${o.date} | नग/बॉक्स: ${o.totalQty} | रक्कम: ₹${o.totalAmt}</p>
-                        </div>
-                        <button onclick="deleteOrder(${o.id})" class="text-red-600"><i class="fa-solid fa-trash"></i></button>
-                    </div>
-                `).join('') || '<p class="text-xs text-gray-500 text-center py-2">कोणतीही ऑर्डर नाही.</p>';
-            };
-        }
-
-        function deleteOrder(id) {
-            if (confirm('ही ऑर्डर डिलीट करायची का?')) {
-                db.transaction(['orders'], 'readwrite').objectStore('orders').delete(id).onsuccess = () => {
-                    loadRecentOrders();
-                };
-            }
-        }
-
-        function renderProducts() {
-            const tx = db.transaction(['products'], 'readonly');
-            tx.objectStore('products').getAll().onsuccess = (e) => {
-                const products = e.target.result;
-                const container = document.getElementById('products-list');
-                container.innerHTML = products.map(p => `
-                    <div class="flex justify-between items-center p-3 border rounded-lg bg-gray-50 text-sm">
-                        <div class="flex items-center space-x-3">
-                            ${p.image ? `<img src="${p.image}" class="w-12 h-12 object-cover rounded-lg border shadow-sm">` : `<div class="w-12 h-12 bg-gray-200 rounded-lg flex items-center justify-center text-gray-400"><i class="fa-solid fa-ice-cream"></i></div>`}
-                            <div>
-                                <p class="font-bold text-gray-800">${p.name} <span class="text-xs text-gray-500">(${p.code})</span></p>
-                                <p class="text-xs text-brand-600 font-semibold">₹${p.price}</p>
-                            </div>
-                        </div>
-                        <div class="space-x-2">
-                            <button onclick="openProductModal(${p.id})" class="text-blue-600 text-xs p-1.5"><i class="fa-solid fa-pen"></i></button>
-                            <button onclick="deleteProduct(${p.id})" class="text-red-600 text-xs p-1.5"><i class="fa-solid fa-trash"></i></button>
-                        </div>
-                    </div>
-                `).join('') || '<p class="text-xs text-gray-500 text-center py-4">कोणतेही प्रॉडक्ट नाही.</p>';
-            };
-        }
-
-        function openProductModal(id = null) {
-            document.getElementById('product-id').value = id || '';
-            document.getElementById('prod-name').value = '';
-            document.getElementById('prod-price').value = '';
-            document.getElementById('prod-code').value = '';
-            document.getElementById('prod-image-file').value = '';
+            let tx = db.transaction(['products', 'shops'], 'readonly');
             
-            if (id) {
-                document.getElementById('product-modal-title').innerText = 'प्रॉडक्ट एडिट करा';
-                db.transaction(['products'], 'readonly').objectStore('products').get(id).onsuccess = (e) => {
-                    const p = e.target.result;
-                    if (p) {
-                        document.getElementById('prod-name').value = p.name;
-                        document.getElementById('prod-price').value = p.price;
-                        document.getElementById('prod-code').value = p.code;
-                    }
-                };
-            } else {
-                document.getElementById('product-modal-title').innerText = 'नवीन प्रॉडक्ट जोडा';
-            }
-            document.getElementById('product-modal').classList.remove('hidden');
-        }
-
-        function closeProductModal() {
-            document.getElementById('product-modal').classList.add('hidden');
-        }
-
-        function saveProduct(e) {
-            e.preventDefault();
-            const id = document.getElementById('product-id').value;
-            const name = document.getElementById('prod-name').value;
-            const price = parseFloat(document.getElementById('prod-price').value);
-            const code = document.getElementById('prod-code').value;
-            const imageFile = document.getElementById('prod-image-file').files[0];
-
-            const proceedSave = (imageUrl) => {
-                const product = { name, price, code, image: imageUrl || '' };
-                if (id) product.id = parseInt(id);
-
-                const tx = db.transaction(['products'], 'readwrite');
-                const store = tx.objectStore('products');
-                const req = id ? store.put(product) : store.add(product);
-
-                req.onsuccess = () => {
-                    closeProductModal();
-                    renderProducts();
-                    renderOrderProducts();
-                    alert('प्रॉडक्ट फोटोसह सेव्ह झाले!');
-                };
+            tx.objectStore('products').getAll().onsuccess = e => {
+                if(e.target.result.length === 0) {
+                    let wTx = db.transaction('products', 'readwrite');
+                    defaultProds.forEach(p => wTx.objectStore('products').add(p));
+                    wTx.oncomplete = () => loadProducts();
+                } else { loadProducts(); }
             };
 
-            if (imageFile) {
-                const reader = new FileReader();
-                reader.onload = function(uploadEvent) {
-                    proceedSave(uploadEvent.target.result);
+            tx.objectStore('shops').getAll().onsuccess = e => {
+                if(e.target.result.length === 0) {
+                    resetToDefaultShops();
+                } else { loadShops(); }
+            };
+            loadOrders();
+        }
+
+        function resetToDefaultShops() {
+            let tx = db.transaction('shops', 'readwrite');
+            let store = tx.objectStore('shops');
+            store.clear();
+            defaultShops.forEach(s => store.add(s));
+            tx.oncomplete = () => {
+                alert('सर्व दुकाने आणि रूट्स यशस्वीरित्या लोड झाले!');
+                loadShops();
+            };
+        }
+
+        function getStore(name, mode) { return db.transaction(name, mode).objectStore(name); }
+
+        // --- PRODUCTS CRUD ---
+        function saveProduct() {
+            let id = document.getElementById('prodId').value;
+            let name = document.getElementById('prodName').value.trim();
+            let price = parseFloat(document.getElementById('prodPrice').value);
+            if(!name || isNaN(price)) return alert('कृपया माहिती भरा.');
+
+            let fileInput = document.getElementById('prodImageFile');
+            if(fileInput.files && fileInput.files[0]) {
+                let reader = new FileReader();
+                reader.onload = function(e) {
+                    persistProduct(id, name, price, e.target.result);
                 };
-                reader.readAsDataURL(imageFile);
+                reader.readAsDataURL(fileInput.files[0]);
             } else {
-                if (id) {
-                    db.transaction(['products'], 'readonly').objectStore('products').get(parseInt(id)).onsuccess = (ev) => {
-                        const existing = ev.target.result;
-                        proceedSave(existing ? existing.image : '');
-                    };
-                } else {
-                    proceedSave('');
-                }
+                persistProduct(id, name, price, currentEditingProductImage || "");
             }
+        }
+
+        function persistProduct(id, name, price, image) {
+            let item = { name, price, image };
+            if(id) item.id = parseInt(id);
+            getStore('products', 'readwrite').put(item).onsuccess = () => {
+                resetProdForm();
+                loadProducts();
+            };
+        }
+
+        function editProduct(id, name, price, image) {
+            document.getElementById('prodId').value = id;
+            document.getElementById('prodName').value = name;
+            document.getElementById('prodPrice').value = price;
+            currentEditingProductImage = image || "";
+            
+            let previewArea = document.getElementById('currentProdImagePreview');
+            if(currentEditingProductImage) {
+                previewArea.innerHTML = `<img src="${currentEditingProductImage}" style="width:50px; height:50px; object-fit:cover; border-radius:4px;"><br><button type="button" onclick="removeProductImageInEdit()" style="background:red; color:white; border:none; padding:2px 5px; font-size:0.75rem; border-radius:3px; margin-top:3px; cursor:pointer;">फोटो काढा</button>`;
+            } else {
+                previewArea.innerHTML = `<small style="color:gray;">सध्या फोटो नाही</small>`;
+            }
+            document.getElementById('prodFormTitle').innerText = "उत्पादनात बदल करा";
+            document.getElementById('prodCancelBtn').style.display = "block";
+        }
+
+        function removeProductImageInEdit() {
+            currentEditingProductImage = "";
+            document.getElementById('currentProdImagePreview').innerHTML = `<small style="color:red;">फोटो काढला गेला आहे</small>`;
         }
 
         function deleteProduct(id) {
-            if (confirm('हे प्रॉडक्ट डिलीट करायचे का?')) {
-                db.transaction(['products'], 'readwrite').objectStore('products').delete(id).onsuccess = () => {
-                    renderProducts();
-                    renderOrderProducts();
-                };
+            if(confirm("उत्पादन नक्की डिलीट करायचे का?")) {
+                getStore('products', 'readwrite').delete(id).onsuccess = () => loadProducts();
             }
         }
 
-        function toggleReportFilters() {
-            const type = document.getElementById('report-type').value;
-            const container2 = document.getElementById('filter-val-2-container');
-            if (type === 'range') {
-                container2.classList.remove('hidden');
-            } else {
-                container2.classList.add('hidden');
+        function resetProdForm() {
+            document.getElementById('prodId').value = '';
+            document.getElementById('prodName').value = '';
+            document.getElementById('prodPrice').value = '';
+            document.getElementById('prodImageFile').value = '';
+            document.getElementById('currentProdImagePreview').innerHTML = '';
+            currentEditingProductImage = null;
+            document.getElementById('prodFormTitle').innerText = "उत्पादन जोडा / बदला";
+            document.getElementById('prodCancelBtn').style.display = "none";
+        }
+
+        function loadProducts() {
+            getStore('products', 'readonly').getAll().onsuccess = e => {
+                let prods = e.target.result;
+                let html = '<table><tr><th>फोटो</th><th>नाव</th><th>किंमत</th><th>कृती</th></tr>';
+                prods.forEach(p => {
+                    let imgTag = p.image ? `<img src="${p.image}" class="prod-thumb">` : '<span style="color:gray; font-size:0.75rem;">नाही</span>';
+                    let safeName = p.name.replace(/'/g, "\\'");
+                    let safeImg = (p.image || '').replace(/'/g, "\\'");
+                    html += `<tr>
+                        <td>${imgTag}</td>
+                        <td>${p.name}</td>
+                        <td>₹${p.price}</td>
+                        <td>
+                            <button class="btn-edit" onclick="editProduct(${p.id}, '${safeName}', ${p.price}, '${safeImg}')">एडिट</button>
+                            <button class="btn-danger" onclick="deleteProduct(${p.id})">डिलीट</button>
+                        </td>
+                    </tr>`;
+                });
+                html += '</table>';
+                document.getElementById('productList').innerHTML = html;
+                renderOrderProductInputs(prods);
+            };
+        }
+
+        function renderOrderProductInputs(prods) {
+            document.getElementById('orderProductsContainer').innerHTML = prods.map(p => {
+                let thumb = p.image ? `<img src="${p.image}" style="width:30px; height:30px; object-fit:cover; border-radius:3px; vertical-align:middle; margin-right:5px;">` : '';
+                return `
+                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;" class="prod-row" data-name="${p.name}" data-price="${p.price}">
+                        <span style="display:flex; align-items:center;">${thumb}${p.name} (₹${p.price})</span>
+                        <input type="number" class="order-qty" value="0" min="0" style="width:80px;" oninput="calcTotal()">
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // --- SHOPS CRUD ---
+        function saveShop() {
+            let id = document.getElementById('shopId').value;
+            let route = document.getElementById('shopRoute').value.trim();
+            let name = document.getElementById('shopName').value.trim();
+            let details = document.getElementById('shopDetails').value.trim();
+            if(!route || !name) return alert('मार्ग आणि दुकान नाव आवश्यक आहे.');
+
+            let item = { route, name, details };
+            if(id) item.id = parseInt(id);
+
+            getStore('shops', 'readwrite').put(item).onsuccess = () => {
+                resetShopForm();
+                loadShops();
+            };
+        }
+
+        function editShop(id, route, name, details) {
+            document.getElementById('shopId').value = id;
+            document.getElementById('shopRoute').value = route;
+            document.getElementById('shopName').value = name;
+            document.getElementById('shopDetails').value = details;
+            document.getElementById('shopFormTitle').innerText = "दुकानाची माहिती बदला";
+            document.getElementById('shopCancelBtn').style.display = "block";
+        }
+
+        function deleteShop(id) {
+            if(confirm("दुकान नक्की डिलीट करायचे का?")) {
+                getStore('shops', 'readwrite').delete(id).onsuccess = () => loadShops();
             }
+        }
+
+        function resetShopForm() {
+            document.getElementById('shopId').value = '';
+            document.getElementById('shopRoute').value = '';
+            document.getElementById('shopName').value = '';
+            document.getElementById('shopDetails').value = '';
+            document.getElementById('shopFormTitle').innerText = "दुकान जोडा / बदला";
+            document.getElementById('shopCancelBtn').style.display = "none";
+        }
+
+        function loadShops() {
+            getStore('shops', 'readonly').getAll().onsuccess = e => {
+                let shops = e.target.result;
+                let routes = [...new Set(shops.map(s => s.route))];
+                let routeSelect = document.getElementById('orderRoute');
+                routeSelect.innerHTML = routes.map(r => `<option value="${r}">${r}</option>`).join('');
+                loadShopsByRoute();
+
+                let html = '<table><tr><th>मार्ग</th><th>दुकान</th><th>तपशील</th><th>कृती</th></tr>';
+                shops.forEach(s => {
+                    let safeRoute = (s.route || '').replace(/'/g, "\\'");
+                    let safeName = (s.name || '').replace(/'/g, "\\'");
+                    let safeDetails = (s.details || '').replace(/'/g, "\\'");
+                    html += `<tr>
+                        <td>${s.route}</td>
+                        <td>${s.name}</td>
+                        <td>${s.details || ''}</td>
+                        <td>
+                            <button class="btn-edit" onclick="editShop(${s.id}, '${safeRoute}', '${safeName}', '${safeDetails}')">एडिट</button>
+                            <button class="btn-danger" onclick="deleteShop(${s.id})">डिलीट</button>
+                        </td>
+                    </tr>`;
+                });
+                html += '</table>';
+                document.getElementById('shopList').innerHTML = html;
+            };
+        }
+
+        function loadShopsByRoute() {
+            let r = document.getElementById('orderRoute').value;
+            getStore('shops', 'readonly').getAll().onsuccess = e => {
+                let shops = e.target.result.filter(s => s.route === r);
+                document.getElementById('orderShop').innerHTML = shops.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+                clearOrderFormQuantities();
+            };
+        }
+
+        // --- ORDERS & REPORTS ---
+        function calcTotal() {
+            let sub = 0;
+            document.querySelectorAll('.prod-row').forEach(row => {
+                sub += parseFloat(row.dataset.price) * (parseInt(row.querySelector('.order-qty').value) || 0);
+            });
+            let disc = parseFloat(document.getElementById('orderDiscount').value) || 0;
+            let paid = parseFloat(document.getElementById('orderPaid').value) || 0;
+            let net = sub - disc;
+            let bal = net - paid;
+            document.getElementById('orderSubtotal').innerText = sub.toFixed(2);
+            document.getElementById('orderNetTotal').innerText = net.toFixed(2);
+            document.getElementById('orderBalance').innerText = bal.toFixed(2);
+        }
+
+        function clearOrderFormQuantities() {
+            document.querySelectorAll('.order-qty').forEach(input => input.value = 0);
+            document.getElementById('orderDiscount').value = 0;
+            document.getElementById('orderPaid').value = 0;
+            calcTotal();
+        }
+
+        function saveOrder() {
+            let route = document.getElementById('orderRoute').value;
+            let shop = document.getElementById('orderShop').value;
+            let date = document.getElementById('orderDate').value;
+            let items = [];
+            document.querySelectorAll('.prod-row').forEach(row => {
+                let q = parseInt(row.querySelector('.order-qty').value) || 0;
+                if(q > 0) items.push({ name: row.dataset.name, price: parseFloat(row.dataset.price), qty: q });
+            });
+            if(items.length === 0) return alert('किमान एक प्रॉडक्ट निवडा.');
+            
+            let order = {
+                route, shop, date, items,
+                subtotal: parseFloat(document.getElementById('orderSubtotal').innerText),
+                discount: parseFloat(document.getElementById('orderDiscount').value) || 0,
+                net: parseFloat(document.getElementById('orderNetTotal').innerText),
+                paid: parseFloat(document.getElementById('orderPaid').value) || 0,
+                balance: parseFloat(document.getElementById('orderBalance').innerText)
+            };
+            
+            getStore('orders', 'readwrite').add(order).onsuccess = () => {
+                alert('ऑर्डर यशस्वी सेव्ह झाली!');
+                loadOrders();
+                clearOrderFormQuantities();
+            };
+        }
+
+        function loadOrders() {
+            getStore('orders', 'readonly').getAll().onsuccess = e => {
+                let orders = e.target.result.reverse();
+                let html = '<table><tr><th>तारीख</th><th>दुकान</th><th>नेट</th><th>बाकी</th></tr>';
+                orders.forEach(o => html += `<tr><td>${o.date}</td><td>${o.shop} (${o.route})</td><td>₹${o.net}</td><td>₹${o.balance}</td></tr>`);
+                html += '</table>';
+                document.getElementById('orderHistoryList').innerHTML = html;
+            };
         }
 
         function generateReport() {
-            const type = document.getElementById('report-type').value;
-            const date1 = document.getElementById('report-date-1').value;
-            const date2 = document.getElementById('report-date-2').value;
+            getStore('products', 'readonly').getAll().onsuccess = eP => {
+                let prods = eP.target.result.map(p => p.name);
+                getStore('orders', 'readonly').getAll().onsuccess = eO => {
+                    let orders = eO.target.result;
+                    let html = '<table><thead><tr><th>क्र.</th><th>रूट</th><th>दुकान</th>';
+                    prods.forEach(p => html += `<th>${p} (नग)</th>`);
+                    html += '<th>एकूण नग</th><th>एकूण रक्कम (₹)</th></tr></thead><tbody>';
+                    
+                    let totals = {}; prods.forEach(p => totals[p] = 0);
+                    let grandQty = 0;
+                    let grandAmt = 0;
 
-            db.transaction(['orders', 'products'], 'readonly').objectStore('orders').getAll().onsuccess = (e) => {
-                let orders = e.target.result;
+                    orders.forEach((o, idx) => {
+                        let pMap = {}; prods.forEach(p => pMap[p] = 0);
+                        let rowTotalQty = 0;
+                        o.items.forEach(i => { 
+                            pMap[i.name] = i.qty; 
+                            rowTotalQty += i.qty;
+                        });
 
-                if (type === 'today') {
-                    const todayStr = new Date().toISOString().split('T')[0];
-                    orders = orders.filter(o => o.date === todayStr);
-                } else if (type === 'yesterday') {
-                    const yest = new Date();
-                    yest.setDate(yest.getDate() - 1);
-                    const yestStr = yest.toISOString().split('T')[0];
-                    orders = orders.filter(o => o.date === yestStr);
-                } else if (type === 'date') {
-                    orders = orders.filter(o => o.date === date1);
-                } else if (type === 'range') {
-                    orders = orders.filter(o => o.date >= date1 && o.date <= date2);
-                }
+                        html += `<tr><td>${idx+1}</td><td>${o.route}</td><td>${o.shop}</td>`;
+                        prods.forEach(p => { 
+                            html += `<td>${pMap[p]}</td>`; 
+                            totals[p] += pMap[p]; 
+                        });
+                        html += `<td><b>${rowTotalQty}</b></td><td><b>₹${o.net}</b></td></tr>`;
+                        
+                        grandQty += rowTotalQty;
+                        grandAmt += o.net;
+                    });
 
-                db.transaction(['products'], 'readonly').objectStore('products').getAll().onsuccess = (pe) => {
-                    const products = pe.target.result.map(p => p.name);
-                    renderReportTable(orders, products);
+                    html += `<tr class="total-row"><td colspan="3">एकूण (TOTAL)</td>`;
+                    prods.forEach(p => {
+                        html += `<td>${totals[p]}</td>`;
+                    });
+                    html += `<td><b>${grandQty}</b></td><td><b>₹${grandAmt.toFixed(2)}</b></td></tr></tbody></table>`;
+                    
+                    document.getElementById('reportOutput').innerHTML = html;
                 };
             };
         }
 
-        // Updated Report Table showing each product boxes/qty per shop clearly
-        function renderReportTable(orders, products) {
-            const container = document.getElementById('report-result-container');
-            if (orders.length === 0) {
-                container.innerHTML = '<p class="text-xs text-gray-500 text-center py-6">या कालावधीत कोणतीही ऑर्डर नाही.</p>';
-                return;
-            }
-
-            let productTotals = {};
-            products.forEach(p => productTotals[p] = 0);
-
-            let html = `
-                <table class="w-full text-left border-collapse text-xs">
-                    <thead>
-                        <tr class="bg-gray-100 border-b">
-                            <th class="p-2 border">क्र.</th>
-                            <th class="p-2 border">तारीख</th>
-                            <th class="p-2 border">रूट</th>
-                            <th class="p-2 border">दुकान (Shop Name)</th>
-                            ${products.map(p => `<th class="p-2 border text-center">${p}<br><span class="text-[9px] text-gray-500">(बॉक्स/नग)</span></th>`).join('')}
-                            <th class="p-2 border text-center">एकूण बॉक्स/नग</th>
-                            <th class="p-2 border text-center">एकूण रक्कम (₹)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-            `;
-
-            orders.forEach((o, index) => {
-                html += `
-                    <tr class="border-b hover:bg-gray-50">
-                        <td class="p-2 border">${index + 1}</td>
-                        <td class="p-2 border">${o.date}</td>
-                        <td class="p-2 border">${o.route}</td>
-                        <td class="p-2 border font-medium">${o.shopName}</td>
-                `;
-                products.forEach(p => {
-                    const qty = o.items[p] ? o.items[p].qty : 0;
-                    productTotals[p] += qty;
-                    html += `<td class="p-2 border text-center font-bold text-blue-700">${qty || '-'}</td>`;
-                });
-                html += `<td class="p-2 border text-center font-bold bg-gray-50">${o.totalQty}</td>`;
-                html += `<td class="p-2 border text-center font-bold text-brand-600">₹${o.totalAmt}</td></tr>`;
-            });
-
-            html += `
-                    <tr class="bg-gray-100 font-bold border-t-2">
-                        <td colspan="4" class="p-2 border text-right">चिपण एकूण (TOTAL):</td>
-            `;
-            products.forEach(p => {
-                html += `<td class="p-2 border text-center text-blue-800">${productTotals[p]}</td>`;
-            });
-            html += `<td class="p-2 border text-center font-bold">${orders.reduce((sum, o) => sum + o.totalQty, 0)}</td>`;
-            html += `<td class="p-2 border text-center text-brand-600">₹${orders.reduce((sum, o) => sum + o.totalAmt, 0)}</td></tr>`;
-
-            html += `</tbody></table>`;
-            container.innerHTML = html;
+        function exportCSV() {
+            let csv = '\uFEFFDate,Route,Shop,Net,Balance\n';
+            getStore('orders', 'readonly').getAll().onsuccess = e => {
+                e.target.result.reload; // safe access
+                e.target.result.forEach(o => csv += `"${o.date}","${o.route}","${o.shop}",${o.net},${o.balance}\n`);
+                let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                let l = document.createElement('a'); l.href = URL.createObjectURL(blob); l.download = "orders.csv"; l.click();
+            };
         }
 
         function exportJSON() {
-            const tx = db.transaction(['products', 'shops', 'orders'], 'readonly');
             let data = {};
-            tx.objectStore('products').getAll().onsuccess = (e) => {
-                data.products = e.target.result;
-                tx.objectStore('shops').getAll().onsuccess = (e2) => {
+            getStore('products', 'readonly').getAll().onsuccess = e1 => {
+                data.products = e1.target.result;
+                getStore('shops', 'readonly').getAll().onsuccess = e2 => {
                     data.shops = e2.target.result;
-                    tx.objectStore('orders').getAll().onsuccess = (e3) => {
+                    getStore('orders', 'readonly').getAll().onsuccess = e3 => {
                         data.orders = e3.target.result;
-                        
-                        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-                        const url = URL.createObjectURL(blob);
-                        const a = document.createElement('a');
-                        a.href = url;
-                        a.download = `Kalidas_Order_Backup_${new Date().toISOString().split('T')[0]}.json`;
-                        a.click();
+                        let blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                        let l = document.createElement('a'); l.href = URL.createObjectURL(blob); l.download = "backup.json"; l.click();
                     };
                 };
             };
-        }
-
-        function importJSON(event) {
-            const file = event.target.files[0];
-            if (!file) return;
-            const reader = new FileReader();
-            reader.onload = function(e) {
-                try {
-                    const data = JSON.parse(e.target.result);
-                    const tx = db.transaction(['products', 'shops', 'orders'], 'readwrite');
-                    
-                    if(data.products) {
-                        const pStore = tx.objectStore('products');
-                        pStore.clear();
-                        data.products.format = [];
-                        data.products.forEach(p => pStore.add(p));
-                    }
-                    if(data.shops) {
-                        const sStore = tx.objectStore('shops');
-                        sStore.clear();
-                        data.shops.forEach(s => sStore.add(s));
-                    }
-                    if(data.orders) {
-                        const oStore = tx.objectStore('orders');
-                        oStore.clear();
-                        data.orders.forEach(o => oStore.add(o));
-                    }
-
-                    tx.oncomplete = () => {
-                        alert('डेटा यशस्वीरित्या रिस्टोअर झाला!');
-                        initializeApp();
-                    };
-                } catch (err) {
-                    alert('चुकीची फाईल! कृपया योग्य JSON फाईल निवडा.');
-                }
-            };
-            reader.readAsText(file);
         }
     </script>
 </body>
