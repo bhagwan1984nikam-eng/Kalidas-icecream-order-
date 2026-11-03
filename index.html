@@ -37,7 +37,6 @@
 </head>
 <body>
     <header>
-        <!-- Using icon.png from the same directory -->
         <img src="icon.png" alt="Kalidas Logo" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'><circle cx=\'50\' cy=\'50\' r=\'48\' fill=\'%23d81b60\'/><text x=\'50%\' y=\'55%\' font-size=\'40\' fill=\'white\' text-anchor=\'middle\' dominant-baseline=\'middle\'>K</text></svg>'">
         <h1>कालिदास आईस्क्रीम ऑर्डर ॲप</h1>
     </header>
@@ -69,6 +68,7 @@
         <!-- 2. Products Section -->
         <div id="sec-products" class="section">
             <div class="card">
+                <button class="btn btn-secondary" onclick="resetToDefaultProds()" style="margin-bottom: 15px; background: #00897b;">🔄 सर्व नवीन प्रॉडक्ट्स लोड करा (Reset Products)</button>
                 <h2 id="prodFormTitle">उत्पादन जोडा / बदला</h2>
                 <input type="hidden" id="prodId">
                 <div class="form-group"><label>उत्पादनाचे नाव:</label><input type="text" id="prodName"></div>
@@ -139,7 +139,7 @@
             {"route": "Aaros", "name": "Aaros Cold Drinks", "details": "Aaros Phata | 9822123456"}
         ];
 
-        // Exact products list as requested with correct names and prices
+        // Updated New Products List
         const defaultProds = [
             { name: "Kaju candy ₹10", price: 200, image: "" },
             { name: "Mawa candy ₹15", price: 300, image: "" },
@@ -155,8 +155,7 @@
             { name: "Family pack mango", price: 125, image: "" }
         ];
 
-        // Database version set to 14 to cleanly load default products and shops
-        const req = indexedDB.open("KalidasIceCreamDB", 14);
+        const req = indexedDB.open("KalidasIceCreamDB", 15);
         req.onerror = e => alert("Database error");
         req.onsuccess = e => { db = e.target.result; initApp(); };
         req.onupgradeneeded = e => {
@@ -180,9 +179,7 @@
             
             tx.objectStore('products').getAll().onsuccess = e => {
                 if(e.target.result.length === 0) {
-                    let wTx = db.transaction('products', 'readwrite');
-                    defaultProds.forEach(p => wTx.objectStore('products').add(p));
-                    wTx.oncomplete = () => loadProducts();
+                    resetToDefaultProds();
                 } else { loadProducts(); }
             };
 
@@ -192,6 +189,17 @@
                 } else { loadShops(); }
             };
             loadOrders();
+        }
+
+        function resetToDefaultProds() {
+            let tx = db.transaction('products', 'readwrite');
+            let store = tx.objectStore('products');
+            store.clear();
+            defaultProds.forEach(p => store.add(p));
+            tx.oncomplete = () => {
+                alert('नवीन सर्व १२ प्रॉडक्ट्स यशस्वीरित्या लोड झाले!');
+                loadProducts();
+            };
         }
 
         function resetToDefaultShops() {
