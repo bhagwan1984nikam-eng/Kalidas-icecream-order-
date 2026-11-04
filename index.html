@@ -24,7 +24,6 @@
         button.btn-danger { background: var(--danger); color: white; padding: 5px 10px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; }
         button.btn-whatsapp { background: #25d366; color: white; padding: 10px 15px; font-size: 0.95rem; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         
-        /* Attractive Product Grid & Counter Layout */
         .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-top: 10px; }
         .product-card { display: flex; align-items: center; background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 10px; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         .product-card img.large-thumb { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; background: #eee; }
@@ -36,7 +35,6 @@
         .counter-box button:active { background: #ad1457; }
         .counter-box input { width: 45px; text-align: center; padding: 5px; font-size: 1rem; border: 1px solid var(--border); border-radius: 4px; }
 
-        /* Folder Accordion Styles for History */
         .folder-group { border: 1px solid var(--border); border-radius: 6px; margin-bottom: 8px; background: #fff; overflow: hidden; }
         .folder-header { background: #f1f3f4; padding: 10px 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 0.95rem; }
         .folder-content { padding: 10px; display: none; background: #fafafa; border-top: 1px solid var(--border); }
@@ -57,7 +55,7 @@
 </head>
 <body>
     <header>
-        <img src="icon.png" alt="Kalidas Logo" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'><circle cx=\'50\' cy=\'50\' r=\'48\' fill=\'%23d81b60\'/><text x=\'50%\' y=\'55%\' font-size=\'40\' fill=\'white\' text-anchor=\'middle\' dominant-baseline=\'middle\'>K</text></svg>'">
+        <img src="icon.png" alt="Kalidas Logo" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)\' width=\'100\' height=\'100\'><circle cx=\'50\' cy=\'50\' r=\'48\' fill=\'%23d81b60\'/><text x=\'50%\' y=\'55%\' font-size=\'40\' fill=\'white\' text-anchor=\'middle\' dominant-baseline=\'middle\'>K</text></svg>'">
         <h1>कालिदास आईस्क्रीम ऑर्डर ॲप</h1>
     </header>
     <div class="container">
@@ -144,7 +142,7 @@
         <!-- 4. Reports Section -->
         <div id="sec-reports" class="section">
             <div class="card">
-                <h2>तारीखनुसार अहवाल व पूर्ण WhatsApp चार्ट शेअरिंग</h2>
+                <h2>तारीखनुसार अहवाल व एक्सेल सारखा चार्ट WhatsApp शेअरिंग</h2>
                 <div class="form-group" style="margin-top: 10px;">
                     <label>अहवालासाठी तारीख निवडा:</label>
                     <input type="date" id="reportDateSelect" onchange="generateDateReport()">
@@ -372,8 +370,8 @@
             { name: "Family pack mango", price: 125, image: "" }
         ];
 
-        // Database version set to 20
-        const req = indexedDB.open("KalidasIceCreamDB", 20);
+        // Database version set to 21
+        const req = indexedDB.open("KalidasIceCreamDB", 21);
         req.onerror = e => alert("Database error");
         req.onsuccess = e => { db = e.target.result; initApp(); };
         req.onupgradeneeded = e => {
@@ -817,7 +815,7 @@
             content.classList.toggle('open');
         }
 
-        // Complete Chart Date-wise Report & Full WhatsApp Share
+        // Excel-like Formatted Grid Chart for WhatsApp
         function generateDateReport() {
             let selectedDate = document.getElementById('reportDateSelect').value;
             if(!selectedDate) return;
@@ -832,6 +830,7 @@
                         return;
                     }
 
+                    // App Display Table
                     let html = `<h3>दिनांक: ${selectedDate} चा अहवाल</h3>`;
                     html += '<div class="table-responsive"><table><thead><tr><th>क्र.</th><th>रूट</th><th>दुकान</th>';
                     prods.forEach(p => html += `<th>${p}</th>`);
@@ -841,7 +840,7 @@
                     let grandAmt = 0;
 
                     orders.forEach((o, idx) => {
-                        let pMap = {}; prods.forEach(p => prods.forEach(prod => pMap[prod] = 0));
+                        let pMap = {}; prods.forEach(p => pMap[p] = 0);
                         if(o.items) {
                             o.items.forEach(i => { pMap[i.name] = i.qty; });
                         }
@@ -859,28 +858,39 @@
                     prods.forEach(p => { html += `<td>${totals[p]}</td>`; });
                     html += `<td><b>₹${grandAmt.toFixed(2)}</b></td></tr></tbody></table></div>`;
 
-                    // Formulating Complete Detailed Chart for WhatsApp
+                    // Formulating Excel-like Matrix Chart for WhatsApp using Monospaced code block (```)
                     let waText = `*🍦 कालिदास आईस्क्रीम ऑर्डर चार्ट*%0A`;
-                    waText += `📅 दिनांक: *${selectedDate}*%0A`;
-                    waText += `----------------------------------%0A`;
-                    
-                    orders.forEach((o, i) => {
-                        waText += `%0A*${i+1}. दुकान:* ${o.shop}%0A`;
-                        waText += `🛣️ *रूट:* ${o.route}%0A`;
-                        waText += `📦 *प्रॉडक्ट्स:*%0A`;
+                    waText += `📅 दिनांक: ${selectedDate}%0A`;
+                    waText += `\`\`\`%0A`; // Monospaced block starts for table grid alignment
+                    waText += `--------------------------------------------------%0A`;
+                    waText += `क्र. | दुकान / रूट                | नेट ₹  | नग%0A`;
+                    waText += `--------------------------------------------------%0A`;
+
+                    orders.forEach((o, idx) => {
+                        let rowTotalQty = 0;
+                        if(o.items) o.items.forEach(i => rowTotalQty += i.qty);
                         
-                        if(o.items && o.items.length > 0) {
-                            o.items.forEach(item => {
-                                waText += `   - ${item.name}: *${item.qty} नग* (₹${item.price * item.qty})%0A`;
-                            });
-                        }
-                        waText += `💰 *नेट रक्कम:* ₹${o.net} (बाकी: ₹${o.balance})%0A`;
-                        waText += `----------------------------------`;
+                        let shopShort = o.shop.length > 20 ? o.shop.substring(0, 18) + '..' : o.shop.padEnd(20, ' ');
+                        let netStr = ('₹' + o.net).padEnd(7, ' ');
+                        let qtyStr = (rowTotalQty + '').padEnd(3, ' ');
+                        let idxStr = ((idx + 1) + '').padEnd(3, ' ');
+                        
+                        waText += `${idxStr}| ${shopShort} | ${netStr}| ${qtyStr}%0A`;
                     });
 
-                    waText += `%0A%0A📊 *एकूण एकूण व्यवसाय रक्कम: ₹${grandAmt.toFixed(2)}*`;
+                    waText += `--------------------------------------------------%0A`;
+                    waText += `एकूण दुकाने: ${orders.length} | एकूण व्यवसाय: ₹${grandAmt.toFixed(2)}%0A`;
+                    waText += `\`\`\`%0A%0A`; // Monospaced block ends
 
-                    html += `<button class="btn-whatsapp" onclick="window.open('https://api.whatsapp.com/send?text=${waText}', '_blank')">💬 पूर्ण चार्ट WhatsApp वर पाठवा</button>`;
+                    // Detailed Product-wise breakdown
+                    waText += `*📦 उत्पादननिहाय एकूण नग:*%0A`;
+                    prods.forEach(p => {
+                        if(totals[p] > 0) {
+                            waText += ` - ${p}: *${totals[p]} नग*%0A`;
+                        }
+                    });
+
+                    html += `<button class="btn-whatsapp" onclick="window.open('https://api.whatsapp.com/send?text=${waText}', '_blank')">💬 एक्सेल चार्ट स्वरूपात WhatsApp वर पाठवा</button>`;
 
                     document.getElementById('dateReportOutput').innerHTML = html;
                 };
