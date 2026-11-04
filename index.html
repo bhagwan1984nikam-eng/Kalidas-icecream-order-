@@ -703,47 +703,15 @@
             };
         }
 
-        
-function exportCSV() {
-    getStore('products', 'readonly').getAll().onsuccess = eP => {
-        let prods = eP.target.result.map(p => p.name);
-        getStore('orders', 'readonly').getAll().onsuccess = eO => {
-            let orders = eO.target.result;
-            
-            // Excel Header Row
-            let csv = '\uFEFFक्र.,तारीख,रूट,दुकान,';
-            prods.forEach(p => csv += `"${p} (नग)",`);
-            csv += 'एकूण नग,नेट रक्कम (₹),बाकी (₹)\n';
+        function exportCSV() {
+            let csv = '\uFEFFDate,Route,Shop,Net,Balance\n';
+            getStore('orders', 'readonly').getAll().onsuccess = e => {
+                e.target.result.forEach(o => csv += `"${o.date}","${o.route}","${o.shop}",${o.net},${o.balance}\n`);
+                let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                let l = document.createElement('a'); l.href = URL.createObjectURL(blob); l.download = "orders.csv"; l.click();
+            };
+        }
 
-            // Data Rows
-            orders.forEach((o, idx) => {
-                let pMap = {}; 
-                prods.forEach(p => pMap[p] = 0);
-                let rowTotalQty = 0;
-                
-                if(o.items && Array.isArray(o.items)) {
-                    o.items.forEach(i => { 
-                        pMap[i.name] = i.qty; 
-                        rowTotalQty += i.qty;
-                    });
-                }
-
-                csv += `"${idx + 1}","${o.date}","${o.route}","${o.shop}",`;
-                prods.forEach(p => { 
-                    csv += `"${pMap[p]}",`; 
-                });
-                csv += `"${rowTotalQty}","${o.net}","${o.balance}"\n`;
-            });
-
-            // Download Trigger
-            let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-            let l = document.createElement('a');
-            l.href = URL.createObjectURL(blob);
-            l.download = `Kalidas_Orders_Report_${new Date().toISOString().slice(0,10)}.csv`;
-            l.click();
-        };
-    };
-}
         function exportJSON() {
             let data = {};
             getStore('products', 'readonly').getAll().onsuccess = e1 => {
