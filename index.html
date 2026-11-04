@@ -55,7 +55,7 @@
 </head>
 <body>
     <header>
-        <img src="icon.png" alt="Kalidas Logo" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'[http://www.w3.org/2000/svg](http://www.w3.org/2000/svg)\' width=\'100\' height=\'100\'><circle cx=\'50\' cy=\'50\' r=\'48\' fill=\'%23d81b60\'/><text x=\'50%\' y=\'55%\' font-size=\'40\' fill=\'white\' text-anchor=\'middle\' dominant-baseline=\'middle\'>K</text></svg>'">
+        <img src="icon.png" alt="Kalidas Logo" onerror="this.src='data:image/svg+xml;utf8,<svg xmlns=\'http://www.w3.org/2000/svg\' width=\'100\' height=\'100\'><circle cx=\'50\' cy=\'50\' r=\'48\' fill=\'%23d81b60\'/><text x=\'50%\' y=\'55%\' font-size=\'40\' fill=\'white\' text-anchor=\'middle\' dominant-baseline=\'middle\'>K</text></svg>'">
         <h1>कालिदास आईस्क्रीम ऑर्डर ॲप</h1>
     </header>
     <div class="container">
@@ -142,7 +142,7 @@
         <!-- 4. Reports Section -->
         <div id="sec-reports" class="section">
             <div class="card">
-                <h2>तारीखनुसार अहवाल व एक्सेल सारखा चार्ट WhatsApp शेअरिंग</h2>
+                <h2>तारीखनुसार अहवाल व WhatsApp चार्ट / CSV शेअरिंग</h2>
                 <div class="form-group" style="margin-top: 10px;">
                     <label>अहवालासाठी तारीख निवडा:</label>
                     <input type="date" id="reportDateSelect" onchange="generateDateReport()">
@@ -370,8 +370,8 @@
             { name: "Family pack mango", price: 125, image: "" }
         ];
 
-        // Database version set to 21
-        const req = indexedDB.open("KalidasIceCreamDB", 21);
+        // Database version set to 23
+        const req = indexedDB.open("KalidasIceCreamDB", 23);
         req.onerror = e => alert("Database error");
         req.onsuccess = e => { db = e.target.result; initApp(); };
         req.onupgradeneeded = e => {
@@ -815,7 +815,7 @@
             content.classList.toggle('open');
         }
 
-        // Excel-like Formatted Grid Chart for WhatsApp
+        // Full Chart Report with Total Quantity (एकूण बॉक्स) and Total Amount at the bottom
         function generateDateReport() {
             let selectedDate = document.getElementById('reportDateSelect').value;
             if(!selectedDate) return;
@@ -834,15 +834,20 @@
                     let html = `<h3>दिनांक: ${selectedDate} चा अहवाल</h3>`;
                     html += '<div class="table-responsive"><table><thead><tr><th>क्र.</th><th>रूट</th><th>दुकान</th>';
                     prods.forEach(p => html += `<th>${p}</th>`);
-                    html += '<th>नेट रक्कम</th></tr></thead><tbody>';
+                    html += '<th>एकूण बॉक्स</th><th>नेट रक्कम</th></tr></thead><tbody>';
 
                     let totals = {}; prods.forEach(p => totals[p] = 0);
+                    let grandQty = 0;
                     let grandAmt = 0;
 
                     orders.forEach((o, idx) => {
                         let pMap = {}; prods.forEach(p => pMap[p] = 0);
+                        let rowTotalQty = 0;
                         if(o.items) {
-                            o.items.forEach(i => { pMap[i.name] = i.qty; });
+                            o.items.forEach(i => { 
+                                pMap[i.name] = i.qty; 
+                                rowTotalQty += i.qty;
+                            });
                         }
 
                         html += `<tr><td>${idx+1}</td><td>${o.route}</td><td>${o.shop}</td>`;
@@ -850,20 +855,21 @@
                             html += `<td>${pMap[p] || 0}</td>`; 
                             totals[p] += (pMap[p] || 0); 
                         });
-                        html += `<td><b>₹${o.net}</b></td></tr>`;
+                        html += `<td><b>${rowTotalQty}</b></td><td><b>₹${o.net}</b></td></tr>`;
+                        grandQty += rowTotalQty;
                         grandAmt += o.net;
                     });
 
                     html += `<tr class="total-row"><td colspan="3">एकूण (TOTAL)</td>`;
                     prods.forEach(p => { html += `<td>${totals[p]}</td>`; });
-                    html += `<td><b>₹${grandAmt.toFixed(2)}</b></td></tr></tbody></table></div>`;
+                    html += `<td><b>${grandQty}</b></td><td><b>₹${grandAmt.toFixed(2)}</b></td></tr></tbody></table></div>`;
 
-                    // Formulating Excel-like Matrix Chart for WhatsApp using Monospaced code block (```)
+                    // WhatsApp Chart Format with Table alignment & Totals at the bottom
                     let waText = `*🍦 कालिदास आईस्क्रीम ऑर्डर चार्ट*%0A`;
                     waText += `📅 दिनांक: ${selectedDate}%0A`;
-                    waText += `\`\`\`%0A`; // Monospaced block starts for table grid alignment
+                    waText += `\`\`\`%0A`;
                     waText += `--------------------------------------------------%0A`;
-                    waText += `क्र. | दुकान / रूट                | नेट ₹  | नग%0A`;
+                    waText += `क्र. | दुकान / रूट                | नग  | नेट ₹%0A`;
                     waText += `--------------------------------------------------%0A`;
 
                     orders.forEach((o, idx) => {
@@ -871,18 +877,18 @@
                         if(o.items) o.items.forEach(i => rowTotalQty += i.qty);
                         
                         let shopShort = o.shop.length > 20 ? o.shop.substring(0, 18) + '..' : o.shop.padEnd(20, ' ');
-                        let netStr = ('₹' + o.net).padEnd(7, ' ');
                         let qtyStr = (rowTotalQty + '').padEnd(3, ' ');
+                        let netStr = ('₹' + o.net).padEnd(6, ' ');
                         let idxStr = ((idx + 1) + '').padEnd(3, ' ');
                         
-                        waText += `${idxStr}| ${shopShort} | ${netStr}| ${qtyStr}%0A`;
+                        waText += `${idxStr}| ${shopShort} | ${qtyStr}| ${netStr}%0A`;
                     });
 
                     waText += `--------------------------------------------------%0A`;
-                    waText += `एकूण दुकाने: ${orders.length} | एकूण व्यवसाय: ₹${grandAmt.toFixed(2)}%0A`;
-                    waText += `\`\`\`%0A%0A`; // Monospaced block ends
+                    waText += `📊 *एकूण बॉक्स (नग): ${grandQty}*%0A`;
+                    waText += `💰 *एकूण रक्कम: ₹${grandAmt.toFixed(2)}*%0A`;
+                    waText += `\`\`\`%0A%0A`;
 
-                    // Detailed Product-wise breakdown
                     waText += `*📦 उत्पादननिहाय एकूण नग:*%0A`;
                     prods.forEach(p => {
                         if(totals[p] > 0) {
@@ -890,9 +896,76 @@
                         }
                     });
 
-                    html += `<button class="btn-whatsapp" onclick="window.open('https://api.whatsapp.com/send?text=${waText}', '_blank')">💬 एक्सेल चार्ट स्वरूपात WhatsApp वर पाठवा</button>`;
+                    let encodedWaText = encodeURIComponent(waText);
+                    html += `<button class="btn-whatsapp" onclick="window.open('https://api.whatsapp.com/send?text=${encodedWaText}', '_blank')">💬 चार्ट WhatsApp वर पाठवा</button>`;
+
+                    // Button to share complete Excel CSV file directly via WhatsApp
+                    html += `<button class="btn-whatsapp" style="background:#128c7e; margin-top:8px;" onclick="shareCSVWhatsApp('${selectedDate}')">📎 एक्सेल CSV फाईल WhatsApp वर पाठवा</button>`;
 
                     document.getElementById('dateReportOutput').innerHTML = html;
+                };
+            };
+        }
+
+        // Generate and Share Full CSV File via WhatsApp
+        function shareCSVWhatsApp(selectedDate) {
+            getStore('products', 'readonly').getAll().onsuccess = eP => {
+                let prods = eP.target.result.map(p => p.name);
+                getStore('orders', 'readonly').getAll().onsuccess = eO => {
+                    let orders = eO.target.result.filter(o => o.date === selectedDate);
+                    
+                    let csv = '\uFEFFक्र.,तारीख,रूट,दुकान,';
+                    prods.forEach(p => csv += `"${p} (नग)",`);
+                    csv += 'एकूण बॉक्स,नेट रक्कम (₹),बाकी (₹)\n';
+
+                    let grandQty = 0;
+                    let grandAmt = 0;
+
+                    orders.forEach((o, idx) => {
+                        let pMap = {}; prods.forEach(p => pMap[p] = 0);
+                        let rowTotalQty = 0;
+                        if(o.items && Array.isArray(o.items)) {
+                            o.items.forEach(i => { 
+                                pMap[i.name] = i.qty; 
+                                rowTotalQty += i.qty;
+                            });
+                        }
+                        grandQty += rowTotalQty;
+                        grandAmt += o.net;
+
+                        csv += `"${idx + 1}","${o.date}","${o.route}","${o.shop}",`;
+                        prods.forEach(p => { csv += `"${pMap[p]}",`; });
+                        csv += `"${rowTotalQty}","${o.net}","${o.balance}"\n`;
+                    });
+
+                    // Adding Totals Row at the bottom of CSV
+                    csv += `"","","","एकूण (TOTAL)",`;
+                    prods.forEach(p => {
+                        let colTotal = orders.reduce((sum, ord) => {
+                            let match = ord.items ? ord.items.find(i => i.name === p) : null;
+                            return sum + (match ? match.qty : 0);
+                        }, 0);
+                        csv += `"${colTotal}",`;
+                    });
+                    csv += `"${grandQty}","${grandAmt.toFixed(2)}",""\n`;
+
+                    let file = new File([csv], `Kalidas_Report_${selectedDate}.csv`, { type: 'text/csv' });
+                    
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        navigator.share({
+                            title: `कालिदास आईस्क्रीम अहवाल (${selectedDate})`,
+                            text: `📅 दिनांक: ${selectedDate}\n📦 एकूण बॉक्स: ${grandQty}\n💰 एकूण रक्कम: ₹${grandAmt.toFixed(2)}`,
+                            files: [file]
+                        }).catch(console.error);
+                    } else {
+                        // Fallback: Download file if direct sharing is not supported by browser
+                        let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                        let l = document.createElement('a');
+                        l.href = URL.createObjectURL(blob);
+                        l.download = `Kalidas_Report_${selectedDate}.csv`;
+                        l.click();
+                        alert('तुमच्या डिव्हाइसवर फाईल थेट शेअरिंग सपोर्ट नसल्यामुळे फाईल डाउनलोड झाली आहे. तुम्ही ती WhatsApp वर डाऊनलोड करून पाठवू शकता.');
+                    }
                 };
             };
         }
@@ -904,7 +977,7 @@
                     let orders = eO.target.result;
                     let csv = '\uFEFFक्र.,तारीख,रूट,दुकान,';
                     prods.forEach(p => csv += `"${p} (नग)",`);
-                    csv += 'एकूण नग,नेट रक्कम (₹),बाकी (₹)\n';
+                    csv += 'एकूण बॉक्स,नेट रक्कम (₹),बाकी (₹)\n';
 
                     orders.forEach((o, idx) => {
                         let pMap = {}; prods.forEach(p => pMap[p] = 0);
