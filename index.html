@@ -44,10 +44,12 @@
         <!-- 1. Orders Section -->
         <div id="sec-orders" class="section active">
             <div class="card">
-                <h2>नवीन ऑर्डर नोंदवा</h2>
+                <h2 id="orderFormTitle">नवीन ऑर्डर नोंदवा</h2>
+                <input type="hidden" id="editingOrderId">
+                
                 <div class="form-group">
                     <label>मार्ग निवडा (Route):</label>
-                    <select id="orderRoute" onchange="loadShopsByRoute()">
+                    <select id="orderRoute" onchange="onRouteChanged()">
                         <option value="">-- मार्ग निवडा --</option>
                     </select>
                 </div>
@@ -67,7 +69,8 @@
                     <p><strong>नेट रक्कम: </strong><span id="orderNetTotal">0.00</span> ₹</p>
                     <p><strong>बाकी: </strong><span id="orderBalance">0.00</span> ₹</p>
                 </div>
-                <button class="btn" onclick="saveOrder()">ऑर्डर सेव्ह करा</button>
+                <button class="btn" id="orderSaveBtn" onclick="saveOrder()">ऑर्डर सेव्ह करा</button>
+                <button class="btn btn-secondary" id="orderCancelBtn" style="display:none; margin-top:5px;" onclick="resetOrderForm()">एडिट रद्द करा</button>
             </div>
             <div class="card">
                 <h2>ऑर्डर इतिहास</h2>
@@ -139,7 +142,6 @@
         let db;
         let currentEditingProductImage = null;
 
-        // Exact Complete List of Shops Provided by User
         const defaultShops = [
             {"route": "Banda", "name": "Nandkishor sweets Malgaon highway", "details": "Malgaon | Lokesh 73020 19 933"},
             {"route": "Banda", "name": "hotel Laxmi Narayan,Malgaon bazar", "details": "Malgaon bazar | 9022 312 374"},
@@ -342,8 +344,8 @@
             { name: "Family pack mango", price: 125, image: "" }
         ];
 
-        // Increased Version to 16 to automatically reload new full shops dataset
-        const req = indexedDB.open("KalidasIceCreamDB", 16);
+        // Database version set to 18 to force fresh update if cached
+        const req = indexedDB.open("KalidasIceCreamDB", 18);
         req.onerror = e => alert("Database error");
         req.onsuccess = e => { db = e.target.result; initApp(); };
         req.onupgradeneeded = e => {
@@ -384,10 +386,7 @@
             let store = tx.objectStore('products');
             store.clear();
             defaultProds.forEach(p => store.add(p));
-            tx.oncomplete = () => {
-                alert('नवीन सर्व १२ प्रॉडक्ट्स यशस्वीरित्या लोड झाले!');
-                loadProducts();
-            };
+            tx.oncomplete = () => { loadProducts(); };
         }
 
         function resetToDefaultShops() {
@@ -396,7 +395,7 @@
             store.clear();
             defaultShops.forEach(s => store.add(s));
             tx.oncomplete = () => {
-                alert('नवीन सर्व दुकाने आणि रूट्स यशस्वीरित्या लोड झाले!');
+                alert('सर्व दुकाने आणि रूट्स यशस्वीरित्या लोड झाले!');
                 loadShops();
             };
         }
@@ -554,8 +553,17 @@
                 
                 routeSelect.innerHTML = '<option value="">-- मार्ग निवडा --</option>' + 
                     routes.map(r => `<option value="${r}">${r}</option>`).join('');
-                
-                loadShopsByRoute();
+
+                let savedRouteData = localStorage.getItem('kalidas_last_route');
+                let savedTime = localStorage.getItem('kalidas_route_time');
+                let now = new Date().getTime();
+
+                if(savedRouteData && savedTime && (now - savedTime < 24 * 60 * 60 * 1000)) {
+                    if(routes.includes(savedRouteData)) {
+                        routeSelect.value = savedRouteData;
+                        loadShopsByRoute(true);
+                    }
+                }
 
                 let html = '<table><tr><th>मार्ग</th><th>दुकान</th><th>तपशील</th><th>कृती</th></tr>';
                 shops.forEach(s => {
@@ -577,7 +585,19 @@
             };
         }
 
-        function loadShopsByRoute() {
+        function onRouteChanged() {
+            let r = document.getElementById('orderRoute').value;
+            if(r) {
+                localStorage.setItem('kalidas_last_route', r);
+                localStorage.setItem('kalidas_route_time', new Date().getTime());
+            } else {
+                localStorage.removeItem('kalidas_last_route');
+                localStorage.removeItem('kalidas_route_time');
+            }
+            loadShopsByRoute(false);
+        }
+
+        function loadShopsByRoute(isInitial = false) {
             let r = document.getElementById('orderRoute').value;
             let shopSelect = document.getElementById('orderShop');
             
@@ -591,11 +611,13 @@
                 let shops = e.target.result.filter(s => s.route === r);
                 shopSelect.innerHTML = '<option value="">-- दुकान निवडा --</option>' + 
                     shops.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
-                clearOrderFormQuantities();
+                if(!isInitial) {
+                    clearOrderFormQuantities();
+                }
             };
         }
 
-        // --- ORDERS & REPORTS ---
+        // --- ORDERS & REPORTS & EDIT ORDER ---
         function calcTotal() {
             let sub = 0;
             document.querySelectorAll('.prod-row').forEach(row => {
@@ -618,6 +640,7 @@
         }
 
         function saveOrder() {
+            let editId = document.getElementById('editingOrderId').value;
             let route = document.getElementById('orderRoute').value;
             let shop = document.getElementById('orderShop').value;
             let date = document.getElementById('orderDate').value;
@@ -640,21 +663,82 @@
                 paid: parseFloat(document.getElementById('orderPaid').value) || 0,
                 balance: parseFloat(document.getElementById('orderBalance').innerText)
             };
-            
-            getStore('orders', 'readwrite').add(order).onsuccess = () => {
-                alert('ऑर्डर यशस्वी सेव्ह झाली!');
-                loadOrders();
-                document.getElementById('orderRoute').value = '';
-                document.getElementById('orderShop').innerHTML = '<option value="">-- आधी मार्ग निवडा --</option>';
-                clearOrderFormQuantities();
+
+            if(editId) {
+                order.id = parseInt(editId);
+                getStore('orders', 'readwrite').put(order).onsuccess = () => {
+                    alert('ऑर्डर यशस्वीरित्या अपडेट झाली!');
+                    resetOrderForm();
+                    loadOrders();
+                };
+            } else {
+                getStore('orders', 'readwrite').add(order).onsuccess = () => {
+                    alert('ऑर्डर यशस्वी सेव्ह झाली!');
+                    loadOrders();
+                    document.getElementById('orderShop').value = '';
+                    clearOrderFormQuantities();
+                };
+            }
+        }
+
+        function editOrder(id) {
+            getStore('orders', 'readonly').get(id).onsuccess = e => {
+                let o = e.target.result;
+                if(!o) return;
+
+                document.getElementById('editingOrderId').value = o.id;
+                document.getElementById('orderRoute').value = o.route;
+                
+                getStore('shops', 'readonly').getAll().onsuccess = evt => {
+                    let shops = evt.target.result.filter(s => s.route === o.route);
+                    let shopSelect = document.getElementById('orderShop');
+                    shopSelect.innerHTML = '<option value="">-- दुकान निवडा --</option>' + 
+                        shops.map(s => `<option value="${s.name}" ${s.name === o.shop ? 'selected' : ''}>${s.name}</option>`).join('');
+                };
+
+                document.getElementById('orderDate').value = o.date;
+                document.getElementById('orderDiscount').value = o.discount;
+                document.getElementById('orderPaid').value = o.paid;
+
+                let itemMap = {};
+                o.items.forEach(i => { itemMap[i.name] = i.qty; });
+
+                document.querySelectorAll('.prod-row').forEach(row => {
+                    let pName = row.dataset.name;
+                    row.querySelector('.order-qty').value = itemMap[pName] || 0;
+                });
+
+                calcTotal();
+                document.getElementById('orderFormTitle').innerText = "ऑर्डर एडिट करा (Edit Order)";
+                document.getElementById('orderSaveBtn').innerText = "अपडेट करा (Update)";
+                document.getElementById('orderCancelBtn').style.display = "block";
+                
+                window.scrollTo({ top: 0, behavior: 'smooth' });
             };
+        }
+
+        function resetOrderForm() {
+            document.getElementById('editingOrderId').value = '';
+            document.getElementById('orderFormTitle').innerText = "नवीन ऑर्डर नोंदवा";
+            document.getElementById('orderSaveBtn').innerText = "ऑर्डर सेव्ह करा";
+            document.getElementById('orderCancelBtn').style.display = "none";
+            document.getElementById('orderShop').value = '';
+            clearOrderFormQuantities();
         }
 
         function loadOrders() {
             getStore('orders', 'readonly').getAll().onsuccess = e => {
                 let orders = e.target.result.reverse();
-                let html = '<table><tr><th>तारीख</th><th>दुकान</th><th>नेट</th><th>बाकी</th></tr>';
-                orders.forEach(o => html += `<tr><td>${o.date}</td><td>${o.shop} (${o.route})</td><td>₹${o.net}</td><td>₹${o.balance}</td></tr>`);
+                let html = '<table><tr><th>तारीख</th><th>दुकान</th><th>नेट</th><th>बाकी</th><th>कृती</th></tr>';
+                orders.forEach(o => {
+                    html += `<tr>
+                        <td>${o.date}</td>
+                        <td>${o.shop} (${o.route})</td>
+                        <td>₹${o.net}</td>
+                        <td>₹${o.balance}</td>
+                        <td><button class="btn-edit" onclick="editOrder(${o.id})">एडिट</button></td>
+                    </tr>`;
+                });
                 html += '</table>';
                 document.getElementById('orderHistoryList').innerHTML = html;
             };
@@ -676,10 +760,12 @@
                     orders.forEach((o, idx) => {
                         let pMap = {}; prods.forEach(p => pMap[p] = 0);
                         let rowTotalQty = 0;
-                        o.items.forEach(i => { 
-                            pMap[i.name] = i.qty; 
-                            rowTotalQty += i.qty;
-                        });
+                        if(o.items && Array.isArray(o.items)) {
+                            o.items.forEach(i => { 
+                                pMap[i.name] = i.qty; 
+                                rowTotalQty += i.qty;
+                            });
+                        }
 
                         html += `<tr><td>${idx+1}</td><td>${o.route}</td><td>${o.shop}</td>`;
                         prods.forEach(p => { 
@@ -704,11 +790,35 @@
         }
 
         function exportCSV() {
-            let csv = '\uFEFFDate,Route,Shop,Net,Balance\n';
-            getStore('orders', 'readonly').getAll().onsuccess = e => {
-                e.target.result.forEach(o => csv += `"${o.date}","${o.route}","${o.shop}",${o.net},${o.balance}\n`);
-                let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                let l = document.createElement('a'); l.href = URL.createObjectURL(blob); l.download = "orders.csv"; l.click();
+            getStore('products', 'readonly').getAll().onsuccess = eP => {
+                let prods = eP.target.result.map(p => p.name);
+                getStore('orders', 'readonly').getAll().onsuccess = eO => {
+                    let orders = eO.target.result;
+                    let csv = '\uFEFFक्र.,तारीख,रूट,दुकान,';
+                    prods.forEach(p => csv += `"${p} (नग)",`);
+                    csv += 'एकूण नग,नेट रक्कम (₹),बाकी (₹)\n';
+
+                    orders.forEach((o, idx) => {
+                        let pMap = {}; prods.forEach(p => pMap[p] = 0);
+                        let rowTotalQty = 0;
+                        if(o.items && Array.isArray(o.items)) {
+                            o.items.forEach(i => { 
+                                pMap[i.name] = i.qty; 
+                                rowTotalQty += i.qty;
+                            });
+                        }
+
+                        csv += `"${idx + 1}","${o.date}","${o.route}","${o.shop}",`;
+                        prods.forEach(p => { csv += `"${pMap[p]}",`; });
+                        csv += `"${rowTotalQty}","${o.net}","${o.balance}"\n`;
+                    });
+
+                    let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                    let l = document.createElement('a');
+                    l.href = URL.createObjectURL(blob);
+                    l.download = `Kalidas_Orders_Report_${new Date().toISOString().slice(0,10)}.csv`;
+                    l.click();
+                };
             };
         }
 
