@@ -78,7 +78,7 @@
                 </div>
                 <div class="form-group"><label>तारीख:</label><input type="date" id="orderDate"></div>
                 
-                <h3>उत्पादने व प्रमाण (ऑर्डर्स)</h3>
+                <h3>उत्पादने व ऑर्डर्स </h3>
                 <div id="orderProductsContainer" class="product-grid"></div>
 
                 <div style="margin-top: 15px; background: #f9f9f9; padding: 10px; border-radius: 6px;">
@@ -106,9 +106,8 @@
                 <div class="form-group"><label>उत्पादनाचे नाव:</label><input type="text" id="prodName"></div>
                 <div class="form-group"><label>किंमत (₹):</label><input type="number" id="prodPrice"></div>
                 <div class="form-group">
-                    <label>उत्पादनाचा फोटो (Image):</label>
-                    <input type="file" id="prodImageFile" accept="image/*" style="margin-bottom:5px;">
-                    <div id="currentProdImagePreview" style="margin-top:5px;"></div>
+                    <label>फोटोचे नाव / पाथ (उदा. kaju.png):</label>
+                    <input type="text" id="prodImageName" placeholder="उदा. kaju.png किंवा खालील लिस्ट मधून नाव द्या">
                 </div>
                 <button class="btn" id="prodSaveBtn" onclick="saveProduct()">उत्पादन सेव्ह करा</button>
                 <button class="btn btn-secondary" id="prodCancelBtn" style="display:none; margin-top:5px;" onclick="resetProdForm()">रद्द करा</button>
@@ -165,7 +164,6 @@
 
     <script>
         let db;
-        let currentEditingProductImage = null;
 
         const defaultShops = [
             {"route": "Banda", "name": "Nandkishor sweets Malgaon highway", "details": "Malgaon | Lokesh 73020 19 933"},
@@ -355,21 +353,21 @@
         ];
 
         const defaultProds = [
-            { name: "Kaju candy ₹10", price: 200, image: "" },
-            { name: "Mawa candy ₹15", price: 300, image: "" },
-            { name: "Gadabad", price: 150, image: "" },
-            { name: "Strawberry Cup 10", price: 200, image: "" },
-            { name: "Pista Cup 10", price: 200, image: "" },
-            { name: "Vanilla cup 10", price: 200, image: "" },
-            { name: "Mango Cup 20", price: 200, image: "" },
-            { name: "Buttercotch cup 20", price: 200, image: "" },
-            { name: "Sauce Ripple Cup 20", price: 200, image: "" },
-            { name: "Choco ripple Cup 20", price: 200, image: "" },
-            { name: "family pack vanilla", price: 85, image: "" },
-            { name: "Family pack mango", price: 125, image: "" }
+            { name: "Kaju candy ₹10", price: 200, image: "kaju.png" },
+            { name: "Mawa candy ₹15", price: 300, image: "mawa.png" },
+            { name: "Gadabad", price: 150, image: "gadabad.png" },
+            { name: "Strawberry Cup 10", price: 200, image: "strawberry.png" },
+            { name: "Pista Cup 10", price: 200, image: "pista.png" },
+            { name: "Vanilla cup 10", price: 200, image: "vanilla.png" },
+            { name: "Mango Cup 20", price: 200, image: "mango.png" },
+            { name: "Buttercotch cup 20", price: 200, image: "butterscotch.png" },
+            { name: "Sauce Ripple Cup 20", price: 200, image: "sauce.png" },
+            { name: "Choco ripple Cup 20", price: 200, image: "choco.png" },
+            { name: "family pack vanilla", price: 85, image: "family_vanilla.png" },
+            { name: "Family pack mango", price: 125, image: "family_mango.png" }
         ];
 
-        const req = indexedDB.open("KalidasIceCreamDB", 23);
+        const req = indexedDB.open("KalidasIceCreamDB", 26);
         req.onerror = e => alert("Database error");
         req.onsuccess = e => { db = e.target.result; initApp(); };
         req.onupgradeneeded = e => {
@@ -378,6 +376,15 @@
             if(!db.objectStoreNames.contains('shops')) db.createObjectStore('shops', { keyPath: 'id', autoIncrement: true });
             if(!db.objectStoreNames.contains('orders')) db.createObjectStore('orders', { keyPath: 'id', autoIncrement: true });
         };
+
+        function formatDateDMY(dateStr) {
+            if(!dateStr) return '';
+            let parts = dateStr.split('-');
+            if(parts.length === 3) {
+                return `${parts[2]}-${parts[1]}-${parts[0]}`;
+            }
+            return dateStr;
+        }
 
         function switchTab(id, el) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
@@ -433,23 +440,12 @@
             let id = document.getElementById('prodId').value;
             let name = document.getElementById('prodName').value.trim();
             let price = parseFloat(document.getElementById('prodPrice').value);
-            if(!name || isNaN(price)) return alert('कृपया माहिती भरा.');
+            let image = document.getElementById('prodImageName').value.trim();
+            if(!name || isNaN(price)) return alert('कृपया उत्पादनाचे नाव आणि किंमत भरा.');
 
-            let fileInput = document.getElementById('prodImageFile');
-            if(fileInput.files && fileInput.files[0]) {
-                let reader = new FileReader();
-                reader.onload = function(e) {
-                    persistProduct(id, name, price, e.target.result);
-                };
-                reader.readAsDataURL(fileInput.files[0]);
-            } else {
-                persistProduct(id, name, price, currentEditingProductImage || "");
-            }
-        }
-
-        function persistProduct(id, name, price, image) {
             let item = { name, price, image };
             if(id) item.id = parseInt(id);
+
             getStore('products', 'readwrite').put(item).onsuccess = () => {
                 resetProdForm();
                 loadProducts();
@@ -460,21 +456,9 @@
             document.getElementById('prodId').value = id;
             document.getElementById('prodName').value = name;
             document.getElementById('prodPrice').value = price;
-            currentEditingProductImage = image || "";
-            
-            let previewArea = document.getElementById('currentProdImagePreview');
-            if(currentEditingProductImage) {
-                previewArea.innerHTML = `<img src="${currentEditingProductImage}" style="width:50px; height:50px; object-fit:cover; border-radius:4px;"><br><button type="button" onclick="removeProductImageInEdit()" style="background:red; color:white; border:none; padding:2px 5px; font-size:0.75rem; border-radius:3px; margin-top:3px; cursor:pointer;">फोटो काढा</button>`;
-            } else {
-                previewArea.innerHTML = `<small style="color:gray;">सध्या फोटो नाही</small>`;
-            }
+            document.getElementById('prodImageName').value = image || "";
             document.getElementById('prodFormTitle').innerText = "उत्पादनात बदल करा";
             document.getElementById('prodCancelBtn').style.display = "block";
-        }
-
-        function removeProductImageInEdit() {
-            currentEditingProductImage = "";
-            document.getElementById('currentProdImagePreview').innerHTML = `<small style="color:red;">फोटो काढला गेला आहे</small>`;
         }
 
         function deleteProduct(id) {
@@ -487,9 +471,7 @@
             document.getElementById('prodId').value = '';
             document.getElementById('prodName').value = '';
             document.getElementById('prodPrice').value = '';
-            document.getElementById('prodImageFile').value = '';
-            document.getElementById('currentProdImagePreview').innerHTML = '';
-            currentEditingProductImage = null;
+            document.getElementById('prodImageName').value = '';
             document.getElementById('prodFormTitle').innerText = "उत्पादन जोडा / बदला";
             document.getElementById('prodCancelBtn').style.display = "none";
         }
@@ -497,13 +479,12 @@
         function loadProducts() {
             getStore('products', 'readonly').getAll().onsuccess = e => {
                 let prods = e.target.result;
-                let html = '<table><tr><th>फोटो</th><th>नाव</th><th>किंमत</th><th>कृती</th></tr>';
+                let html = '<table><tr><th>फोटो नाव</th><th>नाव</th><th>किंमत</th><th>कृती</th></tr>';
                 prods.forEach(p => {
-                    let imgTag = p.image ? `<img src="${p.image}" class="prod-thumb">` : '<span style="color:gray; font-size:0.75rem;">नाही</span>';
                     let safeName = p.name.replace(/'/g, "\\'");
                     let safeImg = (p.image || '').replace(/'/g, "\\'");
                     html += `<tr>
-                        <td>${imgTag}</td>
+                        <td>${p.image || 'नाही'}</td>
                         <td>${p.name}</td>
                         <td>₹${p.price}</td>
                         <td>
@@ -520,7 +501,7 @@
 
         function renderOrderProductInputs(prods) {
             document.getElementById('orderProductsContainer').innerHTML = prods.map(p => {
-                let thumb = p.image ? `<img src="${p.image}" class="large-thumb">` : `<div class="large-thumb" style="display:flex;align-items:center;justify-content:center;color:#999;font-size:0.7rem;">फोटो नाही</div>`;
+                let thumb = `<div class="large-thumb" style="display:flex;align-items:center;justify-content:center;color:#d81b60;font-weight:bold;font-size:0.75rem;background:#fce4ec;border-radius:6px;">🍦 आईस्क्रीम</div>`;
                 return `
                     <div class="product-card prod-row" data-name="${p.name}" data-price="${p.price}">
                         ${thumb}
@@ -779,11 +760,12 @@
                 for(let date in grouped) {
                     let dateOrders = grouped[date];
                     let dayTotalNet = dateOrders.reduce((sum, item) => sum + item.net, 0);
+                    let displayDate = formatDateDMY(date);
                     
                     html += `
                         <div class="folder-group">
                             <div class="folder-header" onclick="toggleFolder(this)">
-                                <span>📁 दिनांक: ${date} (${dateOrders.length} ऑर्डर्स)</span>
+                                <span>📁 दिनांक: ${displayDate} (${dateOrders.length} ऑर्डर्स)</span>
                                 <span>एकूण: ₹${dayTotalNet.toFixed(2)} 🔽</span>
                             </div>
                             <div class="folder-content">
@@ -814,17 +796,19 @@
             let selectedDate = document.getElementById('reportDateSelect').value;
             if(!selectedDate) return;
 
+            let displayDate = formatDateDMY(selectedDate);
+
             getStore('products', 'readonly').getAll().onsuccess = eP => {
                 let prods = eP.target.result.map(p => p.name);
                 getStore('orders', 'readonly').getAll().onsuccess = eO => {
                     let orders = eO.target.result.filter(o => o.date === selectedDate);
                     
                     if(orders.length === 0) {
-                        document.getElementById('dateReportOutput').innerHTML = `<p style="color:red; text-align:center;">दिनांक ${selectedDate} साठी कोणतीही ऑर्डर सापडली नाही.</p>`;
+                        document.getElementById('dateReportOutput').innerHTML = `<p style="color:red; text-align:center;">दिनांक ${displayDate} साठी कोणतीही ऑर्डर सापडली नाही.</p>`;
                         return;
                     }
 
-                    let html = `<h3>दिनांक: ${selectedDate} चा अहवाल</h3>`;
+                    let html = `<h3>दिनांक: ${displayDate} चा अहवाल</h3>`;
                     html += '<div class="table-responsive"><table><thead><tr><th>क्र.</th><th>रूट</th><th>दुकान</th>';
                     prods.forEach(p => html += `<th>${p}</th>`);
                     html += '<th>एकूण बॉक्स</th><th>नेट रक्कम</th></tr></thead><tbody>';
@@ -858,7 +842,7 @@
                     html += `<td><b>${grandQty}</b></td><td><b>₹${grandAmt.toFixed(2)}</b></td></tr></tbody></table></div>`;
 
                     let waText = `*🍦 कालिदास आईस्क्रीम ऑर्डर चार्ट*%0A`;
-                    waText += `📅 दिनांक: ${selectedDate}%0A`;
+                    waText += `📅 दिनांक: ${displayDate}%0A`;
                     waText += `\`\`\`%0A`;
                     waText += `--------------------------------------------------%0A`;
                     waText += `क्र. | दुकान / रूट                | नग  | नेट ₹%0A`;
@@ -898,6 +882,7 @@
         }
 
         function shareCSVWhatsApp(selectedDate) {
+            let displayDate = formatDateDMY(selectedDate);
             getStore('products', 'readonly').getAll().onsuccess = eP => {
                 let prods = eP.target.result.map(p => p.name);
                 getStore('orders', 'readonly').getAll().onsuccess = eO => {
@@ -922,7 +907,7 @@
                         grandQty += rowTotalQty;
                         grandAmt += o.net;
 
-                        csv += `"${idx + 1}","${o.date}","${o.route}","${o.shop}",`;
+                        csv += `"${idx + 1}","${displayDate}","${o.route}","${o.shop}",`;
                         prods.forEach(p => { csv += `"${pMap[p]}",`; });
                         csv += `"${rowTotalQty}","${o.net}","${o.balance}"\n`;
                     });
@@ -937,19 +922,19 @@
                     });
                     csv += `"${grandQty}","${grandAmt.toFixed(2)}",""\n`;
 
-                    let file = new File([csv], `Kalidas_Report_${selectedDate}.csv`, { type: 'text/csv' });
+                    let file = new File([csv], `Kalidas_Report_${displayDate}.csv`, { type: 'text/csv' });
                     
                     if (navigator.canShare && navigator.canShare({ files: [file] })) {
                         navigator.share({
-                            title: `कालिदास आईस्क्रीम अहवाल (${selectedDate})`,
-                            text: `📅 दिनांक: ${selectedDate}\n📦 एकूण बॉक्स: ${grandQty}\n💰 एकूण रक्कम: ₹${grandAmt.toFixed(2)}`,
+                            title: `कालिदास आईस्क्रीम अहवाल (${displayDate})`,
+                            text: `📅 दिनांक: ${displayDate}\n📦 एकूण बॉक्स: ${grandQty}\n💰 एकूण रक्कम: ₹${grandAmt.toFixed(2)}`,
                             files: [file]
                         }).catch(console.error);
                     } else {
                         let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
                         let l = document.createElement('a');
                         l.href = URL.createObjectURL(blob);
-                        l.download = `Kalidas_Report_${selectedDate}.csv`;
+                        l.download = `Kalidas_Report_${displayDate}.csv`;
                         l.click();
                         alert('तुमच्या डिव्हाइसवर फाईल थेट शेअरिंग सपोर्ट नसल्यामुळे फाईल डाउनलोड झाली आहे. तुम्ही ती WhatsApp वर डाऊनलोड करून पाठवू शकता.');
                     }
@@ -976,7 +961,8 @@
                             });
                         }
 
-                        csv += `"${idx + 1}","${o.date}","${o.route}","${o.shop}",`;
+                        let displayDate = formatDateDMY(o.date);
+                        csv += `"${idx + 1}","${displayDate}","${o.route}","${o.shop}",`;
                         prods.forEach(p => { csv += `"${pMap[p]}",`; });
                         csv += `"${rowTotalQty}","${o.net}","${o.balance}"\n`;
                     });
@@ -984,7 +970,8 @@
                     let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
                     let l = document.createElement('a');
                     l.href = URL.createObjectURL(blob);
-                    l.download = `Kalidas_Orders_Report_${new Date().toISOString().slice(0,10)}.csv`;
+                    let todayStr = formatDateDMY(new Date().toISOString().slice(0,10));
+                    l.download = `Kalidas_Orders_Report_${todayStr}.csv`;
                     l.click();
                 };
             };
@@ -1003,15 +990,6 @@
                     };
                 };
             };
-        }
-
-        // Service Worker Registration for Offline Capabilities
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(reg => console.log('Service Worker Registered successfully.'))
-                    .catch(err => console.log('Service Worker registration failed:', err));
-            });
         }
     </script>
 </body>
