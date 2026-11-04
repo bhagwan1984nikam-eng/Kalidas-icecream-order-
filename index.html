@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>कालिदास आईस्क्रीम ऑर्डर ॲप</title>
-    <!-- PWA Manifest with icon.png -->
     <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Kalidas%20Ice%20Cream%20Orders%22%2C%22short_name%22%3A%22Kalidas%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23ffffff%22%2C%22theme_color%22%3A%22%23d81b60%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22icon.png%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D">
     <style>
         :root { --primary: #d81b60; --secondary: #00897b; --danger: #d32f2f; --warning: #f57c00; --bg: #fafafa; --border: #e0e0e0; }
@@ -370,7 +369,6 @@
             { name: "Family pack mango", price: 125, image: "" }
         ];
 
-        // Database version set to 23
         const req = indexedDB.open("KalidasIceCreamDB", 23);
         req.onerror = e => alert("Database error");
         req.onsuccess = e => { db = e.target.result; initApp(); };
@@ -431,7 +429,6 @@
 
         function getStore(name, mode) { return db.transaction(name, mode).objectStore(name); }
 
-        // --- PRODUCTS CRUD ---
         function saveProduct() {
             let id = document.getElementById('prodId').value;
             let name = document.getElementById('prodName').value.trim();
@@ -549,7 +546,6 @@
             calcTotal();
         }
 
-        // --- SHOPS CRUD ---
         function saveShop() {
             let id = document.getElementById('shopId').value;
             let route = document.getElementById('shopRoute').value.trim();
@@ -662,7 +658,6 @@
             };
         }
 
-        // --- ORDERS & REPORTS & EDIT ORDER ---
         function calcTotal() {
             let sub = 0;
             document.querySelectorAll('.prod-row').forEach(row => {
@@ -815,7 +810,6 @@
             content.classList.toggle('open');
         }
 
-        // Full Chart Report with Total Quantity (एकूण बॉक्स) and Total Amount at the bottom
         function generateDateReport() {
             let selectedDate = document.getElementById('reportDateSelect').value;
             if(!selectedDate) return;
@@ -830,7 +824,6 @@
                         return;
                     }
 
-                    // App Display Table
                     let html = `<h3>दिनांक: ${selectedDate} चा अहवाल</h3>`;
                     html += '<div class="table-responsive"><table><thead><tr><th>क्र.</th><th>रूट</th><th>दुकान</th>';
                     prods.forEach(p => html += `<th>${p}</th>`);
@@ -864,7 +857,6 @@
                     prods.forEach(p => { html += `<td>${totals[p]}</td>`; });
                     html += `<td><b>${grandQty}</b></td><td><b>₹${grandAmt.toFixed(2)}</b></td></tr></tbody></table></div>`;
 
-                    // WhatsApp Chart Format with Table alignment & Totals at the bottom
                     let waText = `*🍦 कालिदास आईस्क्रीम ऑर्डर चार्ट*%0A`;
                     waText += `📅 दिनांक: ${selectedDate}%0A`;
                     waText += `\`\`\`%0A`;
@@ -898,8 +890,6 @@
 
                     let encodedWaText = encodeURIComponent(waText);
                     html += `<button class="btn-whatsapp" onclick="window.open('https://api.whatsapp.com/send?text=${encodedWaText}', '_blank')">💬 चार्ट WhatsApp वर पाठवा</button>`;
-
-                    // Button to share complete Excel CSV file directly via WhatsApp
                     html += `<button class="btn-whatsapp" style="background:#128c7e; margin-top:8px;" onclick="shareCSVWhatsApp('${selectedDate}')">📎 एक्सेल CSV फाईल WhatsApp वर पाठवा</button>`;
 
                     document.getElementById('dateReportOutput').innerHTML = html;
@@ -907,7 +897,6 @@
             };
         }
 
-        // Generate and Share Full CSV File via WhatsApp
         function shareCSVWhatsApp(selectedDate) {
             getStore('products', 'readonly').getAll().onsuccess = eP => {
                 let prods = eP.target.result.map(p => p.name);
@@ -938,7 +927,6 @@
                         csv += `"${rowTotalQty}","${o.net}","${o.balance}"\n`;
                     });
 
-                    // Adding Totals Row at the bottom of CSV
                     csv += `"","","","एकूण (TOTAL)",`;
                     prods.forEach(p => {
                         let colTotal = orders.reduce((sum, ord) => {
@@ -958,7 +946,6 @@
                             files: [file]
                         }).catch(console.error);
                     } else {
-                        // Fallback: Download file if direct sharing is not supported by browser
                         let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
                         let l = document.createElement('a');
                         l.href = URL.createObjectURL(blob);
@@ -1016,6 +1003,15 @@
                     };
                 };
             };
+        }
+
+        // Service Worker Registration for Offline Capabilities
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(reg => console.log('Service Worker Registered successfully.'))
+                    .catch(err => console.log('Service Worker registration failed:', err));
+            });
         }
     </script>
 </body>
