@@ -22,6 +22,26 @@
         button.btn-secondary { background: var(--secondary); color: white; }
         button.btn-edit { background: var(--warning); color: white; padding: 5px 10px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; margin-right: 4px; }
         button.btn-danger { background: var(--danger); color: white; padding: 5px 10px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; }
+        button.btn-whatsapp { background: #25d366; color: white; padding: 6px 12px; font-size: 0.85rem; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 5px; }
+        
+        /* Attractive Product Grid & Counter Layout */
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-top: 10px; }
+        .product-card { display: flex; align-items: center; background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 10px; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        .product-card img.large-thumb { width: 60px; height: 60px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; background: #eee; }
+        .product-info { flex-grow: 1; }
+        .product-info h4 { font-size: 0.95rem; margin-bottom: 2px; color: #333; }
+        .product-info p { font-size: 0.85rem; color: var(--primary); font-weight: bold; }
+        .counter-box { display: flex; align-items: center; gap: 6px; }
+        .counter-box button { width: 32px; height: 32px; background: var(--primary); color: white; border: none; border-radius: 4px; font-size: 1.1rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
+        .counter-box button:active { background: #ad1457; }
+        .counter-box input { width: 45px; text-align: center; padding: 5px; font-size: 1rem; border: 1px solid var(--border); border-radius: 4px; }
+
+        /* Folder Accordion Styles for History */
+        .folder-group { border: 1px solid var(--border); border-radius: 6px; margin-bottom: 8px; background: #fff; overflow: hidden; }
+        .folder-header { background: #f1f3f4; padding: 10px 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 0.95rem; }
+        .folder-content { padding: 10px; display: none; background: #fafafa; border-top: 1px solid var(--border); }
+        .folder-content.open { display: block; }
+
         .table-responsive { overflow-x: auto; margin-top: 10px; }
         table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
         th, td { border: 1px solid var(--border); padding: 8px; text-align: center; vertical-align: middle; }
@@ -60,8 +80,10 @@
                     </select>
                 </div>
                 <div class="form-group"><label>तारीख:</label><input type="date" id="orderDate"></div>
-                <h3>उत्पादने व प्रमाण</h3>
-                <div id="orderProductsContainer" style="max-height: 250px; overflow-y: auto; margin-top: 10px;"></div>
+                
+                <h3>उत्पादने व प्रमाण (प्लस / मायनस)</h3>
+                <div id="orderProductsContainer" class="product-grid"></div>
+
                 <div style="margin-top: 15px; background: #f9f9f9; padding: 10px; border-radius: 6px;">
                     <p><strong>एकूण: </strong><span id="orderSubtotal">0.00</span> ₹</p>
                     <div class="form-group" style="margin-top:8px;"><label>सवलत (₹):</label><input type="number" id="orderDiscount" value="0" oninput="calcTotal()"></div>
@@ -73,8 +95,8 @@
                 <button class="btn btn-secondary" id="orderCancelBtn" style="display:none; margin-top:5px;" onclick="resetOrderForm()">एडिट रद्द करा</button>
             </div>
             <div class="card">
-                <h2>ऑर्डर इतिहास</h2>
-                <div class="table-responsive" id="orderHistoryList"></div>
+                <h2>ऑर्डर इतिहास (तारीखनुसार फोल्डर)</h2>
+                <div id="orderHistoryFolders" style="margin-top: 10px;"></div>
             </div>
         </div>
 
@@ -122,10 +144,16 @@
         <!-- 4. Reports Section -->
         <div id="sec-reports" class="section">
             <div class="card">
-                <h2>अहवाल व बॅकअप</h2>
-                <button class="btn btn-secondary" onclick="generateReport()">अहवाल तयार करा</button>
-                <div class="table-responsive" id="reportOutput" style="margin-top:10px;"></div>
-                <button class="btn" style="margin-top:10px;" onclick="exportCSV()">Excel CSV डाउनलोड करा</button>
+                <h2>तारीखनुसार अहवाल व WhatsApp शेअरिंग</h2>
+                <div class="form-group" style="margin-top: 10px;">
+                    <label>अहवालासाठी तारीख निवडा:</label>
+                    <input type="date" id="reportDateSelect" onchange="generateDateReport()">
+                </div>
+                <div id="dateReportOutput" style="margin-top:15px;"></div>
+                
+                <hr style="margin: 20px 0; border:0; border-top:1px solid var(--border);">
+                <h2>एकत्रित बॅकअप व CSV</h2>
+                <button class="btn" style="margin-top:10px;" onclick="exportCSV()">संपूर्ण Excel CSV डाउनलोड करा</button>
                 <button class="btn" style="margin-top:10px; background:#d32f2f;" onclick="exportJSON()">JSON बॅकअप घ्या</button>
             </div>
         </div>
@@ -344,8 +372,8 @@
             { name: "Family pack mango", price: 125, image: "" }
         ];
 
-        // Database version set to 18 to force fresh update if cached
-        const req = indexedDB.open("KalidasIceCreamDB", 18);
+        // Database version set to 19
+        const req = indexedDB.open("KalidasIceCreamDB", 19);
         req.onerror = e => alert("Database error");
         req.onsuccess = e => { db = e.target.result; initApp(); };
         req.onupgradeneeded = e => {
@@ -360,7 +388,10 @@
             document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
             document.getElementById('sec-' + id).classList.add('active');
             el.classList.add('active');
-            if(id === 'reports') generateReport();
+            if(id === 'reports') {
+                document.getElementById('reportDateSelect').valueAsDate = new Date();
+                generateDateReport();
+            }
         }
 
         function initApp() {
@@ -492,16 +523,33 @@
             };
         }
 
+        // Plus / Minus Quantity Control Grid
         function renderOrderProductInputs(prods) {
             document.getElementById('orderProductsContainer').innerHTML = prods.map(p => {
-                let thumb = p.image ? `<img src="${p.image}" style="width:30px; height:30px; object-fit:cover; border-radius:3px; vertical-align:middle; margin-right:5px;">` : '';
+                let thumb = p.image ? `<img src="${p.image}" class="large-thumb">` : `<div class="large-thumb" style="display:flex;align-items:center;justify-content:center;color:#999;font-size:0.7rem;">फोटो नाही</div>`;
                 return `
-                    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;" class="prod-row" data-name="${p.name}" data-price="${p.price}">
-                        <span style="display:flex; align-items:center;">${thumb}${p.name} (₹${p.price})</span>
-                        <input type="number" class="order-qty" value="0" min="0" style="width:80px;" oninput="calcTotal()">
+                    <div class="product-card prod-row" data-name="${p.name}" data-price="${p.price}">
+                        ${thumb}
+                        <div class="product-info">
+                            <h4>${p.name}</h4>
+                            <p>₹${p.price}</p>
+                        </div>
+                        <div class="counter-box">
+                            <button type="button" onclick="changeQty(this, -1)">-</button>
+                            <input type="number" class="order-qty" value="0" min="0" oninput="calcTotal()">
+                            <button type="button" onclick="changeQty(this, 1)">+</button>
+                        </div>
                     </div>
                 `;
             }).join('');
+        }
+
+        function changeQty(btn, delta) {
+            let input = btn.parentElement.querySelector('.order-qty');
+            let val = (parseInt(input.value) || 0) + delta;
+            if(val < 0) val = 0;
+            input.value = val;
+            calcTotal();
         }
 
         // --- SHOPS CRUD ---
@@ -726,65 +774,101 @@
             clearOrderFormQuantities();
         }
 
+        // Folder Accordion Layout for Order History
         function loadOrders() {
             getStore('orders', 'readonly').getAll().onsuccess = e => {
                 let orders = e.target.result.reverse();
-                let html = '<table><tr><th>तारीख</th><th>दुकान</th><th>नेट</th><th>बाकी</th><th>कृती</th></tr>';
+                let grouped = {};
                 orders.forEach(o => {
-                    html += `<tr>
-                        <td>${o.date}</td>
-                        <td>${o.shop} (${o.route})</td>
-                        <td>₹${o.net}</td>
-                        <td>₹${o.balance}</td>
-                        <td><button class="btn-edit" onclick="editOrder(${o.id})">एडिट</button></td>
-                    </tr>`;
+                    if(!grouped[o.date]) grouped[o.date] = [];
+                    grouped[o.date].push(o);
                 });
-                html += '</table>';
-                document.getElementById('orderHistoryList').innerHTML = html;
+
+                let html = '';
+                for(let date in grouped) {
+                    let dateOrders = grouped[date];
+                    let dayTotalNet = dateOrders.reduce((sum, item) => sum + item.net, 0);
+                    
+                    html += `
+                        <div class="folder-group">
+                            <div class="folder-header" onclick="toggleFolder(this)">
+                                <span>📁 दिनांक: ${date} (${dateOrders.length} ऑर्डर्स)</span>
+                                <span>एकूण: ₹${dayTotalNet.toFixed(2)} 🔽</span>
+                            </div>
+                            <div class="folder-content">
+                                <div class="table-responsive">
+                                    <table>
+                                        <tr><th>दुकान</th><th>नेट रक्कम</th><th>बाकी</th><th>कृती</th></tr>
+                    `;
+                    dateOrders.forEach(o => {
+                        html += `<tr>
+                            <td>${o.shop} (${o.route})</td>
+                            <td>₹${o.net}</td>
+                            <td>₹${o.balance}</td>
+                            <td><button class="btn-edit" onclick="editOrder(${o.id})">एडिट</button></td>
+                        </tr>`;
+                    });
+                    html += `</table></div></div></div>`;
+                }
+                document.getElementById('orderHistoryFolders').innerHTML = html || '<p style="color:gray;text-align:center;">कोणत्याही ऑर्डर्स नोंदवलेल्या नाहीत.</p>';
             };
         }
 
-        function generateReport() {
+        function toggleFolder(header) {
+            let content = header.nextElementSibling;
+            content.classList.toggle('open');
+        }
+
+        // Date-wise Report & WhatsApp Share
+        function generateDateReport() {
+            let selectedDate = document.getElementById('reportDateSelect').value;
+            if(!selectedDate) return;
+
             getStore('products', 'readonly').getAll().onsuccess = eP => {
                 let prods = eP.target.result.map(p => p.name);
                 getStore('orders', 'readonly').getAll().onsuccess = eO => {
-                    let orders = eO.target.result;
-                    let html = '<table><thead><tr><th>क्र.</th><th>रूट</th><th>दुकान</th>';
-                    prods.forEach(p => html += `<th>${p} (नग)</th>`);
-                    html += '<th>एकूण नग</th><th>एकूण रक्कम (₹)</th></tr></thead><tbody>';
+                    let orders = eO.target.result.filter(o => o.date === selectedDate);
                     
+                    if(orders.length === 0) {
+                        document.getElementById('dateReportOutput').innerHTML = `<p style="color:red; text-align:center;">दिनांक ${selectedDate} साठी कोणतीही ऑर्डर सापडली नाही.</p>`;
+                        return;
+                    }
+
+                    let html = `<h3>दिनांक: ${selectedDate} चा अहवाल</h3>`;
+                    html += '<div class="table-responsive"><table><thead><tr><th>क्र.</th><th>रूट</th><th>दुकान</th>';
+                    prods.forEach(p => html += `<th>${p}</th>`);
+                    html += '<th>नेट रक्कम</th></tr></thead><tbody>';
+
                     let totals = {}; prods.forEach(p => totals[p] = 0);
-                    let grandQty = 0;
                     let grandAmt = 0;
 
                     orders.forEach((o, idx) => {
                         let pMap = {}; prods.forEach(p => pMap[p] = 0);
-                        let rowTotalQty = 0;
-                        if(o.items && Array.isArray(o.items)) {
-                            o.items.forEach(i => { 
-                                pMap[i.name] = i.qty; 
-                                rowTotalQty += i.qty;
-                            });
-                        }
+                        o.items.forEach(i => { pMap[i.name] = i.qty; });
 
                         html += `<tr><td>${idx+1}</td><td>${o.route}</td><td>${o.shop}</td>`;
                         prods.forEach(p => { 
                             html += `<td>${pMap[p]}</td>`; 
                             totals[p] += pMap[p]; 
                         });
-                        html += `<td><b>${rowTotalQty}</b></td><td><b>₹${o.net}</b></td></tr>`;
-                        
-                        grandQty += rowTotalQty;
+                        html += `<td><b>₹${o.net}</b></td></tr>`;
                         grandAmt += o.net;
                     });
 
                     html += `<tr class="total-row"><td colspan="3">एकूण (TOTAL)</td>`;
-                    prods.forEach(p => {
-                        html += `<td>${totals[p]}</td>`;
+                    prods.forEach(p => { html += `<td>${totals[p]}</td>`; });
+                    html += `<td><b>₹${grandAmt.toFixed(2)}</b></td></tr></tbody></table></div>`;
+
+                    // WhatsApp Share Button
+                    let waText = `*🍦 कालिदास आईस्क्रीम ऑर्डर अहवाल*%0A📅 दिनांक: ${selectedDate}%0A----------------------------------%0A`;
+                    orders.forEach((o, i) => {
+                        waText += `${i+1}. *${o.shop}* (${o.route}) - नेट: ₹${o.net}%0A`;
                     });
-                    html += `<td><b>${grandQty}</b></td><td><b>₹${grandAmt.toFixed(2)}</b></td></tr></tbody></table>`;
-                    
-                    document.getElementById('reportOutput').innerHTML = html;
+                    waText += `----------------------------------%0A*एकूण व्यवसाय रक्कम: ₹${grandAmt.toFixed(2)}*`;
+
+                    html += `<button class="btn-whatsapp" onclick="window.open('https://api.whatsapp.com/send?text=${waText}', '_blank')">💬 हा अहवाल WhatsApp वर पाठवा</button>`;
+
+                    document.getElementById('dateReportOutput').innerHTML = html;
                 };
             };
         }
