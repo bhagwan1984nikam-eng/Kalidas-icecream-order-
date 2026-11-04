@@ -22,7 +22,7 @@
         button.btn-secondary { background: var(--secondary); color: white; }
         button.btn-edit { background: var(--warning); color: white; padding: 5px 10px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; margin-right: 4px; }
         button.btn-danger { background: var(--danger); color: white; padding: 5px 10px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; }
-        button.btn-whatsapp { background: #25d366; color: white; padding: 6px 12px; font-size: 0.85rem; border: none; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 5px; }
+        button.btn-whatsapp { background: #25d366; color: white; padding: 10px 15px; font-size: 0.95rem; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         
         /* Attractive Product Grid & Counter Layout */
         .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-top: 10px; }
@@ -144,7 +144,7 @@
         <!-- 4. Reports Section -->
         <div id="sec-reports" class="section">
             <div class="card">
-                <h2>तारीखनुसार अहवाल व WhatsApp शेअरिंग</h2>
+                <h2>तारीखनुसार अहवाल व पूर्ण WhatsApp चार्ट शेअरिंग</h2>
                 <div class="form-group" style="margin-top: 10px;">
                     <label>अहवालासाठी तारीख निवडा:</label>
                     <input type="date" id="reportDateSelect" onchange="generateDateReport()">
@@ -372,8 +372,8 @@
             { name: "Family pack mango", price: 125, image: "" }
         ];
 
-        // Database version set to 19
-        const req = indexedDB.open("KalidasIceCreamDB", 19);
+        // Database version set to 20
+        const req = indexedDB.open("KalidasIceCreamDB", 20);
         req.onerror = e => alert("Database error");
         req.onsuccess = e => { db = e.target.result; initApp(); };
         req.onupgradeneeded = e => {
@@ -523,7 +523,6 @@
             };
         }
 
-        // Plus / Minus Quantity Control Grid
         function renderOrderProductInputs(prods) {
             document.getElementById('orderProductsContainer').innerHTML = prods.map(p => {
                 let thumb = p.image ? `<img src="${p.image}" class="large-thumb">` : `<div class="large-thumb" style="display:flex;align-items:center;justify-content:center;color:#999;font-size:0.7rem;">फोटो नाही</div>`;
@@ -774,7 +773,6 @@
             clearOrderFormQuantities();
         }
 
-        // Folder Accordion Layout for Order History
         function loadOrders() {
             getStore('orders', 'readonly').getAll().onsuccess = e => {
                 let orders = e.target.result.reverse();
@@ -819,7 +817,7 @@
             content.classList.toggle('open');
         }
 
-        // Date-wise Report & WhatsApp Share
+        // Complete Chart Date-wise Report & Full WhatsApp Share
         function generateDateReport() {
             let selectedDate = document.getElementById('reportDateSelect').value;
             if(!selectedDate) return;
@@ -843,13 +841,15 @@
                     let grandAmt = 0;
 
                     orders.forEach((o, idx) => {
-                        let pMap = {}; prods.forEach(p => pMap[p] = 0);
-                        o.items.forEach(i => { pMap[i.name] = i.qty; });
+                        let pMap = {}; prods.forEach(p => prods.forEach(prod => pMap[prod] = 0));
+                        if(o.items) {
+                            o.items.forEach(i => { pMap[i.name] = i.qty; });
+                        }
 
                         html += `<tr><td>${idx+1}</td><td>${o.route}</td><td>${o.shop}</td>`;
                         prods.forEach(p => { 
-                            html += `<td>${pMap[p]}</td>`; 
-                            totals[p] += pMap[p]; 
+                            html += `<td>${pMap[p] || 0}</td>`; 
+                            totals[p] += (pMap[p] || 0); 
                         });
                         html += `<td><b>₹${o.net}</b></td></tr>`;
                         grandAmt += o.net;
@@ -859,14 +859,28 @@
                     prods.forEach(p => { html += `<td>${totals[p]}</td>`; });
                     html += `<td><b>₹${grandAmt.toFixed(2)}</b></td></tr></tbody></table></div>`;
 
-                    // WhatsApp Share Button
-                    let waText = `*🍦 कालिदास आईस्क्रीम ऑर्डर अहवाल*%0A📅 दिनांक: ${selectedDate}%0A----------------------------------%0A`;
+                    // Formulating Complete Detailed Chart for WhatsApp
+                    let waText = `*🍦 कालिदास आईस्क्रीम ऑर्डर चार्ट*%0A`;
+                    waText += `📅 दिनांक: *${selectedDate}*%0A`;
+                    waText += `----------------------------------%0A`;
+                    
                     orders.forEach((o, i) => {
-                        waText += `${i+1}. *${o.shop}* (${o.route}) - नेट: ₹${o.net}%0A`;
+                        waText += `%0A*${i+1}. दुकान:* ${o.shop}%0A`;
+                        waText += `🛣️ *रूट:* ${o.route}%0A`;
+                        waText += `📦 *प्रॉडक्ट्स:*%0A`;
+                        
+                        if(o.items && o.items.length > 0) {
+                            o.items.forEach(item => {
+                                waText += `   - ${item.name}: *${item.qty} नग* (₹${item.price * item.qty})%0A`;
+                            });
+                        }
+                        waText += `💰 *नेट रक्कम:* ₹${o.net} (बाकी: ₹${o.balance})%0A`;
+                        waText += `----------------------------------`;
                     });
-                    waText += `----------------------------------%0A*एकूण व्यवसाय रक्कम: ₹${grandAmt.toFixed(2)}*`;
 
-                    html += `<button class="btn-whatsapp" onclick="window.open('https://api.whatsapp.com/send?text=${waText}', '_blank')">💬 हा अहवाल WhatsApp वर पाठवा</button>`;
+                    waText += `%0A%0A📊 *एकूण एकूण व्यवसाय रक्कम: ₹${grandAmt.toFixed(2)}*`;
+
+                    html += `<button class="btn-whatsapp" onclick="window.open('https://api.whatsapp.com/send?text=${waText}', '_blank')">💬 पूर्ण चार्ट WhatsApp वर पाठवा</button>`;
 
                     document.getElementById('dateReportOutput').innerHTML = html;
                 };
