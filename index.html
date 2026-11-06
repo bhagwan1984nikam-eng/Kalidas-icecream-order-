@@ -513,27 +513,7 @@ function saveProduct() {
             document.getElementById('prodFormTitle').innerText = "उत्पादन जोडा / बदला";
             document.getElementById('prodCancelBtn').style.display = "none";
         }
-
-        function loadProducts() {
-            getStore('products', 'readonly').getAll().onsuccess = e => {
-                let prods = e.target.result;
-                let html = '<table><tr><th>फोटो नाव</th><th>नाव</th><th>किंमत</th><th>कृती</th></tr>';
-                prods.forEach(p => {
-                    let safeName = p.name.replace(/'/g, "\\'");
-                    let safeImg = (p.image || '').replace(/'/g, "\\'");
-                    html += `<tr>
-                        <td>${p.image || 'नाही'}</td>
-                        <td>${p.name}</td>
-                        <td>₹${p.price}</td>
-                        <td>
-                            <button class="btn-edit" onclick="editProduct(${p.id}, '${safeName}', ${p.price}, '${safeImg}')">एडिट</button>
-                            <button class="btn-danger" onclick="deleteProduct(${p.id})">डिलीट</button>
-                        </td>
-                    </tr>`;
-                });
-                html += '</table>';
-                document.getElementById('productList').innerHTML = html;
-                renderOrderProductInputs(prods);
+;
             };
         }
 
@@ -555,7 +535,45 @@ function saveProduct() {
                     </div>
                 `;
             }).join('');
+        function loadProducts() {
+    let prodList = document.getElementById('productList');
+    if (!prodList) return;
+    prodList.innerHTML = '';
+
+    let transaction = db.transaction(['products'], 'readonly');
+    let store = transaction.objectStore('products');
+
+    store.openCursor().onsuccess = function(event) {
+        let cursor = event.target.result;
+        if (cursor) {
+            let p = cursor.value;
+            
+            // आयकॉन किंवा इमोजी निश्चित करणे (नाव किंवा फाईल नाव दिसू नये म्हणून)
+            let displayIcon = p.icon ? p.icon : '🍦';
+
+            let card = document.createElement('div');
+            card.className = 'product-card';
+            card.style.cssText = "display: flex; align-items: center; justify-content: space-between; padding: 10px; margin-bottom: 8px; background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);";
+            
+            card.innerHTML = `
+                <div style="display: flex; align-items: center; gap: 12px;">
+                    <span style="font-size: 32px;">${displayIcon}</span>
+                    <div>
+                        <h4 style="margin: 0; font-size: 16px; color: #333;">${p.name}</h4>
+                        <p style="margin: 4px 0 0 0; color: #666; font-size: 14px;">किंमत: ₹${p.price}</p>
+                    </div>
+                </div>
+                <div>
+                    <button onclick="editProduct(${p.id})" style="background: #ff9800; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 5px;">बदला</button>
+                    <button onclick="deleteProduct(${p.id})" style="background: #f44336; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">डिलीट</button>
+                </div>
+            `;
+            prodList.appendChild(card);
+            cursor.continue();
         }
+    };
+        }
+            
 
         function changeQty(btn, delta) {
             let input = btn.parentElement.querySelector('.order-qty');
