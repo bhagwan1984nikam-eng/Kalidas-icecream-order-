@@ -351,21 +351,59 @@
             {"route": "Kalambist", "name": "कालिका जनरल स्टोअर, कारिवडे कट्टा", "details": "प्रशांत राणे | 7276915203 / 9637162952"},
             {"route": "Kalambist", "name": "मोहन स्वार कुणकेरी", "details": "कुणकेरी | 9404173132"}
         ];
+        
+// १. defaultProds डेटाबेस डिफॉल्ट लिस्ट (सर्व प्रॉडक्ट्स व आयकॉनसह)
+const defaultProds = [
+    { id: 1, name: "काजू कँडी (Kaju Candy)", price: 25, icon: "🥜🍦" },
+    { id: 2, name: "मावा कँडी (Mava Kulfi)", price: 15, icon: "🍡🍦" },
+    { id: 3, name: "व्हॅनिला कप (Vanilla)", price: 12, icon: "🍨" },
+    { id: 4, name: "गॅडबड (Gadbad)", price: 20, icon: "🍧" },
+    { id: 5, name: "मॅंगो कप (Mango)", price: 12, icon: "🥭" },
+    { id: 6, name: "बटरस्कॉच कप (Butterscotch)", price: 15, icon: "🧈" },
+    { id: 7, name: "पिस्ता कप (Pista)", price: 15, icon: "🫛" },
+    { id: 8, name: "स्ट्रॉबेरी कप (Strawberry)", price: 12, icon: "🍓" },
+    { id: 9, name: "चोको रिपल (Choco Ripple)", price: 20, icon: "🍫" },
+    { id: 10, name: "व्हॅनिला कोन (Vanilla Cone)", price: 12, icon: "🍦" },
+    { id: 11, name: "बटरस्कॉच कोन (Butterscotch Cone)", price: 20, icon: "🍦" },
+    { id: 12, name: "अल्फान्सो मॅंगो फॅमिली पॅक", price: 150, icon: "📦" },
+    { id: 13, name: "व्हॅनिला फॅमिली पॅक", price: 120, icon: "📦" }
+];
 
-        const defaultProds = [
-            { name: "Kaju candy ₹10", price: 200, image: "kaju.png" },
-            { name: "Mawa candy ₹15", price: 300, image: "mawa.png" },
-            { name: "Gadabad", price: 150, image: "gadabad.png" },
-            { name: "Strawberry Cup 10", price: 200, image: "strawberry.png" },
-            { name: "Pista Cup 10", price: 200, image: "pista.png" },
-            { name: "Vanilla cup 10", price: 200, image: "vanilla.png" },
-            { name: "Mango Cup 20", price: 200, image: "mango.png" },
-            { name: "Buttercotch cup 20", price: 200, image: "butterscotch.png" },
-            { name: "Sauce Ripple Cup 20", price: 200, image: "sauce.png" },
-            { name: "Choco ripple Cup 20", price: 200, image: "choco.png" },
-            { name: "family pack vanilla", price: 85, image: "family_vanilla.png" },
-            { name: "Family pack mango", price: 125, image: "family_mango.png" }
-        ];
+// २. फोटो/आयकॉन सुरक्षित ठेवणारे ऑटो-असाईन फिक्स फंक्शन
+function getProductIcon(name) {
+    let lowerName = name.toLowerCase();
+    if (lowerName.includes("kaju") || lowerName.includes("काजू")) return "🥜🍦";
+    if (lowerName.includes("mava") || lowerName.includes("मावा")) return "🍡🍦";
+    if (lowerName.includes("gadbad") || lowerName.includes("गॅडबड")) return "🍧";
+    if (lowerName.includes("mango") || lowerName.includes("मॅंगो")) return "🥭";
+    if (lowerName.includes("butterscotch") || lowerName.includes("बटरस्कॉच")) return "🧈";
+    if (lowerName.includes("pista") || lowerName.includes("पिस्ता")) return "🫛";
+    if (lowerName.includes("strawberry") || lowerName.includes("स्ट्रॉबेरी")) return "🍓";
+    if (lowerName.includes("choco") || lowerName.includes("चोको")) return "🍫";
+    if (lowerName.includes("cone") || lowerName.includes("कोन")) return "🍦";
+    if (lowerName.includes("pack") || lowerName.includes("पॅक")) return "📦";
+    return "🍦"; // डिफॉल्ट आईस्क्रीम आयकॉन
+}
+
+// ३. सेव्ह करताना आयकॉन टिकवून ठेवणारे सुरक्षित saveProduct() फंक्शन
+function saveProduct() {
+    let id = document.getElementById('prodId').value;
+    let name = document.getElementById('prodName').value.trim();
+    let price = parseFloat(document.getElementById('prodPrice').value);
+    
+    if(!name || isNaN(price)) return alert('कृपया नाव आणि किंमत भरा.');
+
+    // जुना आयकॉन सेव्ह ठेवणे किंवा नावावरून नवीन ऑटो-असाईन करणे
+    let icon = getProductIcon(name);
+
+    let item = { name, price, icon };
+    if(id) item.id = parseInt(id);
+
+    getStore('products', 'readwrite').put(item).onsuccess = () => {
+        resetProdForm();
+        loadProducts(); // प्रॉडक्ट लिस्ट रिफ्रेश
+    };
+}
 
         const req = indexedDB.open("KalidasIceCreamDB", 26);
         req.onerror = e => alert("Database error");
