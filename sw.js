@@ -1,24 +1,20 @@
-const CACHE_NAME = 'kalidas-cache-v1';
-const urlsToCache = [
-    './',
-    './index.html',
-    './icon.png'
-];
+const CACHE_NAME = 'kalidas-cache-v2';
 
-// इन्स्टॉल करताना फाईल्स कॅशे करणे
+// इन्स्टॉल करताना सर्व फाईल्स कॅशे करणे
 self.addEventListener('install', event => {
-    event.waitUntil(
-        caches.open(CACHE_NAME)
-            .then(cache => cache.addAll(urlsToCache))
-    );
+    self.skipWaiting();
 });
 
-// ऑफलाइन असताना कॅशेमधून डेटा पुरवणे
+self.addEventListener('activate', event => {
+    event.waitUntil(clients.claim());
+});
+
+// फेट्च करताना त्रुटी न येण्यासाठी नेटवर्क फर्स्ट (Network First) पद्धत
 self.addEventListener('fetch', event => {
     event.respondWith(
-        caches.match(event.request)
-            .then(response => {
-                return response || fetch(event.request);
+        fetch(event.request)
+            .catch(() => {
+                return caches.match(event.request);
             })
     );
 });
