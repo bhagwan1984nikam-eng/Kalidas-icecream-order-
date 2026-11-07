@@ -100,7 +100,7 @@
         <!-- 2. Products Section -->
         <div id="sec-products" class="section">
             <div class="card">
-                <button class="btn btn-secondary" onclick="resetToDefaultProds()" style="margin-bottom: 15px; background: #00897b;">🔄 सर्व प्रॉडक्ट्स रीसेट करा (Reset Products)</button>
+                <button class="btn btn-secondary" onclick="resetToDefaultProds()" style="margin-bottom: 15px; background: #00897b;">🔄 सर्व प्रॉडक्ट्स लोड करा (Reset Products)</button>
                 <h2 id="prodFormTitle">उत्पादन जोडा / बदला</h2>
                 <input type="hidden" id="prodId">
                 <div class="form-group"><label>उत्पादनाचे नाव:</label><input type="text" id="prodName"></div>
@@ -121,7 +121,7 @@
         <div id="sec-shops" class="section">
             <div class="card">
                 <h2>दुकानाची माहिती आणि व्यवस्थापन</h2>
-                <button class="btn btn-secondary" onclick="resetToDefaultShops()" style="margin-bottom: 15px; background: #00897b;">🔄 दुकानांची यादी रीसेट करा</button>
+                <button class="btn btn-secondary" onclick="resetToDefaultShops()" style="margin-bottom: 15px; background: #00897b;">🔄 नवीन दुकानांची संपूर्ण यादी रीसेट / लोड करा</button>
                 <hr style="margin: 15px 0; border:0; border-top:1px solid var(--border);">
 
                 <h2 id="shopFormTitle">दुकान जोडा / बदला</h2>
@@ -140,12 +140,17 @@
         <!-- 4. Reports Section -->
         <div id="sec-reports" class="section">
             <div class="card">
-                <h2>तारीखनुसार अहवाल व WhatsApp शेअरिंग</h2>
+                <h2>तारीखनुसार अहवाल व WhatsApp चार्ट / CSV शेअरिंग</h2>
                 <div class="form-group" style="margin-top: 10px;">
                     <label>अहवालासाठी तारीख निवडा:</label>
                     <input type="date" id="reportDateSelect" onchange="generateDateReport()">
                 </div>
                 <div id="dateReportOutput" style="margin-top:15px;"></div>
+                
+                <hr style="margin: 20px 0; border:0; border-top:1px solid var(--border);">
+                <h2>एकत्रित बॅकअप व CSV</h2>
+                <button class="btn" style="margin-top:10px;" onclick="exportCSV()">संपूर्ण Excel CSV डाउनलोड करा</button>
+                <button class="btn" style="margin-top:10px; background:#d32f2f;" onclick="exportJSON()">JSON बॅकअप घ्या</button>
             </div>
         </div>
     </div>
@@ -158,82 +163,349 @@
     </nav>
 
     <script>
+        let db;
+
         const defaultShops = [
-            {"route": "Banda", "name": "Nandkishor sweets Malgaon highway", "details": "Malgaon"},
-            {"route": "Dodamarg", "name": "Shriram super bazar Dodamarg", "details": "Dodamarg"},
-            {"route": "Mangaon", "name": "Gurunath cold drink mangaon bazar", "details": "Mangaon"},
-            {"route": "Kudal", "name": "Aapala Bazar, Kudal", "details": "Kudal"},
-            {"route": "Sawantwadi", "name": "trupti cool drink bus stand Sawantwadi", "details": "Sawantwadi"},
-            {"route": "Kalambist", "name": "श्रीकृष्ण हॉटेल, आकेरी", "details": "आकेरी"}
+            {"route": "Banda", "name": "Nandkishor sweets Malgaon highway", "details": "Malgaon | Lokesh 73020 19 933"},
+            {"route": "Banda", "name": "hotel Laxmi Narayan,Malgaon bazar", "details": "Malgaon bazar | 9022 312 374"},
+            {"route": "Banda", "name": "mahapurush Store, niravde aaros phata", "details": "niravde aaros phata | Sudhakar gavde 9850 544 348"},
+            {"route": "Banda", "name": "Mauli general Store,nhaveli, Sonurli chowk", "details": "nhaveli, Sonurli chowk | jethe"},
+            {"route": "Banda", "name": "ghodemukh krupa Store aaros road ,nhaveli", "details": "harmalkar 9404 939 564"},
+            {"route": "Banda", "name": "MatruChhaya Store sateli", "details": "mandar Tembkar 8275198492"},
+            {"route": "Banda", "name": "Vaishanv kirana Satarda bazar, Satarda", "details": "Tembkar 9420818879"},
+            {"route": "Banda", "name": "Jay Rajeshwar sweet bakery Satarda Bazar", "details": ""},
+            {"route": "Banda", "name": "hotel cum dhaba , pedane road satarda", "details": "Manjrekar 9923013425"},
+            {"route": "Banda", "name": "Supriya paripatte Madura road, Ghogalwadi Satarda", "details": "9405649945"},
+            {"route": "Banda", "name": "Jay Bhawani general Store parabwadi Madura", "details": "8275 31 5141"},
+            {"route": "Banda", "name": "Om Sai general Store ,Madura titha", "details": ""},
+            {"route": "Banda", "name": "Sateri mauli, madura titha", "details": "Pawaskar 9405690135"},
+            {"route": "Banda", "name": "alvi bright super bazar Madura titha", "details": ""},
+            {"route": "Banda", "name": "Shri Mauli general Store, Ronapal road", "details": "Bhogate 9403366148"},
+            {"route": "Banda", "name": "nathkrupa general Store, Sherley, near school", "details": ""},
+            {"route": "Banda", "name": "Vaibhav Lakshmi ,Sherley, Banda road", "details": ""},
+            {"route": "Banda", "name": "Mahalaxmi general Store ,Sherley, Banda road", "details": "shirsath 9405925716 / 9403045554"},
+            {"route": "Banda", "name": "Eknath duri SherLe Banda road", "details": ""},
+            {"route": "Banda", "name": "kalyan bhuvan cold drink katta Banda", "details": ""},
+            {"route": "Banda", "name": "Bandeswar mauli ,katta ,Banda", "details": "9420208819"},
+            {"route": "Banda", "name": "frosty land, Banda, near Banda High School", "details": "Tanvi kanekar 9657121133"},
+            {"route": "Banda", "name": "walake cold drink bandeswar mandir , Banda", "details": ""},
+            {"route": "Banda", "name": "Bandeswar telecom , opp. bandeshwar Mandir", "details": "788 772 4427"},
+            {"route": "Banda", "name": "annpurna super bazar patraDevi road Banda", "details": ""},
+            {"route": "Banda", "name": "Sai Shraddha patradevi road Banda", "details": "aakerkar 7748844084"},
+            {"route": "Banda", "name": "Deepak cold drink fish market Banda", "details": "kesarkar 9673357797"},
+            {"route": "Banda", "name": "Mauli general Store, insuli ,near insuli High School", "details": "7588862554"},
+            {"route": "Dodamarg", "name": "G.G. kesarkar Degve", "details": "9 420 845 140"},
+            {"route": "Dodamarg", "name": "swayambhu general Store Degve", "details": "Guru keSarkar 758 865 8179"},
+            {"route": "Dodamarg", "name": "Swami Samarth ,Morgaon", "details": "uttam gawas 9405571287"},
+            {"route": "Dodamarg", "name": "Santosh general Store, Morgaon", "details": "karpe 9404035561"},
+            {"route": "Dodamarg", "name": "Gauresh kirana , Morgaon , गावठाणवाडी", "details": "Thakur 9322583446"},
+            {"route": "Dodamarg", "name": "Janaki general Store, aadali", "details": "gawakar 9403297971"},
+            {"route": "Dodamarg", "name": "Swami Samarth ugade road , kalane", "details": "pranita naik 8766047048"},
+            {"route": "Dodamarg", "name": "shubh Lakshmi kirana ,kalane", "details": "rakesh degavekar 9423833625"},
+            {"route": "Dodamarg", "name": "mahalaxmi general Store, sasoli", "details": "shetye 9022031147"},
+            {"route": "Dodamarg", "name": "D. S. mini market, vanishi kudase", "details": "sanjana sangurdekar 9370958934"},
+            {"route": "Dodamarg", "name": "atharv sweet Mart ,bhedashi (खालची)", "details": "mithun belekar 7304856565"},
+            {"route": "Dodamarg", "name": "Bhavani Sweet Mart ,bhedashi (खालची)", "details": "Nilesh kubade 9284176326"},
+            {"route": "Dodamarg", "name": "Damodar upahargruh, bhedashi (खालची)", "details": "savarnkar 9405944282"},
+            {"route": "Dodamarg", "name": "meghamalhar cold drink, वरची भेडशी", "details": "swapnil bondre 7057719669"},
+            {"route": "Dodamarg", "name": "Damodar Cold drink,वरची भेडशी", "details": ""},
+            {"route": "Dodamarg", "name": "priya super Bazar वरची भेडशी", "details": "juvekar 9421265163"},
+            {"route": "Dodamarg", "name": "Juvekar general Store वरची भेडशी", "details": "utkarsh 7038888855"},
+            {"route": "Dodamarg", "name": "Laxmi bekary वरची भेडशी", "details": "7558806747"},
+            {"route": "Dodamarg", "name": "ashvin general Store वरची भेडशी", "details": "9420208326"},
+            {"route": "Dodamarg", "name": "hotel vishvtara", "details": "9423302312"},
+            {"route": "Dodamarg", "name": "The yeshvi cafe , awada", "details": "Kishan singh 9722083627"},
+            {"route": "Dodamarg", "name": "vaibhav general Store, vaigantad", "details": ""},
+            {"route": "Dodamarg", "name": "Hiravati general Store vaigantad", "details": "sunita naik 9403938756"},
+            {"route": "Dodamarg", "name": "Velankanni general Store , konalkatta", "details": "9421000994"},
+            {"route": "Dodamarg", "name": "Pravin general Store , konalkatta", "details": "9405086802"},
+            {"route": "Dodamarg", "name": "sairaj general Store konalkatta, londhewadi", "details": "vishvas londhe"},
+            {"route": "Dodamarg", "name": "vinayak super bazar , Tilari", "details": ""},
+            {"route": "Dodamarg", "name": "Pavanai market Usap titha", "details": "Santosh Naik 8805905349"},
+            {"route": "Dodamarg", "name": "Gunavanti super bazar Usap road", "details": ""},
+            {"route": "Dodamarg", "name": "Gawas Cold drink Zarebambar", "details": "Sanjay gavas 9421262694"},
+            {"route": "Dodamarg", "name": "khandoba general Store , Zarebambar", "details": ""},
+            {"route": "Dodamarg", "name": "Devrai cold drink ,Zarebambar", "details": "dipak gavas 9422738229"},
+            {"route": "Dodamarg", "name": "Shriram super bazar  Dodamarg", "details": "9860210091"},
+            {"route": "Dodamarg", "name": "bashnkari super Bazar , Dodamarg", "details": "mahadev savant 9421003832"},
+            {"route": "Dodamarg", "name": "Patil tredars Dodamarg", "details": "Bhagirath 9860210091"},
+            {"route": "Dodamarg", "name": "Nidhi cold drink ,Dodamarg", "details": ""},
+            {"route": "Dodamarg", "name": "Sandesh Mhavlankar ,Dodamarg", "details": "9923119296"},
+            {"route": "Dodamarg", "name": "Sai onkar cold drink ,Aai road", "details": "Gavade 8080200441"},
+            {"route": "Dodamarg", "name": "trishika hotel, Aai road", "details": "sandip gavas 8007991216"},
+            {"route": "Dodamarg", "name": "mahalaxmi suprer bazar, Bus stand road, Dodamarg", "details": "shirsath 8390031813"},
+            {"route": "Dodamarg", "name": "Mandar super bazar , Bus stand road,Dodamarg", "details": "9130969771"},
+            {"route": "Dodamarg", "name": "Himalay cold drink Dodamarg", "details": "Suresh malikar 915870 7040"},
+            {"route": "Dodamarg", "name": "premanand cold drink ,Dodamarg", "details": ""},
+            {"route": "Dodamarg", "name": "Sunil general Store Maneri", "details": "Naik 9405086547"},
+            {"route": "Dodamarg", "name": "narvekar general Store Maneri", "details": "942 114 8406"},
+            {"route": "Mangaon", "name": "sadguru Store Bhoyache kervde , Church samor", "details": "Toraskar 782 205 2117"},
+            {"route": "Mangaon", "name": "Suchita tailor mangaon tarfe Tulasuli", "details": "Tulasulkar 9623 748 347"},
+            {"route": "Mangaon", "name": "Shri Swami Samarth mangaon tarfe Tulasuli lingeshwar Mandir", "details": "Nagesh Warang 7972 951520"},
+            {"route": "Mangaon", "name": "Lavanya general Store Tulasuli", "details": "parab 7588478153"},
+            {"route": "Mangaon", "name": "Sadhna Store lingeshwar High School Tulasuli", "details": "Dhuri 88887 77239"},
+            {"route": "Mangaon", "name": "R.N. bhaji centre, Nanache stop, mangaon", "details": ""},
+            {"route": "Mangaon", "name": "Bhumika general Store Nanche stop", "details": "Neha Bhosle 9370917533"},
+            {"route": "Mangaon", "name": "Bhai Bhai general Store, mangaon", "details": ""},
+            {"route": "Mangaon", "name": "Gurunath cold drink mangaon bazar", "details": "korgaonkar 9404 94325 0"},
+            {"route": "Mangaon", "name": "Dattanath cold drink, mangaon Bazaar", "details": "narvekar 8169664969"},
+            {"route": "Mangaon", "name": "Lakshmi kirana amberi", "details": "Mhadgut 9404 915674"},
+            {"route": "Mangaon", "name": "kesarkar masale vados", "details": "9422 514 421"},
+            {"route": "Mangaon", "name": "Arun tea house vados", "details": "Santosh Sawant 827 566 3569"},
+            {"route": "Mangaon", "name": "dattaram general Store Gothos", "details": "kadam 7744041276"},
+            {"route": "Mangaon", "name": "Mauli general Store Gothos", "details": "8669104554"},
+            {"route": "Mangaon", "name": "Nilesh general Store Gothos", "details": "7745829110"},
+            {"route": "Mangaon", "name": "narvekar general Store ,Khirmale", "details": "9420 963 301"},
+            {"route": "Kudal", "name": "Bikaner bakery, zarap", "details": "9660944649 mukesh"},
+            {"route": "Kudal", "name": "Ramache dukaan, Gudhipur", "details": "730 325 5652"},
+            {"route": "Kudal", "name": "Aapala Bazar, Kudal", "details": ""},
+            {"route": "Kudal", "name": "Dhanlaxmi sweets , malvan road", "details": "Dinesh 9975939632"},
+            {"route": "Kudal", "name": "Kudaleshwar ice cream, Kudal", "details": "7775860235"},
+            {"route": "Kudal", "name": "Shri Swami Samarth cold drink, opp. bharat gas", "details": "Badekar 9422963794"},
+            {"route": "Kudal", "name": "Rawool Bandhu , KelbaiWadi", "details": ""},
+            {"route": "Kudal", "name": "Jay Bhawani general Store,Tupkatwadi", "details": "Abhijeet Sawant 9420001768"},
+            {"route": "Kudal", "name": "Guru kripa kirana Tupkatwadi", "details": "Bhogte 9767592594"},
+            {"route": "Kudal", "name": "pateshwar cold drink oppo bus stand Kudal", "details": ""},
+            {"route": "Kudal", "name": "Ballal general Store, Kudal", "details": "9673 723 612"},
+            {"route": "Kudal", "name": "Gajanan cold drink Pan bazar", "details": "Jamsandekar 9405924582"},
+            {"route": "Kudal", "name": "Samrat coldering fish market Kudal", "details": ""},
+            {"route": "Kudal", "name": "Mahalaxmi general Store kalapnaka", "details": "Yogesh 90 490 84383"},
+            {"route": "Kudal", "name": "Sadguru tea stall ,pavashi", "details": "8275770777"},
+            {"route": "Kudal", "name": "Vighnharta general Store ,pavashi markandeya Mandir", "details": "patade 9356 796 895"},
+            {"route": "Kudal", "name": "Kesarkar cold drink Vetal bambarada", "details": "9404751222 / 8605267426"},
+            {"route": "Kudal", "name": "Sravani stationery vetal bambarada", "details": "Sandhya Pawar 9403838190"},
+            {"route": "Kudal", "name": "Jai Vetoba , vetal bambarada", "details": ""},
+            {"route": "Kudal", "name": "Mahalaxmi general Store Sawant Park Vetalbambara", "details": "9545 714 245"},
+            {"route": "Kudal", "name": "bhakti kangan, hirlok", "details": "Ekavade 952 929 8749"},
+            {"route": "Kudal", "name": "Mahalaxmi general Store hirlok", "details": "teli 98 343 12007"},
+            {"route": "Kudal", "name": "chinmay traders, Hirlok High School", "details": "parb 9324549796"},
+            {"route": "Sawantwadi", "name": "Adarsh general Store kolgaon titha", "details": ""},
+            {"route": "Sawantwadi", "name": "Sateri footwear kolgaon", "details": ""},
+            {"route": "Sawantwadi", "name": "Gavas general Store near mutton shop kolgaon", "details": ""},
+            {"route": "Sawantwadi", "name": "hotel bhumika Prasanna near kolgaon ITI", "details": ""},
+            {"route": "Sawantwadi", "name": "kerkar general Store bhatwadi", "details": ""},
+            {"route": "Sawantwadi", "name": "Prabhat laundry bhatwadi", "details": "9702 282 816"},
+            {"route": "Sawantwadi", "name": "charbhuja bakery gavali titha", "details": ""},
+            {"route": "Sawantwadi", "name": "naath jal  Otawnekar bus stand Sawantwadi", "details": ""},
+            {"route": "Sawantwadi", "name": "trupti cool drink bus stand Sawantwadi", "details": ""},
+            {"route": "Sawantwadi", "name": "maloba general Store sabniswada", "details": ""},
+            {"route": "Sawantwadi", "name": "Parker general Store sabniswada", "details": ""},
+            {"route": "Sawantwadi", "name": "Topale cold drink near Renuka hotel", "details": ""},
+            {"route": "Sawantwadi", "name": "Nidhi general Store Birodakartemb , Dwarka Nagari", "details": "Shailesh Shirke 84 4 691 9106"},
+            {"route": "Sawantwadi", "name": "Marathe general Store charatha road", "details": "9420 564 934"},
+            {"route": "Sawantwadi", "name": "Archana ice cream parlour charata", "details": ""},
+            {"route": "Sawantwadi", "name": "Pratik general Store near dr. Sawant", "details": "9421 190455"},
+            {"route": "Sawantwadi", "name": "Swami Samarth general Store, justin Nagar", "details": "Rane 9420 930 114"},
+            {"route": "Sawantwadi", "name": "Shri Swami krupa  gawade Shet road", "details": "manjarekar 7030 390451"},
+            {"route": "Sawantwadi", "name": "bhumika general Store Otawne", "details": ""},
+            {"route": "Sawantwadi", "name": "bhumika general Store majgaon kashalikar garage", "details": ""},
+            {"route": "Sawantwadi", "name": "Sai Baba super Bazar majgaon Nala", "details": ""},
+            {"route": "Sawantwadi", "name": "Bhogan general Store mazgaon Nala", "details": "9423 302 276"},
+            {"route": "Sawantwadi", "name": "Dalavi general Store diamond hall Majgaon", "details": ""},
+            {"route": "Sawantwadi", "name": "hotel tiffin tahsildar karyalay Sawantwadi", "details": ""},
+            {"route": "Sawantwadi", "name": "Vishvanil general Store Sawantwadi", "details": ""},
+            {"route": "Sawantwadi", "name": "Mahalaxmi suprer bazar Sawantwadi jail", "details": ""},
+            {"route": "Sawantwadi", "name": "Aryan Cold drink near milagiris High School", "details": "94045 02559"},
+            {"route": "Sawantwadi", "name": "Mauli general Store near milagiris High School", "details": ""},
+            {"route": "Sawantwadi", "name": "samartha Prabha general Store behind milagiris High school", "details": "avate 823779 5949"},
+            {"route": "Sawantwadi", "name": "Aba padte cold drink old Panchayat samiti", "details": "94225 9623"},
+            {"route": "Sawantwadi", "name": "kudatarKar cold drink", "details": ""},
+            {"route": "Sawantwadi", "name": "Bidre cold drink aadinarayan Mangal karyaly", "details": "8446 913043"},
+            {"route": "Sawantwadi", "name": "Milind general Store Bazar", "details": ""},
+            {"route": "Sawantwadi", "name": "fresh juice and cold drink Bazar", "details": ""},
+            {"route": "Sawantwadi", "name": "Rajaram cold drink Bazar", "details": "9158 781 661"},
+            {"route": "Sawantwadi", "name": "Bhavani hotel kalsulkar High School", "details": ""},
+            {"route": "Sawantwadi", "name": "mishal general Store juna bazar", "details": ""},
+            {"route": "Sawantwadi", "name": "Maya cold drink mathewada", "details": ""},
+            {"route": "Sawantwadi", "name": "C .R. Thakur near Hussaini masjid", "details": ""},
+            {"route": "Kalambist", "name": "भगत जनरल स्टोअर, आकेरी", "details": "आकेरी | 8411991294"},
+            {"route": "Kalambist", "name": "श्रीकृष्ण हॉटेल, आकेरी", "details": "आकेरी | 9404104801"},
+            {"route": "Kalambist", "name": "जयराम हॉटेल, कोलगाव तिठा", "details": "कोलगाव तिठा | 9421983189"},
+            {"route": "Kalambist", "name": "उज्वला भाजी सेंटर, कोलगाव", "details": "कोलगाव | 9404930303"},
+            {"route": "Kalambist", "name": "मेहक जनरल स्टोअर, कोलगाव", "details": "कोलगाव | 9423178792"},
+            {"route": "Kalambist", "name": "अजलान जनरल स्टोअर, कोलगाव", "details": "कोलगाव"},
+            {"route": "Kalambist", "name": "PS Khan, कोलगाव", "details": "कोलगाव निरुखे"},
+            {"route": "Kalambist", "name": "शुभम जनरल स्टोअर, पेडवेवाडी", "details": "पेडवेवाडी | 9421770363"},
+            {"route": "Kalambist", "name": "महालक्ष्मी आईस्क्रीम, पेडवेवाडी", "details": "पेडवेवाडी"},
+            {"route": "Kalambist", "name": "रवळनाथ जनरल स्टोअर, पेडवेवाडी", "details": "पेडवेवाडी | 9403366363"},
+            {"route": "Kalambist", "name": "हॉटेल भावई, माडखोल", "details": "माडखोल | 7588336560"},
+            {"route": "Kalambist", "name": "पावणाई भाजी सेंटर, माडखोल", "details": "माडखोल | संतोष नाईक"},
+            {"route": "Kalambist", "name": "आदर्श जनरल स्टोअर, माडखोल", "details": "माडखोल | 9405925958"},
+            {"route": "Kalambist", "name": "माजी सैनिक जनरल स्टोअर, माडखोल", "details": "माडखोल"},
+            {"route": "Kalambist", "name": "अर्चना जनरल स्टोअर, माडखोल", "details": "माडखोल | 8446607543"},
+            {"route": "Kalambist", "name": "गुरुकृपा किराणा, सांगेली", "details": "सांगेली | 9552042685"},
+            {"route": "Kalambist", "name": "एस. एस. कटलरी, सांगेली", "details": "सांगेली | 9421937490"},
+            {"route": "Kalambist", "name": "लाड कोल्ड्रिंक, सांगेली", "details": "सांगेली | 7774905089"},
+            {"route": "Kalambist", "name": "वर्दम जनरल स्टोअर, सावरवाड", "details": "सावरवाड | 9420291099"},
+            {"route": "Kalambist", "name": "कृष्णा बेकरी, कलंबिस्त", "details": "कलंबिस्त | 9663194810"},
+            {"route": "Kalambist", "name": "भालचंद्र कृपा, कलंबिस्त", "details": "कलंबिस्त | शिरसाट 9421190563"},
+            {"route": "Kalambist", "name": "लिंगेश्वर किराणा, कलंबिस्त", "details": "कलंबिस्त | 9405330268"},
+            {"route": "Kalambist", "name": "श्री स्वामी समर्थ मेडिकल, कलंबिस्त", "details": "कलंबिस्त"},
+            {"route": "Kalambist", "name": "प्रशांत जनरल स्टोअर, दानोली", "details": "दानोली | 9405220792"},
+            {"route": "Kalambist", "name": "मनोहर प्रिंटिंग प्रेस, धवडकी", "details": "धवडकी"},
+            {"route": "Kalambist", "name": "त्रिमूर्ती जनरल स्टोअर, धवडकी", "details": "धवडकी | पंकज गोवेकर 9529668516"},
+            {"route": "Kalambist", "name": "पांडुरंग हॉटेल, माडखोल फुगीवाडी", "details": "माडखोल, फुगीवाडी | 9403509986"},
+            {"route": "Kalambist", "name": "सिद्धेश जनरल स्टोअर, माडखोल फुगीवाडी", "details": "माडखोल, फुगीवाडी"},
+            {"route": "Kalambist", "name": "संत राऊळ महाराज जनरल स्टोअर", "details": "तायशेटे माडखोल, फुगीवाडी | 8806920890"},
+            {"route": "Kalambist", "name": "कालिका कोल्ड्रिंक, कारिवडे कट्टा", "details": "अभिजीत पोकळे कारिवडे कट्टा | 7350478669"},
+            {"route": "Kalambist", "name": "कालिका जनरल स्टोअर, कारिवडे कट्टा", "details": "प्रशांत राणे | 7276915203 / 9637162952"},
+            {"route": "Kalambist", "name": "मोहन स्वार कुणकेरी", "details": "कुणकेरी | 9404173132"}
         ];
 
-        
-const defaultProds = [
-            { id: 1, name: "Kaju candy ₹10", price: 200, image: "kaju.png", icon: "🥜🍦" },
-            { id: 2, name: "Mawa candy ₹15", price: 300, image: "mawa.png", icon: "🍡🍦" },
-            { id: 3, name: "Gadabad", price: 150, image: "gadabad.png", icon: "🍧" },
-            { id: 4, name: "Strawberry Cup 10", price: 200, image: "strawberry.png", icon: "🍓" },
-            { id: 5, name: "Pista Cup 10", price: 200, image: "pista.png", icon: "🫛" },
-            { id: 6, name: "Vanilla cup 10", price: 200, image: "vanilla.png", icon: "🍨" },
-            { id: 7, name: "Mango Cup 20", price: 200, image: "mango.png", icon: "🥭" },
-            { id: 8, name: "Butterscotch cup 20", price: 200, image: "butterscotch.png", icon: "🧈" },
-            { id: 9, name: "Sauce Ripple Cup 20", price: 200, image: "sauce.png", icon: "🍫" },
-            { id: 10, name: "Choco ripple Cup 20", price: 200, image: "choco.png", icon: "🍫" },
-            { id: 11, name: "family pack vanilla", price: 85, image: "family_vanilla.png", icon: "🍨" },
-            { id: 12, name: "Family pack mango", price: 125, image: "family_mango.png", icon: "🥭" }
+        const defaultProds = [
+            { name: "Kaju candy ₹10", price: 200, image: "kaju.png", icon:  },
+            { name: "Mawa candy ₹15", price: 300, image: "mawa.png", icon:  },
+            { name: "Gadabad", price: 150, image: "gadabad.png", icon:  },
+            { name: "Strawberry Cup 10", price: 200, image: "strawberry.png", icon: },
+            { name: "Pista Cup 10", price: 200, image: "pista.png", icon:  },
+            { name: "Vanilla cup 10", price: 200, image: "vanilla.png", icon:  },
+            { name: "Mango Cup 20", price: 200, image: "mango.png", icon:  },
+            { name: "Butterscotch cup 20", price: 200, image: "butterscotch.png", icon:  },
+            { name: "Sauce Ripple Cup 20", price: 200, image: "sauce.png", icon:  },
+            { name: "Choco ripple Cup 20", price: 200, image: "choco.png", icon:  },
+            { name: "family pack vanilla", price: 85, image: "family_vanilla.png", icon:  },
+            { name: "Family pack mango", price: 125, image: "family_mango.png", icon:  }
         ];
-        function getStoredData(key, fallback) {
-            let data = localStorage.getItem(key);
-            if (!data) {
-                localStorage.setItem(key, JSON.stringify(fallback));
-                return fallback;
-            }
-            return JSON.parse(data);
-        }
 
-        function setStoredData(key, value) {
-            localStorage.setItem(key, JSON.stringify(value));
-        }
-
-        window.onload = function() {
-            document.getElementById('orderDate').valueAsDate = new Date();
-            loadProducts();
-            loadShops();
-            loadOrders();
+        const req = indexedDB.open("KalidasIceCreamDB", 26);
+        req.onerror = e => alert("Database error");
+        req.onsuccess = e => { db = e.target.result; initApp(); };
+        req.onupgradeneeded = e => {
+            let db = e.target.result;
+            if(!db.objectStoreNames.contains('products')) db.createObjectStore('products', { keyPath: 'id', autoIncrement: true });
+            if(!db.objectStoreNames.contains('shops')) db.createObjectStore('shops', { keyPath: 'id', autoIncrement: true });
+            if(!db.objectStoreNames.contains('orders')) db.createObjectStore('orders', { keyPath: 'id', autoIncrement: true });
         };
+
+        function formatDateDMY(dateStr) {
+            if(!dateStr) return '';
+            let parts = dateStr.split('-');
+            if(parts.length === 3) {
+                return `${parts[2]}-${parts[1]}-${parts[0]}`;
+            }
+            return dateStr;
+        }
 
         function switchTab(id, el) {
             document.querySelectorAll('.section').forEach(s => s.classList.remove('active'));
             document.querySelectorAll('.nav-tab').forEach(t => t.classList.remove('active'));
             document.getElementById('sec-' + id).classList.add('active');
             el.classList.add('active');
+            if(id === 'reports') {
+                document.getElementById('reportDateSelect').valueAsDate = new Date();
+                generateDateReport();
+            }
+        }
+
+        function initApp() {
+            document.getElementById('orderDate').valueAsDate = new Date();
+            let tx = db.transaction(['products', 'shops'], 'readonly');
+            
+            tx.objectStore('products').getAll().onsuccess = e => {
+                if(e.target.result.length === 0) {
+                    resetToDefaultProds();
+                } else { loadProducts(); }
+            };
+
+            tx.objectStore('shops').getAll().onsuccess = e => {
+                if(e.target.result.length === 0) {
+                    resetToDefaultShops();
+                } else { loadShops(); }
+            };
+            loadOrders();
+        }
+
+        function resetToDefaultProds() {
+            let tx = db.transaction('products', 'readwrite');
+            let store = tx.objectStore('products');
+            store.clear();
+            defaultProds.forEach(p => store.add(p));
+            tx.oncomplete = () => { loadProducts(); };
+        }
+
+        function resetToDefaultShops() {
+            let tx = db.transaction('shops', 'readwrite');
+            let store = tx.objectStore('shops');
+            store.clear();
+            defaultShops.forEach(s => store.add(s));
+            tx.oncomplete = () => {
+                alert('सर्व दुकाने आणि रूट्स यशस्वीरित्या लोड झाले!');
+                loadShops();
+            };
+        }
+
+        function getStore(name, mode) { return db.transaction(name, mode).objectStore(name); }
+
+        function saveProduct() {
+            let id = document.getElementById('prodId').value;
+            let name = document.getElementById('prodName').value.trim();
+            let price = parseFloat(document.getElementById('prodPrice').value);
+            let image = document.getElementById('prodImageName').value.trim();
+            if(!name || isNaN(price)) return alert('कृपया उत्पादनाचे नाव आणि किंमत भरा.');
+
+            let item = { name, price, image };
+            if(id) item.id = parseInt(id);
+
+            getStore('products', 'readwrite').put(item).onsuccess = () => {
+                resetProdForm();
+                loadProducts();
+            };
+        }
+
+        function editProduct(id, name, price, image) {
+            document.getElementById('prodId').value = id;
+            document.getElementById('prodName').value = name;
+            document.getElementById('prodPrice').value = price;
+            document.getElementById('prodImageName').value = image || "";
+            document.getElementById('prodFormTitle').innerText = "उत्पादनात बदल करा";
+            document.getElementById('prodCancelBtn').style.display = "block";
+        }
+
+        function deleteProduct(id) {
+            if(confirm("उत्पादन नक्की डिलीट करायचे का?")) {
+                getStore('products', 'readwrite').delete(id).onsuccess = () => loadProducts();
+            }
+        }
+
+        function resetProdForm() {
+            document.getElementById('prodId').value = '';
+            document.getElementById('prodName').value = '';
+            document.getElementById('prodPrice').value = '';
+            document.getElementById('prodImageName').value = '';
+            document.getElementById('prodFormTitle').innerText = "उत्पादन जोडा / बदला";
+            document.getElementById('prodCancelBtn').style.display = "none";
         }
 
         function loadProducts() {
-            let prods = getStoredData('kalidas_products', defaultProds);
-            let html = '<table><tr><th>फोटो</th><th>नाव</th><th>किंमत</th><th>कृती</th></tr>';
-            prods.forEach(p => {
-                let imgTag = p.image ? `<img src="${p.image}" class="prod-thumb" onerror="this.outerHTML='${p.icon || '🍦'}'">` : (p.icon || '🍦');
-                html += `<tr>
-                    <td>${imgTag}</td>
-                    <td>${p.name}</td>
-                    <td>₹${p.price}</td>
-                    <td>
-                        <button class="btn-edit" onclick="editProduct(${p.id})">एडिट</button>
-                        <button class="btn-danger" onclick="deleteProduct(${p.id})">डिलीट</button>
-                    </td>
-                </tr>`;
-            });
-            html += '</table>';
-            document.getElementById('productList').innerHTML = html;
-            renderOrderProductInputs(prods);
+            getStore('products', 'readonly').getAll().onsuccess = e => {
+                let prods = e.target.result;
+                let html = '<table><tr><th>फोटो</th><th>नाव</th><th>किंमत</th><th>कृती</th></tr>';
+                prods.forEach(p => {
+                    let safeName = p.name.replace(/'/g, "\\'");
+                    let safeImg = (p.image || '').replace(/'/g, "\\'");
+                    let imgTag = p.image ? `<img src="${p.image}" class="prod-thumb" onerror="this.src='icon.png'">` : '🍦';
+
+                    html += `<tr>
+                        <td>${imgTag}</td>
+                        <td>${p.name}</td>
+                        <td>₹${p.price}</td>
+                        <td>
+                            <button class="btn-edit" onclick="editProduct(${p.id}, '${safeName}', ${p.price}, '${safeImg}')">एडिट</button>
+                            <button class="btn-danger" onclick="deleteProduct(${p.id})">डिलीट</button>
+                        </td>
+                    </tr>`;
+                });
+                html += '</table>';
+                document.getElementById('productList').innerHTML = html;
+                renderOrderProductInputs(prods);
+            };
         }
 
         function renderOrderProductInputs(prods) {
             document.getElementById('orderProductsContainer').innerHTML = prods.map(p => {
-                let imgDisplay = p.image ? `<img src="${p.image}" class="large-thumb" onerror="this.outerHTML='<span style=\\'font-size:30px;\\'>${p.icon || '🍦'}</span>'">` : `<span style="font-size:30px;">${p.icon || '🍦'}</span>`;
+                let imgDisplay = p.image ? `<img src="${p.image}" class="large-thumb" onerror="this.outerHTML='<div class=\\'large-thumb\\' style=\\'display:flex;align-items:center;justify-content:center;color:#d81b60;font-weight:bold;font-size:0.75rem;background:#fce4ec;border-radius:6px;\\'>🍦 आईस्क्रीम</div>'">` : `<div class="large-thumb" style="display:flex;align-items:center;justify-content:center;color:#d81b60;font-weight:bold;font-size:0.75rem;background:#fce4ec;border-radius:6px;">🍦 आईस्क्रीम</div>`;
                 return `
-                    <div class="product-card prod-row" data-id="${p.id}" data-name="${p.name}" data-price="${p.price}">
+                    <div class="product-card prod-row" data-name="${p.name}" data-price="${p.price}">
                         ${imgDisplay}
                         <div class="product-info">
                             <h4>${p.name}</h4>
@@ -257,6 +529,118 @@ const defaultProds = [
             calcTotal();
         }
 
+        function saveShop() {
+            let id = document.getElementById('shopId').value;
+            let route = document.getElementById('shopRoute').value.trim();
+            let name = document.getElementById('shopName').value.trim();
+            let details = document.getElementById('shopDetails').value.trim();
+            if(!route || !name) return alert('मार्ग आणि दुकान नाव आवश्यक आहे.');
+
+            let item = { route, name, details };
+            if(id) item.id = parseInt(id);
+
+            getStore('shops', 'readwrite').put(item).onsuccess = () => {
+                resetShopForm();
+                loadShops();
+            };
+        }
+
+        function editShop(id, route, name, details) {
+            document.getElementById('shopId').value = id;
+            document.getElementById('shopRoute').value = route;
+            document.getElementById('shopName').value = name;
+            document.getElementById('shopDetails').value = details;
+            document.getElementById('shopFormTitle').innerText = "दुकानाची माहिती बदला";
+            document.getElementById('shopCancelBtn').style.display = "block";
+        }
+
+        function deleteShop(id) {
+            if(confirm("दुकान नक्की डिलीट करायचे का?")) {
+                getStore('shops', 'readwrite').delete(id).onsuccess = () => loadShops();
+            }
+        }
+
+        function resetShopForm() {
+            document.getElementById('shopId').value = '';
+            document.getElementById('shopRoute').value = '';
+            document.getElementById('shopName').value = '';
+            document.getElementById('shopDetails').value = '';
+            document.getElementById('shopFormTitle').innerText = "दुकान जोडा / बदला";
+            document.getElementById('shopCancelBtn').style.display = "none";
+        }
+
+        function loadShops() {
+            getStore('shops', 'readonly').getAll().onsuccess = e => {
+                let shops = e.target.result;
+                let routes = [...new Set(shops.map(s => s.route))];
+                let routeSelect = document.getElementById('orderRoute');
+                
+                routeSelect.innerHTML = '<option value="">-- मार्ग निवडा --</option>' + 
+                    routes.map(r => `<option value="${r}">${r}</option>`).join('');
+
+                let savedRouteData = localStorage.getItem('kalidas_last_route');
+                let savedTime = localStorage.getItem('kalidas_route_time');
+                let now = new Date().getTime();
+
+                if(savedRouteData && savedTime && (now - savedTime < 24 * 60 * 60 * 1000)) {
+                    if(routes.includes(savedRouteData)) {
+                        routeSelect.value = savedRouteData;
+                        loadShopsByRoute(true);
+                    }
+                }
+
+                let html = '<table><tr><th>मार्ग</th><th>दुकान</th><th>तपशील</th><th>कृती</th></tr>';
+                shops.forEach(s => {
+                    let safeRoute = (s.route || '').replace(/'/g, "\\'");
+                    let safeName = (s.name || '').replace(/'/g, "\\'");
+                    let safeDetails = (s.details || '').replace(/'/g, "\\'");
+                    html += `<tr>
+                        <td>${s.route}</td>
+                        <td>${s.name}</td>
+                        <td>${s.details || ''}</td>
+                        <td>
+                            <button class="btn-edit" onclick="editShop(${s.id}, '${safeRoute}', '${safeName}', '${safeDetails}')">एडिट</button>
+                            <button class="btn-danger" onclick="deleteShop(${s.id})">डिलीट</button>
+                        </td>
+                    </tr>`;
+                });
+                html += '</table>';
+                document.getElementById('shopList').innerHTML = html;
+            };
+        }
+
+        function onRouteChanged() {
+            let r = document.getElementById('orderRoute').value;
+            if(r) {
+                localStorage.setItem('kalidas_last_route', r);
+                localStorage.setItem('kalidas_route_time', new Date().getTime());
+            } else {
+                localStorage.removeItem('kalidas_last_route');
+                localStorage.removeItem('kalidas_route_time');
+            }
+            loadShopsByRoute(false);
+        }
+
+        function loadShopsByRoute(isInitial = false) {
+            let r = document.getElementById('orderRoute').value;
+            let shopSelect = document.getElementById('orderShop');
+            
+            if(!r) {
+                shopSelect.innerHTML = '<option value="">-- आधी मार्ग निवडा --</option>';
+                clearOrderFormQuantities();
+                return;
+            }
+
+            getStore('shops', 'readonly').getAll().onsuccess = e => {
+                let shops = e.target.result.filter(s => s.route === r);
+                shopSelect.innerHTML = '<option value="">-- दुकान निवडा --</option>' + 
+                    shops.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+                if(!isInitial) {
+                    clearOrderFormQuantities();
+                }
+            };
+        }
+
         function calcTotal() {
             let sub = 0;
             document.querySelectorAll('.prod-row').forEach(row => {
@@ -271,33 +655,21 @@ const defaultProds = [
             document.getElementById('orderBalance').innerText = bal.toFixed(2);
         }
 
-        function loadShops() {
-            let shops = getStoredData('kalidas_shops', defaultShops);
-            let routes = [...new Set(shops.map(s => s.route))];
-            let routeSelect = document.getElementById('orderRoute');
-            routeSelect.innerHTML = '<option value="">-- मार्ग निवडा --</option>' + routes.map(r => `<option value="${r}">${r}</option>`).join('');
-
-            let html = '<table><tr><th>मार्ग</th><th>दुकान</th><th>तपशील</th></tr>';
-            shops.forEach(s => {
-                html += `<tr><td>${s.route}</td><td>${s.name}</td><td>${s.details || ''}</td></tr>`;
-            });
-            html += '</table>';
-            document.getElementById('shopList').innerHTML = html;
-        }
-
-        function onRouteChanged() {
-            let r = document.getElementById('orderRoute').value;
-            let shopSelect = document.getElementById('orderShop');
-            let shops = getStoredData('kalidas_shops', defaultShops);
-            let filtered = shops.filter(s => s.route === r);
-            shopSelect.innerHTML = '<option value="">-- दुकान निवडा --</option>' + filtered.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+        function clearOrderFormQuantities() {
+            document.querySelectorAll('.order-qty').forEach(input => input.value = 0);
+            document.getElementById('orderDiscount').value = 0;
+            document.getElementById('orderPaid').value = 0;
+            calcTotal();
         }
 
         function saveOrder() {
+            let editId = document.getElementById('editingOrderId').value;
             let route = document.getElementById('orderRoute').value;
             let shop = document.getElementById('orderShop').value;
             let date = document.getElementById('orderDate').value;
-            if(!route || !shop) return alert('कृपया मार्ग आणि दुकान निवडा.');
+
+            if(!route) return alert('कृपया मार्ग (Route) निवडा.');
+            if(!shop) return alert('कृपया दुकान (Shop) निवडा.');
 
             let items = [];
             document.querySelectorAll('.prod-row').forEach(row => {
@@ -305,41 +677,330 @@ const defaultProds = [
                 if(q > 0) items.push({ name: row.dataset.name, price: parseFloat(row.dataset.price), qty: q });
             });
             if(items.length === 0) return alert('किमान एक प्रॉडक्ट निवडा.');
+            
+            let order = {
+                route, shop, date, items,
+                subtotal: parseFloat(document.getElementById('orderSubtotal').innerText),
+                discount: parseFloat(document.getElementById('orderDiscount').value) || 0,
+                net: parseFloat(document.getElementById('orderNetTotal').innerText),
+                paid: parseFloat(document.getElementById('orderPaid').value) || 0,
+                balance: parseFloat(document.getElementById('orderBalance').innerText)
+            };
 
-            let orders = getStoredData('kalidas_orders', []);
-            let order = { id: Date.now(), route, shop, date, items, net: parseFloat(document.getElementById('orderNetTotal').innerText) };
-            orders.push(order);
-            setStoredData('kalidas_orders', orders);
+            if(editId) {
+                order.id = parseInt(editId);
+                getStore('orders', 'readwrite').put(order).onsuccess = () => {
+                    alert('ऑर्डर यशस्वीरित्या अपडेट झाली!');
+                    resetOrderForm();
+                    loadOrders();
+                };
+            } else {
+                getStore('orders', 'readwrite').add(order).onsuccess = () => {
+                    alert('ऑर्डर यशस्वी सेव्ह झाली!');
+                    loadOrders();
+                    document.getElementById('orderShop').value = '';
+                    clearOrderFormQuantities();
+                };
+            }
+        }
 
-            alert('ऑर्डर यशस्वीरित्या सेव्ह झाली!');
-            loadOrders();
+        function editOrder(id) {
+            getStore('orders', 'readonly').get(id).onsuccess = e => {
+                let o = e.target.result;
+                if(!o) return;
+
+                document.getElementById('editingOrderId').value = o.id;
+                document.getElementById('orderRoute').value = o.route;
+                
+                getStore('shops', 'readonly').getAll().onsuccess = evt => {
+                    let shops = evt.target.result.filter(s => s.route === o.route);
+                    let shopSelect = document.getElementById('orderShop');
+                    shopSelect.innerHTML = '<option value="">-- दुकान निवडा --</option>' + 
+                        shops.map(s => `<option value="${s.name}" ${s.name === o.shop ? 'selected' : ''}>${s.name}</option>`).join('');
+                };
+
+                document.getElementById('orderDate').value = o.date;
+                document.getElementById('orderDiscount').value = o.discount;
+                document.getElementById('orderPaid').value = o.paid;
+
+                let itemMap = {};
+                o.items.forEach(i => { itemMap[i.name] = i.qty; });
+
+                document.querySelectorAll('.prod-row').forEach(row => {
+                    let pName = row.dataset.name;
+                    row.querySelector('.order-qty').value = itemMap[pName] || 0;
+                });
+
+                calcTotal();
+                document.getElementById('orderFormTitle').innerText = "ऑर्डर एडिट करा (Edit Order)";
+                document.getElementById('orderSaveBtn').innerText = "अपडेट करा (Update)";
+                document.getElementById('orderCancelBtn').style.display = "block";
+                
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            };
+        }
+
+        function resetOrderForm() {
+            document.getElementById('editingOrderId').value = '';
+            document.getElementById('orderFormTitle').innerText = "नवीन ऑर्डर नोंदवा";
+            document.getElementById('orderSaveBtn').innerText = "ऑर्डर सेव्ह करा";
+            document.getElementById('orderCancelBtn').style.display = "none";
+            document.getElementById('orderShop').value = '';
+            clearOrderFormQuantities();
         }
 
         function loadOrders() {
-            let orders = getStoredData('kalidas_orders', []);
-            let html = '<table><tr><th>तारीख</th><th>दुकान</th><th>रक्कम</th></tr>';
-            orders.forEach(o => {
-                html += `<tr><td>${o.date}</td><td>${o.shop}</td><td>₹${o.net}</td></tr>`;
-            });
-            html += '</table>';
-            document.getElementById('orderHistoryFolders').innerHTML = html;
+            getStore('orders', 'readonly').getAll().onsuccess = e => {
+                let orders = e.target.result.reverse();
+                let grouped = {};
+                orders.forEach(o => {
+                    if(!grouped[o.date]) grouped[o.date] = [];
+                    grouped[o.date].push(o);
+                });
+
+                let html = '';
+                for(let date in grouped) {
+                    let dateOrders = grouped[date];
+                    let dayTotalNet = dateOrders.reduce((sum, item) => sum + item.net, 0);
+                    let displayDate = formatDateDMY(date);
+                    
+                    html += `
+                        <div class="folder-group">
+                            <div class="folder-header" onclick="toggleFolder(this)">
+                                <span>📁 दिनांक: ${displayDate} (${dateOrders.length} ऑर्डर्स)</span>
+                                <span>एकूण: ₹${dayTotalNet.toFixed(2)} 🔽</span>
+                            </div>
+                            <div class="folder-content">
+                                <div class="table-responsive">
+                                    <table>
+                                        <tr><th>दुकान</th><th>नेट रक्कम</th><th>बाकी</th><th>कृती</th></tr>
+                    `;
+                    dateOrders.forEach(o => {
+                        html += `<tr>
+                            <td>${o.shop} (${o.route})</td>
+                            <td>₹${o.net}</td>
+                            <td>₹${o.balance}</td>
+                            <td><button class="btn-edit" onclick="editOrder(${o.id})">एडिट</button></td>
+                        </tr>`;
+                    });
+                    html += `</table></div></div></div>`;
+                }
+                document.getElementById('orderHistoryFolders').innerHTML = html || '<p style="color:gray;text-align:center;">कोणत्याही ऑर्डर्स नोंदवलेल्या नाहीत.</p>';
+            };
         }
 
-        function resetToDefaultProds() {
-            setStoredData('kalidas_products', defaultProds);
-            loadProducts();
-            alert('सर्व उत्पादने पूर्ववत रीसेट झाली!');
+        function toggleFolder(header) {
+            let content = header.nextElementSibling;
+            content.classList.toggle('open');
         }
 
-        function resetToDefaultShops() {
-            setStoredData('kalidas_shops', defaultShops);
-            loadShops();
-            alert('सर्व दुकाने पूर्ववत रीसेट झाली!');
+        function generateDateReport() {
+            let selectedDate = document.getElementById('reportDateSelect').value;
+            if(!selectedDate) return;
+
+            let displayDate = formatDateDMY(selectedDate);
+
+            getStore('products', 'readonly').getAll().onsuccess = eP => {
+                let prods = eP.target.result.map(p => p.name);
+                getStore('orders', 'readonly').getAll().onsuccess = eO => {
+                    let orders = eO.target.result.filter(o => o.date === selectedDate);
+                    
+                    if(orders.length === 0) {
+                        document.getElementById('dateReportOutput').innerHTML = `<p style="color:red; text-align:center;">दिनांक ${displayDate} साठी कोणतीही ऑर्डर सापडली नाही.</p>`;
+                        return;
+                    }
+
+                    let html = `<h3>दिनांक: ${displayDate} चा अहवाल</h3>`;
+                    html += '<div class="table-responsive"><table><thead><tr><th>क्र.</th><th>रूट</th><th>दुकान</th>';
+                    prods.forEach(p => html += `<th>${p}</th>`);
+                    html += '<th>एकूण बॉक्स</th><th>नेट रक्कम</th></tr></thead><tbody>';
+
+                    let totals = {}; prods.forEach(p => totals[p] = 0);
+                    let grandQty = 0;
+                    let grandAmt = 0;
+
+                    orders.forEach((o, idx) => {
+                        let pMap = {}; prods.forEach(p => pMap[p] = 0);
+                        let rowTotalQty = 0;
+                        if(o.items) {
+                            o.items.forEach(i => { 
+                                pMap[i.name] = i.qty; 
+                                rowTotalQty += i.qty;
+                            });
+                        }
+
+                        html += `<tr><td>${idx+1}</td><td>${o.route}</td><td>${o.shop}</td>`;
+                        prods.forEach(p => { 
+                            html += `<td>${pMap[p] || 0}</td>`; 
+                            totals[p] += (pMap[p] || 0); 
+                        });
+                        html += `<td><b>${rowTotalQty}</b></td><td><b>₹${o.net}</b></td></tr>`;
+                        grandQty += rowTotalQty;
+                        grandAmt += o.net;
+                    });
+
+                    html += `<tr class="total-row"><td colspan="3">एकूण (TOTAL)</td>`;
+                    prods.forEach(p => { html += `<td>${totals[p]}</td>`; });
+                    html += `<td><b>${grandQty}</b></td><td><b>₹${grandAmt.toFixed(2)}</b></td></tr></tbody></table></div>`;
+
+                    let waText = `*🍦 कालिदास आईस्क्रीम ऑर्डर चार्ट*%0A`;
+                    waText += `📅 दिनांक: ${displayDate}%0A`;
+                    waText += `\`\`\`%0A`;
+                    waText += `--------------------------------------------------%0A`;
+                    waText += `क्र. | दुकान / रूट                | नग  | नेट ₹%0A`;
+                    waText += `--------------------------------------------------%0A`;
+
+                    orders.forEach((o, idx) => {
+                        let rowTotalQty = 0;
+                        if(o.items) o.items.forEach(i => rowTotalQty += i.qty);
+                        
+                        let shopShort = o.shop.length > 20 ? o.shop.substring(0, 18) + '..' : o.shop.padEnd(20, ' ');
+                        let qtyStr = (rowTotalQty + '').padEnd(3, ' ');
+                        let netStr = ('₹' + o.net).padEnd(6, ' ');
+                        let idxStr = ((idx + 1) + '').padEnd(3, ' ');
+                        
+                        waText += `${idxStr}| ${shopShort} | ${qtyStr}| ${netStr}%0A`;
+                    });
+
+                    waText += `--------------------------------------------------%0A`;
+                    waText += `📊 *एकूण बॉक्स (नग): ${grandQty}*%0A`;
+                    waText += `💰 *एकूण रक्कम: ₹${grandAmt.toFixed(2)}*%0A`;
+                    waText += `\`\`\`%0A%0A`;
+
+                    waText += `*📦 उत्पादननिहाय एकूण नग:*%0A`;
+                    prods.forEach(p => {
+                        if(totals[p] > 0) {
+                            waText += ` - ${p}: *${totals[p]} नग*%0A`;
+                        }
+                    });
+
+                    let encodedWaText = encodeURIComponent(waText);
+                    html += `<button class="btn-whatsapp" onclick="window.open('https://api.whatsapp.com/send?text=${encodedWaText}', '_blank')">💬 चार्ट WhatsApp वर पाठवा</button>`;
+                    html += `<button class="btn-whatsapp" style="background:#128c7e; margin-top:8px;" onclick="shareCSVWhatsApp('${selectedDate}')">📎 एक्सेल CSV फाईल WhatsApp वर पाठवा</button>`;
+
+                    document.getElementById('dateReportOutput').innerHTML = html;
+                };
+            };
         }
 
+        function shareCSVWhatsApp(selectedDate) {
+            let displayDate = formatDateDMY(selectedDate);
+            getStore('products', 'readonly').getAll().onsuccess = eP => {
+                let prods = eP.target.result.map(p => p.name);
+                getStore('orders', 'readonly').getAll().onsuccess = eO => {
+                    let orders = eO.target.result.filter(o => o.date === selectedDate);
+                    
+                    let csv = '\uFEFFक्र.,तारीख,रूट,दुकान,';
+                    prods.forEach(p => csv += `"${p} (नग)",`);
+                    csv += 'एकूण बॉक्स,नेट रक्कम (₹),बाकी (₹)\n';
+
+                    let grandQty = 0;
+                    let grandAmt = 0;
+
+                    orders.forEach((o, idx) => {
+                        let pMap = {}; prods.forEach(p => pMap[p] = 0);
+                        let rowTotalQty = 0;
+                        if(o.items && Array.isArray(o.items)) {
+                            o.items.forEach(i => { 
+                                pMap[i.name] = i.qty; 
+                                rowTotalQty += i.qty;
+                            });
+                        }
+                        grandQty += rowTotalQty;
+                        grandAmt += o.net;
+
+                        csv += `"${idx + 1}","${displayDate}","${o.route}","${o.shop}",`;
+                        prods.forEach(p => { csv += `"${pMap[p]}",`; });
+                        csv += `"${rowTotalQty}","${o.net}","${o.balance}"\n`;
+                    });
+
+                    csv += `"","","","एकूण (TOTAL)",`;
+                    prods.forEach(p => {
+                        let colTotal = orders.reduce((sum, ord) => {
+                            let match = ord.items ? ord.items.find(i => i.name === p) : null;
+                            return sum + (match ? match.qty : 0);
+                        }, 0);
+                        csv += `"${colTotal}",`;
+                    });
+                    csv += `"${grandQty}","${grandAmt.toFixed(2)}",""\n`;
+
+                    let file = new File([csv], `Kalidas_Report_${displayDate}.csv`, { type: 'text/csv' });
+                    
+                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                        navigator.share({
+                            title: `कालिदास आईस्क्रीम अहवाल (${displayDate})`,
+                            text: `📅 दिनांक: ${displayDate}\n📦 एकूण बॉक्स: ${grandQty}\n💰 एकूण रक्कम: ₹${grandAmt.toFixed(2)}`,
+                            files: [file]
+                        }).catch(console.error);
+                    } else {
+                        let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                        let l = document.createElement('a');
+                        l.href = URL.createObjectURL(blob);
+                        l.download = `Kalidas_Report_${displayDate}.csv`;
+                        l.click();
+                        alert('तुमच्या डिव्हाइसवर फाईल थेट शेअरिंग सपोर्ट नसल्यामुळे फाईल डाउनलोड झाली आहे. तुम्ही ती WhatsApp वर डाऊनलोड करून पाठवू शकता.');
+                    }
+                };
+            };
+        }
+
+        function exportCSV() {
+            getStore('products', 'readonly').getAll().onsuccess = eP => {
+                let prods = eP.target.result.map(p => p.name);
+                getStore('orders', 'readonly').getAll().onsuccess = eO => {
+                    let orders = eO.target.result;
+                    let csv = '\uFEFFक्र.,तारीख,रूट,दुकान,';
+                    prods.forEach(p => csv += `"${p} (नग)",`);
+                    csv += 'एकूण बॉक्स,नेट रक्कम (₹),बाकी (₹)\n';
+
+                    orders.forEach((o, idx) => {
+                        let pMap = {}; prods.forEach(p => pMap[p] = 0);
+                        let rowTotalQty = 0;
+                        if(o.items && Array.isArray(o.items)) {
+                            o.items.forEach(i => { 
+                                pMap[i.name] = i.qty; 
+                                rowTotalQty += i.qty;
+                            });
+                        }
+
+                        let displayDate = formatDateDMY(o.date);
+                        csv += `"${idx + 1}","${displayDate}","${o.route}","${o.shop}",`;
+                        prods.forEach(p => { csv += `"${pMap[p]}",`; });
+                        csv += `"${rowTotalQty}","${o.net}","${o.balance}"\n`;
+                    });
+
+                    let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                    let l = document.createElement('a');
+                    l.href = URL.createObjectURL(blob);
+                    let todayStr = formatDateDMY(new Date().toISOString().slice(0,10));
+                    l.download = `Kalidas_Orders_Report_${todayStr}.csv`;
+                    l.click();
+                };
+            };
+        }
+
+        function exportJSON() {
+            let data = {};
+            getStore('products', 'readonly').getAll().onsuccess = e1 => {
+                data.products = e1.target.result;
+                getStore('shops', 'readonly').getAll().onsuccess = e2 => {
+                    data.shops = e2.target.result;
+                    getStore('orders', 'readonly').getAll().onsuccess = e3 => {
+                        data.orders = e3.target.result;
+                        let blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                        let l = document.createElement('a'); l.href = URL.createObjectURL(blob); l.download = "backup.json"; l.click();
+                    };
+                };
+            };
+        }
+    </script>
+    <script>
+        // जुना सर्विस वर्कर साफ करणे जेणेकरून ॲप ऑनलाइन/ऑफलाइन अडकणार नाही
         if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(registrations => {
-                for (let reg of registrations) reg.unregister();
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    registration.unregister();
+                }
             });
         }
     </script>
