@@ -167,7 +167,8 @@
             {"route": "Kalambist", "name": "श्रीकृष्ण हॉटेल, आकेरी", "details": "आकेरी"}
         ];
 
-        const defaultProds = [
+        
+const defaultProds = [
             { id: 1, name: "Kaju candy ₹10", price: 200, image: "kaju.png", icon: "🥜🍦" },
             { id: 2, name: "Mawa candy ₹15", price: 300, image: "mawa.png", icon: "🍡🍦" },
             { id: 3, name: "Gadabad", price: 150, image: "gadabad.png", icon: "🍧" },
@@ -175,9 +176,12 @@
             { id: 5, name: "Pista Cup 10", price: 200, image: "pista.png", icon: "🫛" },
             { id: 6, name: "Vanilla cup 10", price: 200, image: "vanilla.png", icon: "🍨" },
             { id: 7, name: "Mango Cup 20", price: 200, image: "mango.png", icon: "🥭" },
-            { id: 8, name: "Butterscotch cup 20", price: 200, image: "butterscotch.png", icon: "🧈" }
+            { id: 8, name: "Butterscotch cup 20", price: 200, image: "butterscotch.png", icon: "🧈" },
+            { id: 9, name: "Sauce Ripple Cup 20", price: 200, image: "sauce.png", icon: "🍫" },
+            { id: 10, name: "Choco ripple Cup 20", price: 200, image: "choco.png", icon: "🍫" },
+            { id: 11, name: "family pack vanilla", price: 85, image: "family_vanilla.png", icon: "🍨" },
+            { id: 12, name: "Family pack mango", price: 125, image: "family_mango.png", icon: "🥭" }
         ];
-
         function getStoredData(key, fallback) {
             let data = localStorage.getItem(key);
             if (!data) {
