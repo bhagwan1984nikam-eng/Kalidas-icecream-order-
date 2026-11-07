@@ -991,6 +991,14 @@
                 };
             };
         }
-    </script>
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('./sw.js')
+                .then(reg => console.log('Service Worker ॲप रजिस्टर झाले!', reg))
+                .catch(err => console.log('Service Worker एरर:', err));
+        });
+    }
+</script>
 </body>
 </html>
