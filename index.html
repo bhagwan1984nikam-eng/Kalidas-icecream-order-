@@ -976,8 +976,7 @@
                 };
             };
         }
-
-        function exportJSON() {
+function exportJSON() {
             let data = {};
             getStore('products', 'readonly').getAll().onsuccess = e1 => {
                 data.products = e1.target.result;
@@ -991,16 +990,16 @@
                 };
             };
         }
+    </script>
     <script>
-    <script>
-    // सर्विस वर्कर जुना प्रॉब्लेम देत असल्यास तो थेट अनरजिस्टर करणे
-    if ('serviceWorker' in navigator) {
-        navigator.serviceWorker.getRegistrations().then(function(registrations) {
-            for(let registration of registrations) {
-                registration.unregister();
-            }
-        });
-    }
-</script>
+        // जुना सर्विस वर्कर साफ करणे जेणेकरून ॲप अडकणार नाही
+        if ('serviceWorker' in navigator) {
+            navigator.serviceWorker.getRegistrations().then(function(registrations) {
+                for(let registration of registrations) {
+                    registration.unregister();
+                }
+            });
+        }
+    </script>
 </body>
 </html>
