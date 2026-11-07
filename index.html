@@ -6,48 +6,59 @@
     <title>कालिदास आईस्क्रीम ऑर्डर ॲप</title>
     <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Kalidas%20Ice%20Cream%20Orders%22%2C%22short_name%22%3A%22Kalidas%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23ffffff%22%2C%22theme_color%22%3A%22%23d81b60%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22icon.png%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D">
     <style>
-        :root { --primary: #d81b60; --secondary: #00897b; --danger: #d32f2f; --warning: #f57c00; --bg: #fafafa; --border: #e0e0e0; }
-        * { box-sizing: border-box; margin: 0; padding: 0; font-family: sans-serif; }
-        body { background: var(--bg); padding-bottom: 70px; color: #212121; }
-        header { background: var(--primary); color: white; padding: 12px 15px; display: flex; align-items: center; gap: 12px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
-        header img { width: 45px; height: 45px; border-radius: 50%; object-fit: cover; background: white; border: 2px solid white; }
-        header h1 { font-size: 1.1rem; }
+        :root { --primary: #d81b60; --primary-dark: #ad1457; --secondary: #00897b; --danger: #d32f2f; --warning: #f57c00; --bg: #f8f9fa; --border: #ced4da; }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        body { background: var(--bg); padding-bottom: 80px; color: #212121; }
+        header { background: linear-gradient(135deg, var(--primary), var(--primary-dark)); color: white; padding: 15px 20px; display: flex; align-items: center; gap: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.15); }
+        header img { width: 50px; height: 50px; border-radius: 50%; object-fit: cover; background: white; border: 2px solid white; }
+        header h1 { font-size: 1.25rem; font-weight: 700; }
         .container { padding: 15px; max-width: 950px; margin: auto; }
-        .card { background: white; border-radius: 8px; padding: 15px; margin-bottom: 15px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
-        .form-group { margin-bottom: 12px; }
-        label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.9rem; }
-        input, select { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 6px; font-size: 1rem; }
-        button.btn { background: var(--primary); color: white; border: none; padding: 10px 15px; border-radius: 6px; font-weight: bold; width: 100%; cursor: pointer; margin-top: 5px; }
-        button.btn-secondary { background: var(--secondary); color: white; }
-        button.btn-edit { background: var(--warning); color: white; padding: 5px 10px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; margin-right: 4px; }
-        button.btn-danger { background: var(--danger); color: white; padding: 5px 10px; font-size: 0.8rem; border: none; border-radius: 4px; cursor: pointer; }
-        button.btn-whatsapp { background: #25d366; color: white; padding: 10px 15px; font-size: 0.95rem; border: none; border-radius: 6px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .card { background: white; border-radius: 12px; padding: 20px; margin-bottom: 15px; border: 1px solid #eaeaea; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+        .card h2 { font-size: 1.1rem; color: var(--primary-dark); margin-bottom: 15px; border-bottom: 2px solid #fce4ec; padding-bottom: 8px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-weight: 600; margin-bottom: 6px; font-size: 0.9rem; color: #495057; }
+        input, select { width: 100%; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: #fff; transition: border-color 0.2s; }
+        input:focus, select:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(216,27,96,0.1); }
+        button.btn { background: var(--primary); color: white; border: none; padding: 12px 20px; border-radius: 8px; font-weight: bold; width: 100%; cursor: pointer; font-size: 1rem; transition: background 0.2s; box-shadow: 0 2px 5px rgba(216,27,96,0.3); }
+        button.btn:active { background: var(--primary-dark); }
+        button.btn-secondary { background: var(--secondary); box-shadow: 0 2px 5px rgba(0,137,123,0.3); }
+        button.btn-edit { background: var(--warning); color: white; padding: 6px 12px; font-size: 0.85rem; border: none; border-radius: 6px; cursor: pointer; margin-right: 5px; font-weight: 600; }
+        button.btn-danger { background: var(--danger); color: white; padding: 6px 12px; font-size: 0.85rem; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        button.btn-whatsapp { background: #25d366; color: white; padding: 12px; font-size: 1rem; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 15px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 2px 5px rgba(37,211,102,0.3); }
         
-        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 12px; margin-top: 10px; }
-        .product-card { display: flex; align-items: center; background: #fff; border: 1px solid var(--border); border-radius: 8px; padding: 10px; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-        .product-card img.large-thumb { width: 50px; height: 50px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; background: #eee; }
+        /* आकर्षक प्रॉडक्ट ग्रीड आणि मोठे आयकॉन */
+        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; margin-top: 10px; }
+        .product-card { display: flex; align-items: center; background: #fff; border: 1px solid #e0e0e0; border-radius: 10px; padding: 12px; gap: 15px; box-shadow: 0 2px 6px rgba(0,0,0,0.04); transition: transform 0.2s; }
+        .product-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        
+        /* मोठे प्रॉडक्ट आयकॉन / इमेजेस */
+        .product-card img.large-thumb { width: 75px; height: 75px; object-fit: cover; border-radius: 8px; border: 2px solid #fce4ec; background: #fff; flex-shrink: 0; }
+        .large-thumb-placeholder { width: 75px; height: 75px; display: flex; align-items: center; justify-content: center; color: var(--primary); font-size: 1.8rem; background: #fce4ec; border-radius: 8px; flex-shrink: 0; border: 2px solid #f8bbd0; }
+        
         .product-info { flex-grow: 1; }
-        .product-info h4 { font-size: 0.95rem; margin-bottom: 2px; color: #333; }
-        .product-info p { font-size: 0.85rem; color: var(--primary); font-weight: bold; }
-        .counter-box { display: flex; align-items: center; gap: 6px; }
-        .counter-box button { width: 32px; height: 32px; background: var(--primary); color: white; border: none; border-radius: 4px; font-size: 1.1rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; }
-        .counter-box button:active { background: #ad1457; }
-        .counter-box input { width: 45px; text-align: center; padding: 5px; font-size: 1rem; border: 1px solid var(--border); border-radius: 4px; }
+        .product-info h4 { font-size: 1rem; margin-bottom: 4px; color: #212121; font-weight: 700; }
+        .product-info p { font-size: 0.9rem; color: var(--primary); font-weight: bold; }
+        
+        .counter-box { display: flex; align-items: center; gap: 8px; }
+        .counter-box button { width: 36px; height: 36px; background: var(--primary); color: white; border: none; border-radius: 6px; font-size: 1.2rem; font-weight: bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(216,27,96,0.2); }
+        .counter-box input { width: 50px; text-align: center; padding: 6px; font-size: 1.1rem; border: 1px solid var(--border); border-radius: 6px; font-weight: bold; }
 
-        .folder-group { border: 1px solid var(--border); border-radius: 6px; margin-bottom: 8px; background: #fff; overflow: hidden; }
-        .folder-header { background: #f1f3f4; padding: 10px 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 0.95rem; }
-        .folder-content { padding: 10px; display: none; background: #fafafa; border-top: 1px solid var(--border); }
+        .folder-group { border: 1px solid #e0e0e0; border-radius: 8px; margin-bottom: 10px; background: #fff; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+        .folder-header { background: #f1f3f4; padding: 12px 15px; font-weight: bold; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-size: 0.95rem; color: #333; }
+        .folder-content { padding: 12px; display: none; background: #fafafa; border-top: 1px solid #e0e0e0; }
         .folder-content.open { display: block; }
 
         .table-responsive { overflow-x: auto; margin-top: 10px; }
-        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
-        th, td { border: 1px solid var(--border); padding: 8px; text-align: center; vertical-align: middle; }
-        th { background: #f5f5f5; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.9rem; background: white; border-radius: 8px; overflow: hidden; }
+        th, td { border: 1px solid #e9ecef; padding: 10px; text-align: center; vertical-align: middle; }
+        th { background: #f8f9fa; color: #495057; font-weight: 600; }
         tr.total-row { background: #fff3e0; font-weight: bold; }
-        .prod-thumb { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc; background: #eee; }
-        .nav-tabs { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; border-top: 1px solid var(--border); z-index: 1000; }
-        .nav-tab { flex: 1; text-align: center; padding: 12px; font-size: 0.8rem; background: none; border: none; cursor: pointer; color: #666; font-weight: bold; }
-        .nav-tab.active { color: var(--primary); border-top: 3px solid var(--primary); }
+        
+        .prod-thumb { width: 45px; height: 45px; object-fit: cover; border-radius: 6px; border: 1px solid #ddd; background: #fff; }
+        
+        .nav-tabs { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; border-top: 1px solid #dee2e6; z-index: 1000; box-shadow: 0 -2px 10px rgba(0,0,0,0.08); }
+        .nav-tab { flex: 1; text-align: center; padding: 12px 5px; font-size: 0.8rem; background: none; border: none; cursor: pointer; color: #6c757d; font-weight: bold; transition: color 0.2s; }
+        .nav-tab.active { color: var(--primary); border-top: 3px solid var(--primary); background: #fff5f8; }
         .section { display: none; }
         .section.active { display: block; }
     </style>
@@ -81,15 +92,15 @@
                 <h3>उत्पादने व ऑर्डर्स (प्रमाण)</h3>
                 <div id="orderProductsContainer" class="product-grid"></div>
 
-                <div style="margin-top: 15px; background: #f9f9f9; padding: 10px; border-radius: 6px;">
+                <div style="margin-top: 20px; background: #fff8e1; padding: 15px; border-radius: 8px; border: 1px solid #ffe0b2;">
                     <p><strong>एकूण: </strong><span id="orderSubtotal">0.00</span> ₹</p>
-                    <div class="form-group" style="margin-top:8px;"><label>सवलत (₹):</label><input type="number" id="orderDiscount" value="0" oninput="calcTotal()"></div>
+                    <div class="form-group" style="margin-top:10px;"><label>सवलत (₹):</label><input type="number" id="orderDiscount" value="0" oninput="calcTotal()"></div>
                     <div class="form-group"><label>जमा (₹):</label><input type="number" id="orderPaid" value="0" oninput="calcTotal()"></div>
                     <p><strong>नेट रक्कम: </strong><span id="orderNetTotal">0.00</span> ₹</p>
                     <p><strong>बाकी: </strong><span id="orderBalance">0.00</span> ₹</p>
                 </div>
-                <button class="btn" id="orderSaveBtn" onclick="saveOrder()">ऑर्डर सेव्ह करा</button>
-                <button class="btn btn-secondary" id="orderCancelBtn" style="display:none; margin-top:5px;" onclick="resetOrderForm()">एडिट रद्द करा</button>
+                <button class="btn" id="orderSaveBtn" onclick="saveOrder()" style="margin-top: 15px;">ऑर्डर सेव्ह करा</button>
+                <button class="btn btn-secondary" id="orderCancelBtn" style="display:none; margin-top:8px;" onclick="resetOrderForm()">एडिट रद्द करा</button>
             </div>
             <div class="card">
                 <h2>ऑर्डर इतिहास (तारीखनुसार फोल्डर)</h2>
@@ -100,7 +111,7 @@
         <!-- 2. Products Section -->
         <div id="sec-products" class="section">
             <div class="card">
-                <button class="btn btn-secondary" onclick="resetToDefaultProds()" style="margin-bottom: 15px; background: #00897b;">🔄 सर्व प्रॉडक्ट्स लोड करा (Reset Products)</button>
+                <button class="btn btn-secondary" onclick="resetToDefaultProds()" style="margin-bottom: 15px;">🔄 सर्व प्रॉडक्ट्स लोड करा (Reset Products)</button>
                 <h2 id="prodFormTitle">उत्पादन जोडा / बदला</h2>
                 <input type="hidden" id="prodId">
                 <div class="form-group"><label>उत्पादनाचे नाव:</label><input type="text" id="prodName"></div>
@@ -110,9 +121,9 @@
                     <input type="text" id="prodImageName" placeholder="उदा. kaju.png">
                 </div>
                 <button class="btn" id="prodSaveBtn" onclick="saveProduct()">उत्पादन सेव्ह करा</button>
-                <button class="btn btn-secondary" id="prodCancelBtn" style="display:none; margin-top:5px;" onclick="resetProdForm()">रद्द करा</button>
+                <button class="btn btn-secondary" id="prodCancelBtn" style="display:none; margin-top:8px;" onclick="resetProdForm()">रद्द करा</button>
                 
-                <h3 style="margin-top:20px;">उत्पादनांची यादी</h3>
+                <h3 style="margin-top:25px; margin-bottom:10px; color:var(--primary-dark);">उत्पादनांची यादी</h3>
                 <div class="table-responsive" id="productList"></div>
             </div>
         </div>
@@ -121,8 +132,8 @@
         <div id="sec-shops" class="section">
             <div class="card">
                 <h2>दुकानाची माहिती आणि व्यवस्थापन</h2>
-                <button class="btn btn-secondary" onclick="resetToDefaultShops()" style="margin-bottom: 15px; background: #00897b;">🔄 दुकानांची संपूर्ण यादी रीसेट / लोड करा</button>
-                <hr style="margin: 15px 0; border:0; border-top:1px solid var(--border);">
+                <button class="btn btn-secondary" onclick="resetToDefaultShops()" style="margin-bottom: 15px;">🔄 दुकानांची संपूर्ण यादी रीसेट / लोड करा</button>
+                <hr style="margin: 15px 0; border:0; border-top:1px solid #eaeaea;">
 
                 <h2 id="shopFormTitle">दुकान जोडा / बदला</h2>
                 <input type="hidden" id="shopId">
@@ -130,9 +141,9 @@
                 <div class="form-group"><label>दुकानाचे नाव:</label><input type="text" id="shopName"></div>
                 <div class="form-group"><label>पत्ता / संपर्क:</label><input type="text" id="shopDetails"></div>
                 <button class="btn" id="shopSaveBtn" onclick="saveShop()">दुकान सेव्ह करा</button>
-                <button class="btn btn-secondary" id="shopCancelBtn" style="display:none; margin-top:5px;" onclick="resetShopForm()">रद्द करा</button>
+                <button class="btn btn-secondary" id="shopCancelBtn" style="display:none; margin-top:8px;" onclick="resetShopForm()">रद्द करा</button>
                 
-                <h3 style="margin-top:20px;">सर्व दुकानांची यादी</h3>
+                <h3 style="margin-top:25px; margin-bottom:10px; color:var(--primary-dark);">सर्व दुकानांची यादी</h3>
                 <div class="table-responsive" id="shopList" style="max-height: 400px;"></div>
             </div>
         </div>
@@ -147,7 +158,7 @@
                 </div>
                 <div id="dateReportOutput" style="margin-top:15px;"></div>
                 
-                <hr style="margin: 20px 0; border:0; border-top:1px solid var(--border);">
+                <hr style="margin: 20px 0; border:0; border-top:1px solid #eaeaea;">
                 <h2>एकत्रित बॅकअप व CSV</h2>
                 <button class="btn" style="margin-top:10px;" onclick="exportCSV()">संपूर्ण Excel CSV डाउनलोड करा</button>
                 <button class="btn" style="margin-top:10px; background:#d32f2f;" onclick="exportJSON()">JSON बॅकअप घ्या</button>
@@ -158,7 +169,7 @@
     <nav class="nav-tabs">
         <button class="nav-tab active" onclick="switchTab('orders', this)">ऑर्डर्स</button>
         <button class="nav-tab" onclick="switchTab('products', this)">उत्पादने</button>
-        <button class="nav-tab" onclick="switchTab('shops', this)">दुकानें</button>
+        <button class="nav-tab" onclick="switchTab('shops', this)">दुकाने</button>
         <button class="nav-tab" onclick="switchTab('reports', this)">अहवाल</button>
     </nav>
 
@@ -367,7 +378,7 @@
             { name: "Family pack mango", price: 125, image: "family_mango.png" }
         ];
 
-        const req = indexedDB.open("KalidasIceCreamDB", 27);
+        const req = indexedDB.open("KalidasIceCreamDB", 28);
         req.onerror = e => alert("Database error");
         req.onsuccess = e => { db = e.target.result; initApp(); };
         req.onupgradeneeded = e => {
@@ -484,8 +495,7 @@
                     let safeName = p.name.replace(/'/g, "\\'");
                     let safeImg = (p.image || '').replace(/'/g, "\\'");
                     
-                    // इथे अचूक इमेज किंवा न मिळाल्यास फाईलचे नाव दाखवण्याची सोय केली आहे
-                    let imgTag = p.image ? `<img src="${p.image}" class="prod-thumb" alt="${p.image}" onerror="this.onerror=null; this.src='icon.png';">` : '🍦';
+                    let imgTag = p.image ? `<img src="${p.image}" class="prod-thumb" alt="${p.name}" onerror="this.outerHTML='<div class=\\'prod-thumb\\' style=\\'display:flex;align-items:center;justify-content:center;background:#fce4ec;color:#d81b60;font-weight:bold;font-size:0.7rem;\\'>🍦</div>'">` : '<div class="prod-thumb" style="display:flex;align-items:center;justify-content:center;background:#fce4ec;color:#d81b60;font-weight:bold;font-size:0.7rem;">🍦</div>';
 
                     html += `<tr>
                         <td>${imgTag}</td>
@@ -505,7 +515,7 @@
 
         function renderOrderProductInputs(prods) {
             document.getElementById('orderProductsContainer').innerHTML = prods.map(p => {
-                let imgDisplay = p.image ? `<img src="${p.image}" class="large-thumb" alt="${p.image}" onerror="this.onerror=null; this.src='icon.png';">` : `<div class="large-thumb" style="display:flex;align-items:center;justify-content:center;color:#d81b60;font-weight:bold;font-size:0.75rem;background:#fce4ec;border-radius:6px;">🍦</div>`;
+                let imgDisplay = p.image ? `<img src="${p.image}" class="large-thumb" alt="${p.name}" onerror="this.outerHTML='<div class=\\'large-thumb-placeholder\\'>🍦</div>'">` : `<div class="large-thumb-placeholder">🍦</div>`;
                 return `
                     <div class="product-card prod-row" data-name="${p.name}" data-price="${p.price}">
                         ${imgDisplay}
@@ -994,16 +1004,6 @@
                     };
                 };
             };
-        }
-    </script>
-    <script>
-        // सर्विस वर्कर पूर्णपणे अनरजिस्टर करणे जेणेकरून ॲप ऑनलाइन/ऑफलाइन दोन्ही वेळेस सुरळीत चालेल
-        if ('serviceWorker' in navigator) {
-            navigator.serviceWorker.getRegistrations().then(function(registrations) {
-                for(let registration of registrations) {
-                    registration.unregister();
-                }
-            });
         }
     </script>
 </body>
