@@ -992,11 +992,13 @@
             };
         }
     <script>
+    <script>
+    // सर्विस वर्कर जुना प्रॉब्लेम देत असल्यास तो थेट अनरजिस्टर करणे
     if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log('Service Worker ॲप रजिस्टर झाले!', reg))
-                .catch(err => console.log('Service Worker एरर:', err));
+        navigator.serviceWorker.getRegistrations().then(function(registrations) {
+            for(let registration of registrations) {
+                registration.unregister();
+            }
         });
     }
 </script>
