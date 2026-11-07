@@ -44,7 +44,7 @@
         th, td { border: 1px solid var(--border); padding: 8px; text-align: center; vertical-align: middle; }
         th { background: #f5f5f5; }
         tr.total-row { background: #fff3e0; font-weight: bold; }
-        .prod-thumb { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc; }
+        .prod-thumb { width: 40px; height: 40px; object-fit: cover; border-radius: 4px; border: 1px solid #ccc; background: #eee; }
         .nav-tabs { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; border-top: 1px solid var(--border); z-index: 1000; }
         .nav-tab { flex: 1; text-align: center; padding: 12px; font-size: 0.8rem; background: none; border: none; cursor: pointer; color: #666; font-weight: bold; }
         .nav-tab.active { color: var(--primary); border-top: 3px solid var(--primary); }
@@ -106,8 +106,8 @@
                 <div class="form-group"><label>उत्पादनाचे नाव:</label><input type="text" id="prodName"></div>
                 <div class="form-group"><label>किंमत (₹):</label><input type="number" id="prodPrice"></div>
                 <div class="form-group">
-                    <label>फोटोचे नाव / पाथ (उदा. kaju.png):</label>
-                    <input type="text" id="prodImageName" placeholder="उदा. kaju.png किंवा इमेजी">
+                    <label>फोटोचे अचूक नाव (उदा. kaju.png):</label>
+                    <input type="text" id="prodImageName" placeholder="उदा. kaju.png">
                 </div>
                 <button class="btn" id="prodSaveBtn" onclick="saveProduct()">उत्पादन सेव्ह करा</button>
                 <button class="btn btn-secondary" id="prodCancelBtn" style="display:none; margin-top:5px;" onclick="resetProdForm()">रद्द करा</button>
@@ -121,7 +121,7 @@
         <div id="sec-shops" class="section">
             <div class="card">
                 <h2>दुकानाची माहिती आणि व्यवस्थापन</h2>
-                <button class="btn btn-secondary" onclick="resetToDefaultShops()" style="margin-bottom: 15px; background: #00897b;">🔄 नवीन दुकानांची संपूर्ण यादी रीसेट / लोड करा</button>
+                <button class="btn btn-secondary" onclick="resetToDefaultShops()" style="margin-bottom: 15px; background: #00897b;">🔄 दुकानांची संपूर्ण यादी रीसेट / लोड करा</button>
                 <hr style="margin: 15px 0; border:0; border-top:1px solid var(--border);">
 
                 <h2 id="shopFormTitle">दुकान जोडा / बदला</h2>
@@ -353,21 +353,21 @@
         ];
 
         const defaultProds = [
-            { name: "Kaju candy ₹10", price: 200, image: "kaju.png", icon: "🥜🍦" },
-            { name: "Mawa candy ₹15", price: 300, image: "mava.png", icon: "🍡🍦" },
-            { name: "Gadabad", price: 150, image: "gadabad.png", icon: "🍧" },
-            { name: "Strawberry Cup 10", price: 200, image: "strawberry.png", icon: "🍓" },
-            { name: "Pista Cup 10", price: 200, image: "pista.png", icon: "🫛" },
-            { name: "Vanilla cup 10", price: 200, image: "vanilla.png", icon: "🍨" },
-            { name: "Mango Cup 20", price: 200, image: "mango.png", icon: "🥭" },
-            { name: "Butterscotch cup 20", price: 200, image: "butterscotch.png", icon: "🧈" },
-            { name: "Sauce Ripple Cup 20", price: 200, image: "sauce.png", icon: "🍫" },
-            { name: "Choco ripple Cup 20", price: 200, image: "choco.png", icon: "🍫" },
-            { name: "family pack vanilla", price: 85, image: "family_vanilla.png", icon: "🍨" },
-            { name: "Family pack mango", price: 125, image: "family_mango.png", icon: "🥭" }
+            { name: "Kaju candy ₹10", price: 200, image: "kaju.png" },
+            { name: "Mawa candy ₹15", price: 300, image: "mawa.png" },
+            { name: "Gadabad", price: 150, image: "gadabad.png" },
+            { name: "Strawberry Cup 10", price: 200, image: "strawberry.png" },
+            { name: "Pista Cup 10", price: 200, image: "pista.png" },
+            { name: "Vanilla cup 10", price: 200, image: "vanilla.png" },
+            { name: "Mango Cup 20", price: 200, image: "mango.png" },
+            { name: "Butterscotch cup 20", price: 200, image: "butterscotch.png" },
+            { name: "Sauce Ripple Cup 20", price: 200, image: "sauce.png" },
+            { name: "Choco ripple Cup 20", price: 200, image: "choco.png" },
+            { name: "family pack vanilla", price: 85, image: "family_vanilla.png" },
+            { name: "Family pack mango", price: 125, image: "family_mango.png" }
         ];
 
-        const req = indexedDB.open("KalidasIceCreamDB", 26);
+        const req = indexedDB.open("KalidasIceCreamDB", 27);
         req.onerror = e => alert("Database error");
         req.onsuccess = e => { db = e.target.result; initApp(); };
         req.onupgradeneeded = e => {
@@ -483,7 +483,9 @@
                 prods.forEach(p => {
                     let safeName = p.name.replace(/'/g, "\\'");
                     let safeImg = (p.image || '').replace(/'/g, "\\'");
-                    let imgTag = p.image ? `<img src="${p.image}" class="prod-thumb" onerror="this.src='icon.png'">` : '🍦';
+                    
+                    // इथे अचूक इमेज किंवा न मिळाल्यास फाईलचे नाव दाखवण्याची सोय केली आहे
+                    let imgTag = p.image ? `<img src="${p.image}" class="prod-thumb" alt="${p.image}" onerror="this.onerror=null; this.src='icon.png';">` : '🍦';
 
                     html += `<tr>
                         <td>${imgTag}</td>
@@ -503,7 +505,7 @@
 
         function renderOrderProductInputs(prods) {
             document.getElementById('orderProductsContainer').innerHTML = prods.map(p => {
-                let imgDisplay = p.image ? `<img src="${p.image}" class="large-thumb" onerror="this.outerHTML='<div class=\\'large-thumb\\' style=\\'display:flex;align-items:center;justify-content:center;color:#d81b60;font-weight:bold;font-size:0.75rem;background:#fce4ec;border-radius:6px;\\'>🍦 आईस्क्रीम</div>'">` : `<div class="large-thumb" style="display:flex;align-items:center;justify-content:center;color:#d81b60;font-weight:bold;font-size:0.75rem;background:#fce4ec;border-radius:6px;">🍦 आईस्क्रीम</div>`;
+                let imgDisplay = p.image ? `<img src="${p.image}" class="large-thumb" alt="${p.image}" onerror="this.onerror=null; this.src='icon.png';">` : `<div class="large-thumb" style="display:flex;align-items:center;justify-content:center;color:#d81b60;font-weight:bold;font-size:0.75rem;background:#fce4ec;border-radius:6px;">🍦</div>`;
                 return `
                     <div class="product-card prod-row" data-name="${p.name}" data-price="${p.price}">
                         ${imgDisplay}
@@ -995,7 +997,7 @@
         }
     </script>
     <script>
-        // जुना सर्विस वर्कर साफ करणे जेणेकरून ॲप ऑनलाइन/ऑफलाइन अडकणार नाही
+        // सर्विस वर्कर पूर्णपणे अनरजिस्टर करणे जेणेकरून ॲप ऑनलाइन/ऑफलाइन दोन्ही वेळेस सुरळीत चालेल
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(function(registrations) {
                 for(let registration of registrations) {
