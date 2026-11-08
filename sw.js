@@ -1,60 +1,33 @@
-const CACHE_NAME = 'kalidas-icecream-v1';
-const ASSETS_TO_CACHE = [
-    './',
-    './index.html',
-    './manifest.json',
-    './icon.png',
-    './kaju.png',
-    './mawa.png',
-    './gadabad.png',
-    './strawberry.png',
-    './pista.png',
-    './vanilla.png',
-    './mango.png',
-    './butterscotch.png',
-    './sauce.png',
-    './choco.png',
-    './family_vanilla.png',
-    './family_mango.png'
-];
+const CACHE_NAME = 'kalidas-dynamic-v1';
 
-// इंस्टॉल करताना सर्व फाईल्स मेमरीमध्ये सेव्ह करा
+// सर्व्हिस वर्कर इन्स्टॉल करणे
 self.addEventListener('install', (event) => {
-    event.waitUntil(
-        caches.open(CACHE_NAME).then((cache) => {
-            return cache.addAll(ASSETS_TO_CACHE);
-        })
-    );
     self.skipWaiting();
 });
 
-// जुना कॅशे साफ करणे
+// जुना कॅशे ॲक्टिव्हेट करणे
 self.addEventListener('activate', (event) => {
-    event.waitUntil(
-        caches.keys().then((keys) => {
-            return Promise.all(
-                keys.map((key) => {
-                    if (key !== CACHE_NAME) {
-                        return caches.delete(key);
-                    }
-                })
-            );
-        })
-    );
-    self.clients.claim();
+    event.waitUntil(clients.claim());
 });
 
-// ऑफलाईन असताना सेव्ह केलेल्या फाईल्स दाखवणे
+// डायनॅमिक फेच आणि कॅशिंग (हे ऑफलाइन चालवण्यासाठी जादू करते)
 self.addEventListener('fetch', (event) => {
+    // फक्त GET रिक्वेस्टसाठी कॅशे तपासा
+    if (event.request.method !== 'GET') return;
+
     event.respondWith(
-        caches.match(event.request).then((cachedResponse) => {
-            if (cachedResponse) {
-                return cachedResponse;
-            }
-            return fetch(event.request).catch(() => {
-                // इंटरनेट नसेल तर इंडेक्स फाईल दाखवा
-                return caches.match('./index.html');
-            });
-        })
+        fetch(event.request)
+            .then((response) => {
+                // जर इंटरनेट असेल, तर आलेला नवीन डेटा/फाइल कॅशेमध्ये सेव्ह करा
+                let responseClone = response.clone();
+                caches.open(CACHE_NAME).then((cache) => {
+                    cache.put(event.request, responseClone);
+                });
+                return response;
+            })
+            .catch(() => {
+                // जर इंटरनेट नसेल (ऑफलाइन), तर सेव्ह केलेल्या कॅशमधून फाइल दाखवा
+                return caches.match(event.request);
+            })
     );
 });
