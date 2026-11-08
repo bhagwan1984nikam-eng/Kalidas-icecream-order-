@@ -1,20 +1,60 @@
-const CACHE_NAME = 'kalidas-cache-v2';
+const CACHE_NAME = 'kalidas-icecream-v1';
+const ASSETS_TO_CACHE = [
+    './',
+    './index.html',
+    './manifest.json',
+    './icon.png',
+    './kaju.png',
+    './mawa.png',
+    './gadabad.png',
+    './strawberry.png',
+    './pista.png',
+    './vanilla.png',
+    './mango.png',
+    './butterscotch.png',
+    './sauce.png',
+    './choco.png',
+    './family_vanilla.png',
+    './family_mango.png'
+];
 
-// इन्स्टॉल करताना सर्व फाईल्स कॅशे करणे
-self.addEventListener('install', event => {
+// इंस्टॉल करताना सर्व फाईल्स मेमरीमध्ये सेव्ह करा
+self.addEventListener('install', (event) => {
+    event.waitUntil(
+        caches.open(CACHE_NAME).then((cache) => {
+            return cache.addAll(ASSETS_TO_CACHE);
+        })
+    );
     self.skipWaiting();
 });
 
-self.addEventListener('activate', event => {
-    event.waitUntil(clients.claim());
+// जुना कॅशे साफ करणे
+self.addEventListener('activate', (event) => {
+    event.waitUntil(
+        caches.keys().then((keys) => {
+            return Promise.all(
+                keys.map((key) => {
+                    if (key !== CACHE_NAME) {
+                        return caches.delete(key);
+                    }
+                })
+            );
+        })
+    );
+    self.clients.claim();
 });
 
-// फेट्च करताना त्रुटी न येण्यासाठी नेटवर्क फर्स्ट (Network First) पद्धत
-self.addEventListener('fetch', event => {
+// ऑफलाईन असताना सेव्ह केलेल्या फाईल्स दाखवणे
+self.addEventListener('fetch', (event) => {
     event.respondWith(
-        fetch(event.request)
-            .catch(() => {
-                return caches.match(event.request);
-            })
+        caches.match(event.request).then((cachedResponse) => {
+            if (cachedResponse) {
+                return cachedResponse;
+            }
+            return fetch(event.request).catch(() => {
+                // इंटरनेट नसेल तर इंडेक्स फाईल दाखवा
+                return caches.match('./index.html');
+            });
+        })
     );
 });
