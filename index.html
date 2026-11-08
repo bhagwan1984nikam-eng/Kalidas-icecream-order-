@@ -414,22 +414,33 @@
         }
 
         function initApp() {
-            document.getElementById('orderDate').valueAsDate = new Date();
-            let tx = db.transaction(['products', 'shops'], 'readonly');
-            
-            tx.objectStore('products').getAll().onsuccess = e => {
-                if(e.target.result.length === 0) {
-                    resetToDefaultProds();
-                } else { loadProducts(); }
-            };
-
-            tx.objectStore('shops').getAll().onsuccess = e => {
-                if(e.target.result.length === 0) {
-                    resetToDefaultShops();
-                } else { loadShops(); }
-            };
-            loadOrders();
+    document.getElementById('orderDate').valueAsDate = new Date();
+    
+    // जर डेटाबेसमध्ये दुकाने नसतील तर आपोआप डीफॉल्ट दुकाने लोड करा
+    let tx = db.transaction(['products', 'shops'], 'readonly');
+    
+    tx.objectStore('products').getAll().onsuccess = e => {
+        if(e.target.result.length === 0) {
+            resetToDefaultProds();
+        } else { 
+            loadProducts(); 
         }
+    };
+
+    tx.objectStore('shops').getAll().onsuccess = e => {
+        let shops = e.target.result;
+        if(shops.length === 0) {
+            // जर ऑफलाइन असताना दुकाने रिकामी वाटली तर तात्काळ डीफॉल्ट दुकाने टाका
+            let tx2 = db.transaction('shops', 'readwrite');
+            let store2 = tx2.objectStore('shops');
+            defaultShops.forEach(s => store2.add(s));
+            tx2.oncomplete = () => { loadShops(); };
+        } else { 
+            loadShops(); 
+        }
+    };
+    loadOrders();
+}
 
         function resetToDefaultProds() {
             let tx = db.transaction('products', 'readwrite');
