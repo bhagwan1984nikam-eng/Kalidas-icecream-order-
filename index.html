@@ -1017,29 +1017,6 @@
 
     <!-- ⚡ १००% ऑफलाईन चालण्यासाठी ऑटो सर्व्हिस वर्कर रजिस्ट्रेशन -->
     <script>
-        if ('serviceWorker' in navigator) {
-            const swCode = `
-                const CACHE_NAME = 'kalidas-pwa-v1';
-                self.addEventListener('install', e => {
-                    e.waitUntil(
-                        caches.open(CACHE_NAME).then(cache => {
-                            return cache.addAll(['./', 'index.html', 'icon.png']);
-                        })
-                    );
-                });
-                self.addEventListener('fetch', e => {
-                    e.respondWith(
-                        caches.match(e.request).then(response => {
-                            return response || fetch(e.request).catch(() => caches.match('./'));
-                        })
-                    );
-                });
-            `;
-            const blob = new Blob([swCode], { type: 'application/javascript' });
-            const swUrl = URL.createObjectURL(blob);
-            navigator.serviceWorker.register(swUrl).catch(err => console.log(err));
-        }
-    </script>
     <script>
     if ('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
