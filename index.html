@@ -1053,28 +1053,21 @@
                 };
             };
         }
-    </script>
-
-    <!-- ⚡ स्वयंचलित कॅशे रीफ्रेश आणि ऑफलाइन सर्विस वर्कर -->
-    <script>
-        if ('serviceWorker' in navigator) {
-            window.addEventListener('load', () => {
-                navigator.serviceWorker.register('data:text/javascript;charset=utf-8,' + encodeURIComponent(`
-                    self.addEventListener('install', e => { self.skipWaiting(); });
-                    self.addEventListener('activate', e => {
-                        e.waitUntil(
-                            caches.keys().then(keys => Promise.all(keys.map(key => caches.delete(key))))
-                            .then(() => self.clients.claim())
-                        );
-                    });
-                    self.addEventListener('fetch', e => {
-                        e.respondWith(
-                            fetch(e.request).catch(() => caches.match(e.request))
-                        );
-                    });
-                `)).catch(err => console.log(err));
-            });
-        }
-    </script>
+        <!-- ⚡ १००% ऑफलाइन काम करण्यासाठी कॅशे स्क्रिप्ट -->
+<script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('data:text/javascript;charset=utf-8,' + encodeURIComponent(`
+                self.addEventListener('install', e => e.waitUntil(self.skipWaiting()));
+                self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
+                self.addEventListener('fetch', e => {
+                    e.respondWith(
+                        fetch(e.request).catch(() => caches.match(e.request))
+                    );
+                });
+            `)).catch(err => console.log(err));
+        });
+    }
+</script>
 </body>
 </html>
