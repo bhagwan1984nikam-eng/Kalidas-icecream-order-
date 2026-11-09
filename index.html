@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>कालिदास आईस्क्रीम ऑर्डर ॲप</title>
-    <link rel="manifest" href="data:application/manifest+json;charset=utf-8,%7B%22name%22%3A%22Kalidas%20Ice%20Cream%20Orders%22%2C%22short_name%22%3A%22Kalidas%22%2C%22start_url%22%3A%22.%22%2C%22display%22%3A%22standalone%22%2C%22background_color%22%3A%22%23ffffff%22%2C%22theme_color%22%3A%22%23d81b60%22%2C%22icons%22%3A%5B%7B%22src%22%3A%22icon.png%22%2C%22sizes%22%3A%22512x512%22%2C%22type%22%3A%22image%2Fpng%22%7D%5D%7D">
     <style>
         :root { 
             --primary: #d81b60; 
@@ -19,7 +18,7 @@
         body { background: var(--bg); padding-bottom: 75px; color: #2c3e50; }
         header { background: linear-gradient(135deg, #d81b60, #880e4f); color: white; padding: 12px 16px; display: flex; align-items: center; gap: 12px; box-shadow: 0 3px 8px rgba(0,0,0,0.2); position: sticky; top: 0; z-index: 999; }
         header img { width: 44px; height: 44px; border-radius: 50%; object-fit: cover; border: 2px solid #fff; background: white; }
-        header h1 { font-size: 1.15rem; font-weight: 700; letter-spacing: 0.3px; }
+        header h1 { font-size: 1.15rem; font-weight: 700; }
         .container { padding: 12px; max-width: 900px; margin: auto; }
         .card { background: white; border-radius: 12px; padding: 16px; margin-bottom: 12px; box-shadow: var(--card-shadow); border: 1px solid #eef2f5; }
         .card h2 { font-size: 1.05rem; color: var(--primary-dark); margin-bottom: 12px; border-bottom: 2px solid #fce4ec; padding-bottom: 6px; }
@@ -33,18 +32,14 @@
         button.btn-danger { background: var(--danger); color: white; padding: 5px 10px; font-size: 0.78rem; border: none; border-radius: 5px; cursor: pointer; }
         button.btn-whatsapp { background: #25d366; color: white; padding: 12px; font-size: 0.95rem; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         
-        /* 🎨 प्रोफेशनल ग्रीड आणि फोटोच्या संपूर्ण जागेचा वापर */
         .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; margin-top: 10px; }
         .product-card { display: flex; align-items: center; background: #fff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 8px; gap: 10px; box-shadow: 0 2px 5px rgba(0,0,0,0.03); }
-        
-        /* इमेजेसचा वापर - संपूर्ण जागेचा परफेक्ट वापर (90px) */
         .product-card .img-container { width: 85px; height: 85px; flex-shrink: 0; border-radius: 8px; overflow: hidden; border: 1px solid #eee; background: #fafafa; display: flex; align-items: center; justify-content: center; }
         .product-card img.large-thumb { width: 100%; height: 100%; object-fit: cover; }
         .large-thumb-placeholder { font-size: 2.2rem; }
         
-        /* लहान आणि बारीक फॉन्ट (जागेचा अचूक वापर) */
         .product-info { flex-grow: 1; overflow: hidden; }
-        .product-info h4 { font-size: 0.85rem; font-weight: 600; color: #2d3748; margin-bottom: 3px; line-height: 1.25; white-space: normal; word-break: break-word; }
+        .product-info h4 { font-size: 0.85rem; font-weight: 600; color: #2d3748; margin-bottom: 3px; line-height: 1.25; }
         .product-info p { font-size: 0.85rem; color: var(--primary); font-weight: 700; }
         
         .counter-box { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
@@ -63,7 +58,6 @@
         tr.total-row { background: #fffaf0; font-weight: bold; }
         .prod-thumb { width: 42px; height: 42px; object-fit: cover; border-radius: 5px; border: 1px solid #e2e8f0; }
         
-        /* 📱 नेव्हिगेशन टॅब डिझाइन */
         .nav-tabs { position: fixed; bottom: 0; left: 0; right: 0; background: white; display: flex; border-top: 1px solid #e2e8f0; z-index: 1000; box-shadow: 0 -2px 10px rgba(0,0,0,0.05); }
         .nav-tab { flex: 1; text-align: center; padding: 10px 2px; font-size: 0.78rem; background: none; border: none; cursor: pointer; color: #718096; font-weight: bold; }
         .nav-tab.active { color: var(--primary); border-top: 3px solid var(--primary); background: #fff5f8; }
@@ -119,15 +113,12 @@
         <!-- 2. Products Section -->
         <div id="sec-products" class="section">
             <div class="card">
-                <button class="btn btn-secondary" onclick="resetToDefaultProds()" style="margin-bottom: 12px;">🔄 सर्व प्रॉडक्ट्स लोड करा (Reset Products)</button>
+                <button class="btn btn-secondary" onclick="resetToDefaultProds()" style="margin-bottom: 12px;">🔄 सर्व प्रॉडक्ट्स लोड करा</button>
                 <h2 id="prodFormTitle">उत्पादन जोडा / बदला</h2>
                 <input type="hidden" id="prodId">
                 <div class="form-group"><label>उत्पादनाचे नाव:</label><input type="text" id="prodName"></div>
                 <div class="form-group"><label>किंमत (₹):</label><input type="number" id="prodPrice"></div>
-                <div class="form-group">
-                    <label>फोटोचे नाव (उदा. kaju.png):</label>
-                    <input type="text" id="prodImageName" placeholder="उदा. kaju.png">
-                </div>
+                <div class="form-group"><label>फोटोचे नाव (उदा. kaju.png):</label><input type="text" id="prodImageName"></div>
                 <button class="btn" id="prodSaveBtn" onclick="saveProduct()">उत्पादन सेव्ह करा</button>
                 <button class="btn btn-secondary" id="prodCancelBtn" style="display:none; margin-top:6px;" onclick="resetProdForm()">रद्द करा</button>
                 
@@ -386,7 +377,7 @@
             { name: "Family pack mango", price: 125, image: "family_mango.png" }
         ];
 
-        const req = indexedDB.open("KalidasIceCreamDB", 30);
+        const req = indexedDB.open("KalidasIceCreamDB", 33);
         req.onerror = e => console.log("Database error");
         req.onsuccess = e => { db = e.target.result; initApp(); };
         req.onupgradeneeded = e => {
@@ -414,33 +405,28 @@
         }
 
         function initApp() {
-    document.getElementById('orderDate').valueAsDate = new Date();
-    
-    // जर डेटाबेसमध्ये दुकाने नसतील तर आपोआप डीफॉल्ट दुकाने लोड करा
-    let tx = db.transaction(['products', 'shops'], 'readonly');
-    
-    tx.objectStore('products').getAll().onsuccess = e => {
-        if(e.target.result.length === 0) {
-            resetToDefaultProds();
-        } else { 
-            loadProducts(); 
-        }
-    };
+            document.getElementById('orderDate').valueAsDate = new Date();
+            let tx = db.transaction(['products', 'shops'], 'readonly');
+            
+            tx.objectStore('products').getAll().onsuccess = e => {
+                if(e.target.result.length === 0) {
+                    resetToDefaultProds();
+                } else { loadProducts(); }
+            };
 
-    tx.objectStore('shops').getAll().onsuccess = e => {
-        let shops = e.target.result;
-        if(shops.length === 0) {
-            // जर ऑफलाइन असताना दुकाने रिकामी वाटली तर तात्काळ डीफॉल्ट दुकाने टाका
-            let tx2 = db.transaction('shops', 'readwrite');
-            let store2 = tx2.objectStore('shops');
-            defaultShops.forEach(s => store2.add(s));
-            tx2.oncomplete = () => { loadShops(); };
-        } else { 
-            loadShops(); 
+            tx.objectStore('shops').getAll().onsuccess = e => {
+                let shops = e.target.result;
+                if(shops.length === 0) {
+                    let tx2 = db.transaction('shops', 'readwrite');
+                    let store2 = tx2.objectStore('shops');
+                    defaultShops.forEach(s => store2.add(s));
+                    tx2.oncomplete = () => { loadShops(); };
+                } else { 
+                    loadShops(); 
+                }
+            };
+            loadOrders();
         }
-    };
-    loadOrders();
-}
 
         function resetToDefaultProds() {
             let tx = db.transaction('products', 'readwrite');
@@ -510,7 +496,6 @@
                 prods.forEach(p => {
                     let safeName = p.name.replace(/'/g, "\\'");
                     let safeImg = (p.image || '').replace(/'/g, "\\'");
-                    
                     let imgTag = p.image ? `<img src="${p.image}" class="prod-thumb" alt="${p.name}" onerror="this.onerror=null; this.src='icon.png';">` : '🍦';
 
                     html += `<tr>
@@ -529,7 +514,6 @@
             };
         }
 
-        /* 📸 इमेजेस आणि आयकॉनसाठी दिलेल्या पूर्ण जागेचा वापर (85px कंटेनर) */
         function renderOrderProductInputs(prods) {
             document.getElementById('orderProductsContainer').innerHTML = prods.map(p => {
                 let imgDisplay = p.image 
@@ -780,43 +764,60 @@
             clearOrderFormQuantities();
         }
 
+        // 🛠️ दुकानांच्या मूळ क्रमानुसार ऑर्डर्स सॉर्ट करून इतिहास दाखवणे
         function loadOrders() {
-            getStore('orders', 'readonly').getAll().onsuccess = e => {
-                let orders = e.target.result.reverse();
-                let grouped = {};
-                orders.forEach(o => {
-                    if(!grouped[o.date]) grouped[o.date] = [];
-                    grouped[o.date].push(o);
+            getStore('shops', 'readonly').getAll().onsuccess = eShops => {
+                let allShops = eShops.target.result;
+                let shopOrderMap = {};
+                allShops.forEach((s, index) => {
+                    shopOrderMap[s.name] = index;
                 });
 
-                let html = '';
-                for(let date in grouped) {
-                    let dateOrders = grouped[date];
-                    let dayTotalNet = dateOrders.reduce((sum, item) => sum + item.net, 0);
-                    let displayDate = formatDateDMY(date);
-                    
-                    html += `
-                        <div class="folder-group">
-                            <div class="folder-header" onclick="toggleFolder(this)">
-                                <span>📁 दिनांक: ${displayDate} (${dateOrders.length} ऑर्डर्स)</span>
-                                <span>एकूण: ₹${dayTotalNet.toFixed(2)} 🔽</span>
-                            </div>
-                            <div class="folder-content">
-                                <div class="table-responsive">
-                                    <table>
-                                        <tr><th>दुकान</th><th>नेट रक्कम</th><th>बाकी</th><th>कृती</th></tr>
-                    `;
-                    dateOrders.forEach(o => {
-                        html += `<tr>
-                            <td>${o.shop} (${o.route})</td>
-                            <td>₹${o.net}</td>
-                            <td>₹${o.balance}</td>
-                            <td><button class="btn-edit" onclick="editOrder(${o.id})">एडिट</button></td>
-                        </tr>`;
+                getStore('orders', 'readonly').getAll().onsuccess = e => {
+                    let orders = e.target.result.reverse();
+                    let grouped = {};
+                    orders.forEach(o => {
+                        if(!grouped[o.date]) grouped[o.date] = [];
+                        grouped[o.date].push(o);
                     });
-                    html += `</table></div></div></div>`;
-                }
-                document.getElementById('orderHistoryFolders').innerHTML = html || '<p style="color:gray;text-align:center;">कोणत्याही ऑर्डर्स नोंदवलेल्या नाहीत.</p>';
+
+                    for(let date in grouped) {
+                        grouped[date].sort((a, b) => {
+                            let posA = shopOrderMap[a.shop] !== undefined ? shopOrderMap[a.shop] : 999;
+                            let posB = shopOrderMap[b.shop] !== undefined ? shopOrderMap[b.shop] : 999;
+                            return posA - posB;
+                        });
+                    }
+
+                    let html = '';
+                    for(let date in grouped) {
+                        let dateOrders = grouped[date];
+                        let dayTotalNet = dateOrders.reduce((sum, item) => sum + item.net, 0);
+                        let displayDate = formatDateDMY(date);
+                        
+                        html += `
+                            <div class="folder-group">
+                                <div class="folder-header" onclick="toggleFolder(this)">
+                                    <span>📁 दिनांक: ${displayDate} (${dateOrders.length} ऑर्डर्स)</span>
+                                    <span>एकूण: ₹${dayTotalNet.toFixed(2)} 🔽</span>
+                                </div>
+                                <div class="folder-content">
+                                    <div class="table-responsive">
+                                        <table>
+                                            <tr><th>दुकान</th><th>नेट रक्कम</th><th>बाकी</th><th>कृती</th></tr>
+                        `;
+                        dateOrders.forEach(o => {
+                            html += `<tr>
+                                <td>${o.shop} (${o.route})</td>
+                                <td>₹${o.net}</td>
+                                <td>₹${o.balance}</td>
+                                <td><button class="btn-edit" onclick="editOrder(${o.id})">एडिट</button></td>
+                            </tr>`;
+                        });
+                        html += `</table></div></div></div>`;
+                    }
+                    document.getElementById('orderHistoryFolders').innerHTML = html || '<p style="color:gray;text-align:center;">कोणत्याही ऑर्डर्स नोंदवलेल्या नाहीत.</p>';
+                };
             };
         }
 
@@ -825,152 +826,179 @@
             content.classList.toggle('open');
         }
 
+        // 🛠️ तारीखनुसार अहवाल - दुकानांचा मूळ अचूक क्रम लावणे
         function generateDateReport() {
             let selectedDate = document.getElementById('reportDateSelect').value;
             if(!selectedDate) return;
 
             let displayDate = formatDateDMY(selectedDate);
 
-            getStore('products', 'readonly').getAll().onsuccess = eP => {
-                let prods = eP.target.result.map(p => p.name);
-                getStore('orders', 'readonly').getAll().onsuccess = eO => {
-                    let orders = eO.target.result.filter(o => o.date === selectedDate);
-                    
-                    if(orders.length === 0) {
-                        document.getElementById('dateReportOutput').innerHTML = `<p style="color:red; text-align:center;">दिनांक ${displayDate} साठी कोणतीही ऑर्डर सापडली नाही.</p>`;
-                        return;
-                    }
+            getStore('shops', 'readonly').getAll().onsuccess = eShops => {
+                let allShops = eShops.target.result;
+                let shopOrderMap = {};
+                allShops.forEach((s, index) => {
+                    shopOrderMap[s.name] = index;
+                });
 
-                    let html = `<h3>दिनांक: ${displayDate} चा अहवाल</h3>`;
-                    html += '<div class="table-responsive"><table><thead><tr><th>क्र.</th><th>रूट</th><th>दुकान</th>';
-                    prods.forEach(p => html += `<th>${p}</th>`);
-                    html += '<th>एकूण बॉक्स</th><th>नेट रक्कम</th></tr></thead><tbody>';
-
-                    let totals = {}; prods.forEach(p => totals[p] = 0);
-                    let grandQty = 0;
-                    let grandAmt = 0;
-
-                    orders.forEach((o, idx) => {
-                        let pMap = {}; prods.forEach(p => pMap[p] = 0);
-                        let rowTotalQty = 0;
-                        if(o.items) {
-                            o.items.forEach(i => { 
-                                pMap[i.name] = i.qty; 
-                                rowTotalQty += i.qty;
-                            });
+                getStore('products', 'readonly').getAll().onsuccess = eP => {
+                    let prods = eP.target.result.map(p => p.name);
+                    getStore('orders', 'readonly').getAll().onsuccess = eO => {
+                        let orders = eO.target.result.filter(o => o.date === selectedDate);
+                        
+                        if(orders.length === 0) {
+                            document.getElementById('dateReportOutput').innerHTML = `<p style="color:red; text-align:center;">दिनांक ${displayDate} साठी कोणतीही ऑर्डर सापडली नाही.</p>`;
+                            return;
                         }
 
-                        html += `<tr><td>${idx+1}</td><td>${o.route}</td><td>${o.shop}</td>`;
-                        prods.forEach(p => { 
-                            html += `<td>${pMap[p] || 0}</td>`; 
-                            totals[p] += (pMap[p] || 0); 
+                        orders.sort((a, b) => {
+                            let posA = shopOrderMap[a.shop] !== undefined ? shopOrderMap[a.shop] : 999;
+                            let posB = shopOrderMap[b.shop] !== undefined ? shopOrderMap[b.shop] : 999;
+                            return posA - posB;
                         });
-                        html += `<td><b>${rowTotalQty}</b></td><td><b>₹${o.net}</b></td></tr>`;
-                        grandQty += rowTotalQty;
-                        grandAmt += o.net;
-                    });
 
-                    html += `<tr class="total-row"><td colspan="3">एकूण (TOTAL)</td>`;
-                    prods.forEach(p => { html += `<td>${totals[p]}</td>`; });
-                    html += `<td><b>${grandQty}</b></td><td><b>₹${grandAmt.toFixed(2)}</b></td></tr></tbody></table></div>`;
+                        let html = `<h3>दिनांक: ${displayDate} चा अहवाल</h3>`;
+                        html += '<div class="table-responsive"><table><thead><tr><th>क्र.</th><th>रूट</th><th>दुकान</th>';
+                        prods.forEach(p => html += `<th>${p}</th>`);
+                        html += '<th>एकूण बॉक्स</th><th>नेट रक्कम</th></tr></thead><tbody>';
 
-                    let waText = `*🍦 कालिदास आईस्क्रीम ऑर्डर चार्ट*%0A`;
-                    waText += `📅 दिनांक: ${displayDate}%0A`;
-                    waText += `\`\`\`%0A`;
-                    waText += `--------------------------------------------------%0A`;
-                    waText += `क्र. | दुकान / रूट                | नग  | नेट ₹%0A`;
-                    waText += `--------------------------------------------------%0A`;
+                        let totals = {}; prods.forEach(p => totals[p] = 0);
+                        let grandQty = 0;
+                        let grandAmt = 0;
 
-                    orders.forEach((o, idx) => {
-                        let rowTotalQty = 0;
-                        if(o.items) o.items.forEach(i => rowTotalQty += i.qty);
-                        
-                        let shopShort = o.shop.length > 20 ? o.shop.substring(0, 18) + '..' : o.shop.padEnd(20, ' ');
-                        let qtyStr = (rowTotalQty + '').padEnd(3, ' ');
-                        let netStr = ('₹' + o.net).padEnd(6, ' ');
-                        let idxStr = ((idx + 1) + '').padEnd(3, ' ');
-                        
-                        waText += `${idxStr}| ${shopShort} | ${qtyStr}| ${netStr}%0A`;
-                    });
+                        orders.forEach((o, idx) => {
+                            let pMap = {}; prods.forEach(p => pMap[p] = 0);
+                            let rowTotalQty = 0;
+                            if(o.items) {
+                                o.items.forEach(i => { 
+                                    pMap[i.name] = i.qty; 
+                                    rowTotalQty += i.qty;
+                                });
+                            }
 
-                    waText += `--------------------------------------------------%0A`;
-                    waText += `📊 *एकूण बॉक्स (नग): ${grandQty}*%0A`;
-                    waText += `💰 *एकूण रक्कम: ₹${grandAmt.toFixed(2)}*%0A`;
-                    waText += `\`\`\`%0A%0A`;
+                            html += `<tr><td>${idx+1}</td><td>${o.route}</td><td>${o.shop}</td>`;
+                            prods.forEach(p => { 
+                                html += `<td>${pMap[p] || 0}</td>`; 
+                                totals[p] += (pMap[p] || 0); 
+                            });
+                            html += `<td><b>${rowTotalQty}</b></td><td><b>₹${o.net}</b></td></tr>`;
+                            grandQty += rowTotalQty;
+                            grandAmt += o.net;
+                        });
 
-                    waText += `*📦 उत्पादननिहाय एकूण नग:*%0A`;
-                    prods.forEach(p => {
-                        if(totals[p] > 0) {
-                            waText += ` - ${p}: *${totals[p]} नग*%0A`;
-                        }
-                    });
+                        html += `<tr class="total-row"><td colspan="3">एकूण (TOTAL)</td>`;
+                        prods.forEach(p => { html += `<td>${totals[p]}</td>`; });
+                        html += `<td><b>${grandQty}</b></td><td><b>₹${grandAmt.toFixed(2)}</b></td></tr></tbody></table></div>`;
 
-                    let encodedWaText = encodeURIComponent(waText);
-                    html += `<button class="btn-whatsapp" onclick="window.open('https://api.whatsapp.com/send?text=${encodedWaText}', '_blank')">💬 चार्ट WhatsApp वर पाठवा</button>`;
-                    html += `<button class="btn-whatsapp" style="background:#128c7e; margin-top:8px;" onclick="shareCSVWhatsApp('${selectedDate}')">📎 एक्सेल CSV फाईल WhatsApp वर पाठवा</button>`;
+                        let waText = `*🍦 कालिदास आईस्क्रीम ऑर्डर चार्ट*%0A`;
+                        waText += `📅 दिनांक: ${displayDate}%0A`;
+                        waText += `\`\`\`%0A`;
+                        waText += `--------------------------------------------------%0A`;
+                        waText += `क्र. | दुकान / रूट                | नग  | नेट ₹%0A`;
+                        waText += `--------------------------------------------------%0A`;
 
-                    document.getElementById('dateReportOutput').innerHTML = html;
+                        orders.forEach((o, idx) => {
+                            let rowTotalQty = 0;
+                            if(o.items) o.items.forEach(i => rowTotalQty += i.qty);
+                            
+                            let shopShort = o.shop.length > 20 ? o.shop.substring(0, 18) + '..' : o.shop.padEnd(20, ' ');
+                            let qtyStr = (rowTotalQty + '').padEnd(3, ' ');
+                            let netStr = ('₹' + o.net).padEnd(6, ' ');
+                            let idxStr = ((idx + 1) + '').padEnd(3, ' ');
+                            
+                            waText += `${idxStr}| ${shopShort} | ${qtyStr}| ${netStr}%0A`;
+                        });
+
+                        waText += `--------------------------------------------------%0A`;
+                        waText += `📊 *एकूण बॉक्स (नग): ${grandQty}*%0A`;
+                        waText += `💰 *एकूण रक्कम: ₹${grandAmt.toFixed(2)}*%0A`;
+                        waText += `\`\`\`%0A%0A`;
+
+                        waText += `*📦 उत्पादननिहाय एकूण नग:*%0A`;
+                        prods.forEach(p => {
+                            if(totals[p] > 0) {
+                                waText += ` - ${p}: *${totals[p]} नग*%0A`;
+                            }
+                        });
+
+                        let encodedWaText = encodeURIComponent(waText);
+                        html += `<button class="btn-whatsapp" onclick="window.open('https://api.whatsapp.com/send?text=${encodedWaText}', '_blank')">💬 चार्ट WhatsApp वर पाठवा</button>`;
+                        html += `<button class="btn-whatsapp" style="background:#128c7e; margin-top:8px;" onclick="shareCSVWhatsApp('${selectedDate}')">📎 एक्सेल CSV फाईल WhatsApp वर पाठवा</button>`;
+
+                        document.getElementById('dateReportOutput').innerHTML = html;
+                    };
                 };
             };
         }
 
         function shareCSVWhatsApp(selectedDate) {
             let displayDate = formatDateDMY(selectedDate);
-            getStore('products', 'readonly').getAll().onsuccess = eP => {
-                let prods = eP.target.result.map(p => p.name);
-                getStore('orders', 'readonly').getAll().onsuccess = eO => {
-                    let orders = eO.target.result.filter(o => o.date === selectedDate);
-                    
-                    let csv = '\uFEFFक्र.,तारीख,रूट,दुकान,';
-                    prods.forEach(p => csv += `"${p} (नग)",`);
-                    csv += 'एकूण बॉक्स,नेट रक्कम (₹),बाकी (₹)\n';
+            getStore('shops', 'readonly').getAll().onsuccess = eShops => {
+                let allShops = eShops.target.result;
+                let shopOrderMap = {};
+                allShops.forEach((s, index) => { shopOrderMap[s.name] = index; });
 
-                    let grandQty = 0;
-                    let grandAmt = 0;
+                getStore('products', 'readonly').getAll().onsuccess = eP => {
+                    let prods = eP.target.result.map(p => p.name);
+                    getStore('orders', 'readonly').getAll().onsuccess = eO => {
+                        let orders = eO.target.result.filter(o => o.date === selectedDate);
+                        
+                        orders.sort((a, b) => {
+                            let posA = shopOrderMap[a.shop] !== undefined ? shopOrderMap[a.shop] : 999;
+                            let posB = shopOrderMap[b.shop] !== undefined ? shopOrderMap[b.shop] : 999;
+                            return posA - posB;
+                        });
 
-                    orders.forEach((o, idx) => {
-                        let pMap = {}; prods.forEach(p => pMap[p] = 0);
-                        let rowTotalQty = 0;
-                        if(o.items && Array.isArray(o.items)) {
-                            o.items.forEach(i => { 
-                                pMap[i.name] = i.qty; 
-                                rowTotalQty += i.qty;
-                            });
+                        let csv = '\uFEFFक्र.,तारीख,रूट,दुकान,';
+                        prods.forEach(p => csv += `"${p} (नग)",`);
+                        csv += 'एकूण बॉक्स,नेट रक्कम (₹),बाकी (₹)\n';
+
+                        let grandQty = 0;
+                        let grandAmt = 0;
+
+                        orders.forEach((o, idx) => {
+                            let pMap = {}; prods.forEach(p => pMap[p] = 0);
+                            let rowTotalQty = 0;
+                            if(o.items && Array.isArray(o.items)) {
+                                o.items.forEach(i => { 
+                                    pMap[i.name] = i.qty; 
+                                    rowTotalQty += i.qty;
+                                });
+                            }
+                            grandQty += rowTotalQty;
+                            grandAmt += o.net;
+
+                            csv += `"${idx + 1}","${displayDate}","${o.route}","${o.shop}",`;
+                            prods.forEach(p => { csv += `"${pMap[p]}",`; });
+                            csv += `"${rowTotalQty}","${o.net}","${o.balance}"\n`;
+                        });
+
+                        csv += `"","","","एकूण (TOTAL)",`;
+                        prods.forEach(p => {
+                            let colTotal = orders.reduce((sum, ord) => {
+                                let match = ord.items ? ord.items.find(i => i.name === p) : null;
+                                return sum + (match ? match.qty : 0);
+                            }, 0);
+                            csv += `"${colTotal}",`;
+                        });
+                        csv += `"${grandQty}","${grandAmt.toFixed(2)}",""\n`;
+
+                        let file = new File([csv], `Kalidas_Report_${displayDate}.csv`, { type: 'text/csv' });
+                        
+                        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                            navigator.share({
+                                title: `कालिदास आईस्क्रीम अहवाल (${displayDate})`,
+                                text: `📅 दिनांक: ${displayDate}\n📦 एकूण बॉक्स: ${grandQty}\n💰 एकूण रक्कम: ₹${grandAmt.toFixed(2)}`,
+                                files: [file]
+                            }).catch(console.error);
+                        } else {
+                            let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                            let l = document.createElement('a');
+                            l.href = URL.createObjectURL(blob);
+                            l.download = `Kalidas_Report_${displayDate}.csv`;
+                            l.click();
+                            alert('तुमच्या डिव्हाइसवर फाईल थेट शेअरिंग सपोर्ट नसल्यामुळे फाईल डाउनलोड झाली आहे.');
                         }
-                        grandQty += rowTotalQty;
-                        grandAmt += o.net;
-
-                        csv += `"${idx + 1}","${displayDate}","${o.route}","${o.shop}",`;
-                        prods.forEach(p => { csv += `"${pMap[p]}",`; });
-                        csv += `"${rowTotalQty}","${o.net}","${o.balance}"\n`;
-                    });
-
-                    csv += `"","","","एकूण (TOTAL)",`;
-                    prods.forEach(p => {
-                        let colTotal = orders.reduce((sum, ord) => {
-                            let match = ord.items ? ord.items.find(i => i.name === p) : null;
-                            return sum + (match ? match.qty : 0);
-                        }, 0);
-                        csv += `"${colTotal}",`;
-                    });
-                    csv += `"${grandQty}","${grandAmt.toFixed(2)}",""\n`;
-
-                    let file = new File([csv], `Kalidas_Report_${displayDate}.csv`, { type: 'text/csv' });
-                    
-                    if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                        navigator.share({
-                            title: `कालिदास आईस्क्रीम अहवाल (${displayDate})`,
-                            text: `📅 दिनांक: ${displayDate}\n📦 एकूण बॉक्स: ${grandQty}\n💰 एकूण रक्कम: ₹${grandAmt.toFixed(2)}`,
-                            files: [file]
-                        }).catch(console.error);
-                    } else {
-                        let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                        let l = document.createElement('a');
-                        l.href = URL.createObjectURL(blob);
-                        l.download = `Kalidas_Report_${displayDate}.csv`;
-                        l.click();
-                        alert('तुमच्या डिव्हाइसवर फाईल थेट शेअरिंग सपोर्ट नसल्यामुळे फाईल डाउनलोड झाली आहे. तुम्ही ती WhatsApp वर डाऊनलोड करून पाठवू शकता.');
-                    }
+                    };
                 };
             };
         }
@@ -1026,16 +1054,21 @@
         }
     </script>
 
-    <!-- ⚡ १००% ऑफलाईन चालण्यासाठी ऑटो सर्व्हिस वर्कर रजिस्ट्रेशन -->
+    <!-- ⚡ १००% ऑफलाइन काम करण्यासाठी कॅशे स्क्रिप्ट -->
     <script>
-    <script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('./sw.js')
-                .then(reg => console.log('Service Worker Registered!'))
-                .catch(err => console.log('Service Worker Failed:', err));
-        });
-    }
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('data:text/javascript;charset=utf-8,' + encodeURIComponent(`
+                    self.addEventListener('install', e => e.waitUntil(self.skipWaiting()));
+                    self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
+                    self.addEventListener('fetch', e => {
+                        e.respondWith(
+                            fetch(e.request).catch(() => caches.match(e.request))
+                        );
+                    });
+                `)).catch(err => console.log(err));
+            });
+        }
     </script>
 </body>
 </html>
