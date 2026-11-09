@@ -757,6 +757,17 @@
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             };
         }
+
+        function resetOrderForm() {
+            document.getElementById('editingOrderId').value = '';
+            document.getElementById('orderFormTitle').innerText = "नवीन ऑर्डर नोंदवा";
+            document.getElementById('orderSaveBtn').innerText = "ऑर्डर सेव्ह करा";
+            document.getElementById('orderCancelBtn').style.display = "none";
+            document.getElementById('orderShop').value = '';
+            clearOrderFormQuantities();
+        }
+
+        
 function deleteOrder(id) {
     if (!confirm("ही ऑर्डर कायमची डिलीट करायची आहे का?")) {
         return;
@@ -780,70 +791,78 @@ function deleteOrder(id) {
         alert('ऑर्डर डिलीट करताना समस्या आली.');
     };
 }
-        function resetOrderForm() {
-            document.getElementById('editingOrderId').value = '';
-            document.getElementById('orderFormTitle').innerText = "नवीन ऑर्डर नोंदवा";
-            document.getElementById('orderSaveBtn').innerText = "ऑर्डर सेव्ह करा";
-            document.getElementById('orderCancelBtn').style.display = "none";
-            document.getElementById('orderShop').value = '';
-            clearOrderFormQuantities();
-        }
 
-        function loadOrders() {
-            getStore('shops', 'readonly').getAll().onsuccess = eShops => {
-                let allShops = eShops.target.result;
-                let shopOrderMap = {};
-                allShops.forEach((s, index) => {
-                    shopOrderMap[s.name] = index;
+function loadOrders() {
+    getStore('shops', 'readonly').getAll().onsuccess = eShops => {
+        let allShops = eShops.target.result;
+        let shopOrderMap = {};
+
+        allShops.forEach((s, index) => {
+            shopOrderMap[s.name] = index;
+        });
+
+        getStore('orders', 'readonly').getAll().onsuccess = e => {
+            let orders = e.target.result.reverse();
+            let grouped = {};
+
+            orders.forEach(o => {
+                if (!grouped[o.date]) grouped[o.date] = [];
+                grouped[o.date].push(o);
+            });
+
+            for (let date in grouped) {
+                grouped[date].sort((a, b) => {
+                    let posA = shopOrderMap[a.shop] !== undefined ? shopOrderMap[a.shop] : 999;
+                    let posB = shopOrderMap[b.shop] !== undefined ? shopOrderMap[b.shop] : 999;
+                    return posA - posB;
+                });
+            }
+
+            let html = '';
+
+            for (let date in grouped) {
+                let dateOrders = grouped[date];
+                let dayTotalNet = dateOrders.reduce((sum, item) => sum + item.net, 0);
+                let displayDate = formatDateDMY(date);
+
+                html += `
+                    <div class="folder-group">
+                        <div class="folder-header" onclick="toggleFolder(this)">
+                            <span>📁 दिनांक: ${displayDate} (${dateOrders.length} ऑर्डर्स)</span>
+                            <span>एकूण: ₹${dayTotalNet.toFixed(2)} 🔽</span>
+                        </div>
+                        <div class="folder-content">
+                            <div class="table-responsive">
+                                <table>
+                                    <tr>
+                                        <th>दुकान</th>
+                                        <th>नेट रक्कम</th>
+                                        <th>बाकी</th>
+                                        <th>कृती</th>
+                                    </tr>
+                `;
+
+                dateOrders.forEach(o => {
+                    html += `<tr>
+                        <td>${o.shop} (${o.route})</td>
+                        <td>₹${o.net}</td>
+                        <td>₹${o.balance}</td>
+                        <td>
+                            <button class="btn-edit" onclick="editOrder(${o.id})">एडिट</button>
+                            <button class="btn-danger" onclick="deleteOrder(${o.id})">डिलीट</button>
+                        </td>
+                    </tr>`;
                 });
 
-                getStore('orders', 'readonly').getAll().onsuccess = e => {
-                    let orders = e.target.result.reverse();
-                    let grouped = {};
-                    orders.forEach(o => {
-                        if(!grouped[o.date]) grouped[o.date] = [];
-                        grouped[o.date].push(o);
-                    });
+                html += `</table></div></div></div>`;
+            }
 
-                    for(let date in grouped) {
-                        grouped[date].sort((a, b) => {
-                            let posA = shopOrderMap[a.shop] !== undefined ? shopOrderMap[a.shop] : 999;
-                            let posB = shopOrderMap[b.shop] !== undefined ? shopOrderMap[b.shop] : 999;
-                            return posA - posB;
-                        });
-                    }
+            document.getElementById('orderHistoryFolders').innerHTML =
+                html || '<p style="color:gray;text-align:center;">कोणत्याही ऑर्डर्स नोंदवलेल्या नाहीत.</p>';
+        };
+    };
+}
 
-                    let html = '';
-                    for(let date in grouped) {
-                        let dateOrders = grouped[date];
-                        let dayTotalNet = dateOrders.reduce((sum, item) => sum + item.net, 0);
-                        let displayDate = formatDateDMY(date);
-                        
-                        html += `
-                            <div class="folder-group">
-                                <div class="folder-header" onclick="toggleFolder(this)">
-                                    <span>📁 दिनांक: ${displayDate} (${dateOrders.length} ऑर्डर्स)</span>
-                                    <span>एकूण: ₹${dayTotalNet.toFixed(2)} 🔽</span>
-                                </div>
-                                <div class="folder-content">
-                                    <div class="table-responsive">
-                                        <table>
-                                            <tr><th>दुकान</th><th>नेट रक्कम</th><th>बाकी</th><th>कृती</th></tr>
-                        `;
-                        dateOrders.forEach(o => {
-                            html += `<tr>
-                                <td>${o.shop} (${o.route})</td>
-                                <td>₹${o.net}</td>
-                                <td>₹${o.balance}</td>
-                                <td><button class="btn-edit" onclick="editOrder(${o.id})">एडिट</button></td>
-                            </tr>`;
-                        });
-                        html += `</table></div></div></div>`;
-                    }
-                    document.getElementById('orderHistoryFolders').innerHTML = html || '<p style="color:gray;text-align:center;">कोणत्याही ऑर्डर्स नोंदवलेल्या नाहीत.</p>';
-                };
-            };
-        }
 
         function toggleFolder(header) {
             let content = header.nextElementSibling;
