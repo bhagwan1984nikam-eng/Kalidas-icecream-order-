@@ -757,7 +757,29 @@
                 window.scrollTo({ top: 0, behavior: 'smooth' });
             };
         }
+function deleteOrder(id) {
+    if (!confirm("ही ऑर्डर कायमची डिलीट करायची आहे का?")) {
+        return;
+    }
 
+    let editingId = document.getElementById('editingOrderId').value;
+
+    if (editingId && parseInt(editingId) === id) {
+        resetOrderForm();
+    }
+
+    let tx = db.transaction('orders', 'readwrite');
+    tx.objectStore('orders').delete(id);
+
+    tx.oncomplete = () => {
+        alert('ऑर्डर यशस्वीरित्या डिलीट झाली!');
+        loadOrders();
+    };
+
+    tx.onerror = () => {
+        alert('ऑर्डर डिलीट करताना समस्या आली.');
+    };
+}
         function resetOrderForm() {
             document.getElementById('editingOrderId').value = '';
             document.getElementById('orderFormTitle').innerText = "नवीन ऑर्डर नोंदवा";
