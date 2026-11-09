@@ -25,7 +25,6 @@
         .form-group { margin-bottom: 12px; }
         label { display: block; font-weight: 600; margin-bottom: 4px; font-size: 0.85rem; color: #555; }
         
-        /* 🛠️ ऑन/ऑफलाइन दोन्ही वेळेस बॉक्सेस नेहमी 100% Active आणि पांढरे राहण्यासाठी फिक्स */
         input, select { width: 100%; padding: 10px 12px; border: 1px solid #cfd8dc; border-radius: 8px; font-size: 0.95rem; background: #fff !important; color: #2c3e50 !important; opacity: 1 !important; }
         input:focus, select:focus { border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(216,27,96,0.12); }
         
@@ -94,7 +93,7 @@
                 </div>
                 <div class="form-group"><label>तारीख:</label><input type="date" id="orderDate"></div>
                 
-                <h3 style="font-size:0.95rem; margin-top:10px;">उत्पादने व ऑर्डर्स (प्रमाण)</h3>
+                <h3 style="font-size:0.95rem; margin-top:10px;">उत्पादने व ऑर्डर्स</h3>
                 <div id="orderProductsContainer" class="product-grid"></div>
 
                 <div style="margin-top: 15px; background: #fff8e1; padding: 12px; border-radius: 8px; border: 1px solid #ffe0b2; font-size: 0.9rem;">
@@ -380,7 +379,8 @@
             { name: "Family pack mango", price: 125, image: "family_mango.png" }
         ];
 
-        const req = indexedDB.open("KalidasIceCreamDB", 34);
+        // 🛠️ डेटाबेसचे व्हर्जन 34 वरून 35 केले जेणेकरून जुना कॅशे पूर्ण डिलीट होऊन नवीन कोड लोड होईल
+        const req = indexedDB.open("KalidasIceCreamDB", 35);
         req.onerror = e => console.log("Database error");
         req.onsuccess = e => { db = e.target.result; initApp(); };
         req.onupgradeneeded = e => {
@@ -1055,13 +1055,18 @@
         }
     </script>
 
-    <!-- ⚡ १००% ऑफलाइन काम करण्यासाठी कॅशे स्क्रिप्ट -->
+    <!-- ⚡ स्वयंचलित कॅशे रीफ्रेश आणि ऑफलाइन सर्विस वर्कर -->
     <script>
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('data:text/javascript;charset=utf-8,' + encodeURIComponent(`
-                    self.addEventListener('install', e => e.waitUntil(self.skipWaiting()));
-                    self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
+                    self.addEventListener('install', e => { self.skipWaiting(); });
+                    self.addEventListener('activate', e => {
+                        e.waitUntil(
+                            caches.keys().then(keys => Promise.all(keys.map(key => caches.delete(key))))
+                            .then(() => self.clients.claim())
+                        );
+                    });
                     self.addEventListener('fetch', e => {
                         e.respondWith(
                             fetch(e.request).catch(() => caches.match(e.request))
