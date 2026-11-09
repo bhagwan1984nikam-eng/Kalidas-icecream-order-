@@ -1053,21 +1053,21 @@
                 };
             };
         }
-        <!-- ⚡ १००% ऑफलाइन काम करण्यासाठी कॅशे स्क्रिप्ट -->
-<script>
-    if ('serviceWorker' in navigator) {
-        window.addEventListener('load', () => {
-            navigator.serviceWorker.register('data:text/javascript;charset=utf-8,' + encodeURIComponent(`
-                self.addEventListener('install', e => e.waitUntil(self.skipWaiting()));
-                self.addEventListener('activate', e => e.waitUntil(self.clients.claim()));
-                self.addEventListener('fetch', e => {
-                    e.respondWith(
-                        fetch(e.request).catch(() => caches.match(e.request))
-                    );
-                });
-            `)).catch(err => console.log(err));
-        });
-    }
-</script>
+            </script>
+
+    <!-- OFFLINE SERVICE WORKER REGISTRATION -->
+    <script>
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('./sw.js')
+                    .then(function (registration) {
+                        console.log('Offline support active:', registration.scope);
+                    })
+                    .catch(function (error) {
+                        console.error('Service Worker Error:', error);
+                    });
+            });
+        }
+    </script>
 </body>
 </html>
