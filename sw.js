@@ -1,5 +1,4 @@
-
-const CACHE_NAME = 'kalidas-offline-v1';
+const CACHE_NAME = 'kalidas-offline-v2';
 
 const APP_FILES = [
     './',
