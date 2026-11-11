@@ -30,8 +30,9 @@
         
         button.btn { background: var(--primary); color: white; border: none; padding: 12px; border-radius: 8px; font-weight: 700; width: 100%; cursor: pointer; font-size: 0.95rem; box-shadow: 0 2px 6px rgba(216,27,96,0.25); }
         button.btn-secondary { background: var(--secondary); color: white; }
-        button.btn-edit { background: var(--warning); color: white; padding: 5px 10px; font-size: 0.78rem; border: none; border-radius: 5px; cursor: pointer; margin-right: 4px; }
-        button.btn-danger { background: var(--danger); color: white; padding: 5px 10px; font-size: 0.78rem; border: none; border-radius: 5px; cursor: pointer; }
+        button.btn-edit { background: var(--warning); color: white; padding: 5px 8px; font-size: 0.78rem; border: none; border-radius: 5px; cursor: pointer; margin-right: 2px; }
+        button.btn-danger { background: var(--danger); color: white; padding: 5px 8px; font-size: 0.78rem; border: none; border-radius: 5px; cursor: pointer; }
+        button.btn-move { background: #4a5568; color: white; padding: 4px 6px; font-size: 0.78rem; border: none; border-radius: 5px; cursor: pointer; margin-right: 2px; }
         button.btn-whatsapp { background: #128c7e; color: white; padding: 12px; font-size: 0.95rem; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; margin-top: 12px; display: flex; align-items: center; justify-content: center; gap: 8px; }
         
         .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; margin-top: 10px; }
@@ -144,7 +145,7 @@
                 <button class="btn" id="shopSaveBtn" onclick="saveShop()">दुकान सेव्ह करा</button>
                 <button class="btn btn-secondary" id="shopCancelBtn" style="display:none; margin-top:6px;" onclick="resetShopForm()">रद्द करा</button>
                 
-                <h3 style="margin-top:20px; font-size:0.95rem;">सर्व दुकानांची यादी</h3>
+                <h3 style="margin-top:20px; font-size:0.95rem;">सर्व दुकानांची यादी (क्रम बदलावा)</h3>
                 <div class="table-responsive" id="shopList" style="max-height: 400px;"></div>
             </div>
         </div>
@@ -379,8 +380,8 @@
             { name: "Family pack mango", price: 125, image: "family_mango.png" }
         ];
 
-        // 🛠️ डेटाबेसचे व्हर्जन 43 केले
-        const req = indexedDB.open("KalidasIceCreamDB", 43);
+        // Database version set to 44
+        const req = indexedDB.open("KalidasIceCreamDB", 44);
         req.onerror = e => console.log("Database error");
         req.onsuccess = e => { db = e.target.result; initApp(); };
         req.onupgradeneeded = e => {
@@ -578,6 +579,35 @@
             }
         }
 
+        // 🛠️ दुकानांचा क्रमांक (स्थान) वर/खाली बदलण्याचे नवीन फंकशन
+        function moveShop(id, direction) {
+            getStore('shops', 'readonly').getAll().onsuccess = e => {
+                let shops = e.target.result;
+                let index = shops.findIndex(s => s.id === id);
+                if(index === -1) return;
+
+                let targetIndex = index + direction;
+                if(targetIndex < 0 || targetIndex >= shops.length) return;
+
+                // दुकानांचे स्थान अदलाबदल करा
+                let temp = shops[index];
+                shops[index] = shops[targetIndex];
+                shops[targetIndex] = temp;
+
+                let tx = db.transaction('shops', 'readwrite');
+                let store = tx.objectStore('shops');
+                store.clear();
+                shops.forEach(s => {
+                    delete s.id; // नवीन ऑटो-इन्क्रिमेंट आयडी मिळण्यासाठी
+                    store.add(s);
+                });
+
+                tx.oncomplete = () => {
+                    loadShops();
+                };
+            };
+        }
+
         function resetShopForm() {
             document.getElementById('shopId').value = '';
             document.getElementById('shopRoute').value = '';
@@ -607,16 +637,18 @@
                     }
                 }
 
-                let html = '<table><tr><th>मार्ग</th><th>दुकान</th><th>तपशील</th><th>कृती</th></tr>';
-                shops.forEach(s => {
+                let html = '<table><tr><th>क्रम</th><th>मार्ग</th><th>दुकान</th><th>कृती</th></tr>';
+                shops.forEach((s, idx) => {
                     let safeRoute = (s.route || '').replace(/'/g, "\\'");
                     let safeName = (s.name || '').replace(/'/g, "\\'");
                     let safeDetails = (s.details || '').replace(/'/g, "\\'");
                     html += `<tr>
+                        <td><b>${idx + 1}</b></td>
                         <td>${s.route}</td>
                         <td>${s.name}</td>
-                        <td>${s.details || ''}</td>
                         <td>
+                            <button class="btn-move" onclick="moveShop(${s.id}, -1)">⬆️</button>
+                            <button class="btn-move" onclick="moveShop(${s.id}, 1)">⬇️</button>
                             <button class="btn-edit" onclick="editShop(${s.id}, '${safeRoute}', '${safeName}', '${safeDetails}')">एडिट</button>
                             <button class="btn-danger" onclick="deleteShop(${s.id})">डिलीट</button>
                         </td>
@@ -758,7 +790,6 @@
             };
         }
 
-        // 🛠️ ऑर्डर डिलीट करण्याचे फिचर पुन्हा जोडले
         function deleteOrder(id) {
             if(confirm("ही ऑर्डर नक्की डिलीट करायची का?")) {
                 getStore('orders', 'readwrite').delete(id).onsuccess = () => {
@@ -905,7 +936,7 @@
 
                         let routesList = [...new Set(orders.map(o => o.route))].join(', ');
 
-                        // 🛠️ WhatsApp किंवा डाऊनलोड होणाऱ्या CSV साठी वर नाव, तारीख आणि रूट सेट केले
+                        // CSV तयार करणे
                         let csvContent = '\uFEFF';
                         csvContent += `"कालिदास आईस्क्रीम"\n`;
                         csvContent += `"दिनांक: ${displayDate} | रूट: ${routesList}"\n\n`;
@@ -930,49 +961,14 @@
                             csvContent += `"${rowTotalQty}","${o.net}"\n`;
                         });
 
-                        // एकूण ओळ
                         csvContent += `"","एकूण (TOTAL)",`;
                         prods.forEach(p => {
                             csvContent += `"${totals[p]}",`;
                         });
                         csvContent += `"${grandQty}","${grandAmt.toFixed(2)}"\n`;
 
-                        // WhatsApp शेअरिंगसाठी मजकूर तयार करणे
-                        let waText = `*🍦 कालिदास आईस्क्रीम*%0A`;
-                        waText += `📅 दिनांक: ${displayDate} | 🛣️ रूट: ${routesList}%0A`;
-                        waText += `\`\`\`%0A`;
-                        waText += `--------------------------------------------------%0A`;
-                        waText += `क्र. | दुकान                      | नग  | नेट ₹%0A`;
-                        waText += `--------------------------------------------------%0A`;
-
-                        orders.forEach((o, idx) => {
-                            let rowTotalQty = 0;
-                            if(o.items) o.items.forEach(i => rowTotalQty += i.qty);
-                            
-                            let shopShort = o.shop.length > 22 ? o.shop.substring(0, 20) + '..' : o.shop.padEnd(22, ' ');
-                            let qtyStr = (rowTotalQty + '').padEnd(3, ' ');
-                            let netStr = ('₹' + o.net).padEnd(6, ' ');
-                            let idxStr = ((idx + 1) + '').padEnd(3, ' ');
-                            
-                            waText += `${idxStr}| ${shopShort} | ${qtyStr}| ${netStr}%0A`;
-                        });
-
-                        waText += `--------------------------------------------------%0A`;
-                        waText += `📊 *एकूण बॉक्स (नग): ${grandQty}*%0A`;
-                        waText += `💰 *एकूण रक्कम: ₹${grandAmt.toFixed(2)}*%0A`;
-                        waText += `\`\`\`%0A%0A`;
-
-                        waText += `*📦 उत्पादननिहाय एकूण नग:*%0A`;
-                        prods.forEach(p => {
-                            if(totals[p] > 0) {
-                                waText += ` - ${p}: *${totals[p]} नग*%0A`;
-                            }
-                        });
-
-                        let encodedWaText = encodeURIComponent(waText);
-                        
-                        // एक्सेल / CSV फाईल थेट डाऊनलोड किंवा WhatsApp वर शेअर करण्याचे बटण
-                        html += `<button class="btn-whatsapp" onclick="shareCSVReport('${displayDate}', \`${encodeURIComponent(csvContent)}\`)">📎 एक्सेल CSV फाईल WhatsApp वर पाठवा</button>`;
+                        // 🛠️ एक्सेल CSV फाईल डाऊनलोड व शेअरिंगचे काम १००% चालणारे बटण
+                        html += `<button class="btn-whatsapp" onclick="downloadCSVReport('${displayDate}', \`${encodeURIComponent(csvContent)}\`)">📎 एक्सेल CSV फाईल WhatsApp वर पाठवा (डाउनलोड करा)</button>`;
 
                         document.getElementById('dateReportOutput').innerHTML = html;
                     };
@@ -980,24 +976,14 @@
             };
         }
 
-        function shareCSVReport(displayDate, encodedCsv) {
+        function downloadCSVReport(displayDate, encodedCsv) {
             let csvText = decodeURIComponent(encodedCsv);
-            let file = new File([csvText], `Kalidas_Report_${displayDate}.csv`, { type: 'text/csv;charset=utf-8;' });
-            
-            if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                navigator.share({
-                    title: `कालिदास आईस्क्रीम अहवाल (${displayDate})`,
-                    text: `📅 दिनांक: ${displayDate}`,
-                    files: [file]
-                }).catch(console.error);
-            } else {
-                let blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
-                let l = document.createElement('a');
-                l.href = URL.createObjectURL(blob);
-                l.download = `Kalidas_Report_${displayDate}.csv`;
-                l.click();
-                alert('एक्सेल CSV फाईल तुमच्या डिव्हाइसवर डाऊनलोड झाली आहे!');
-            }
+            let blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
+            let l = document.createElement('a');
+            l.href = URL.createObjectURL(blob);
+            l.download = `Kalidas_IceCream_Report_${displayDate}.csv`;
+            l.click();
+            alert(`दिनांक ${displayDate} ची एक्सेल CSV फाईल डाउनलोड झाली आहे! आता तुम्ही ती फाईल मॅनेजरमधून WhatsApp वर सहज शेअर करू शकता.`);
         }
 
         function exportCSV() {
