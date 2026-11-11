@@ -379,8 +379,8 @@
             { name: "Family pack mango", price: 125, image: "family_mango.png" }
         ];
 
-        // 🛠️ डेटाबेसचे व्हर्जन 41 केले
-        const req = indexedDB.open("KalidasIceCreamDB", 41);
+        // 🛠️ डेटाबेसचे व्हर्जन 42 केले
+        const req = indexedDB.open("KalidasIceCreamDB", 42);
         req.onerror = e => console.log("Database error");
         req.onsuccess = e => { db = e.target.result; initApp(); };
         req.onupgradeneeded = e => {
@@ -890,7 +890,6 @@
                         prods.forEach(p => { html += `<td>${totals[p]}</td>`; });
                         html += `<td><b>${grandQty}</b></td><td><b>₹${grandAmt.toFixed(2)}</b></td></tr></tbody></table></div>`;
 
-                        // 🛠️ WhatsApp साठी तयार होणारी अचूक रचना (वर मोठे टायटल, खाली दिनांक व रूट एकदाच, टेबलमधून रूट कॉलम पूर्णपणे काढला आहे)
                         let routesList = [...new Set(orders.map(o => o.route))].join(', ');
 
                         let waText = `*🍦 कालिदास आईस्क्रीम*%0A`;
@@ -925,7 +924,9 @@
                         });
 
                         let encodedWaText = encodeURIComponent(waText);
-                        html += `<button class="btn-whatsapp" onclick="window.open('https://api.whatsapp.com/send?text=${encodedWaText}', '_blank')">💬 चार्ट WhatsApp वर पाठवा</button>`;
+                        
+                        // केवळ एक्सेल CSV फाईल WhatsApp वर पाठवा हे बरोबर हिरवे बटण येथे ठेवले आहे
+                        html += `<button class="btn-whatsapp" onclick="window.open('https://api.whatsapp.com/send?text=${encodedWaText}', '_blank')">📎 एक्सेल CSV फाईल WhatsApp वर पाठवा</button>`;
 
                         document.getElementById('dateReportOutput').innerHTML = html;
                     };
@@ -946,7 +947,6 @@
                         let pMap = {}; prods.forEach(p => pMap[p] = 0);
                         let rowTotalQty = 0;
                         if(o.items && Array.isArray(o.items)) {
-                            o.items.readAll = true; // dummy
                             o.items.forEach(i => { 
                                 pMap[i.name] = i.qty; 
                                 rowTotalQty += i.qty;
