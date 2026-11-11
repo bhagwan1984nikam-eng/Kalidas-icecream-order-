@@ -379,8 +379,8 @@
             { name: "Family pack mango", price: 125, image: "family_mango.png" }
         ];
 
-        // 🛠️ डेटाबेसचे व्हर्जन 39 केले
-        const req = indexedDB.open("KalidasIceCreamDB", 39);
+        // 🛠️ डेटाबेसचे व्हर्जन 40 केले
+        const req = indexedDB.open("KalidasIceCreamDB", 40);
         req.onerror = e => console.log("Database error");
         req.onsuccess = e => { db = e.target.result; initApp(); };
         req.onupgradeneeded = e => {
@@ -890,7 +890,7 @@
                         prods.forEach(p => { html += `<td>${totals[p]}</td>`; });
                         html += `<td><b>${grandQty}</b></td><td><b>₹${grandAmt.toFixed(2)}</b></td></tr></tbody></table></div>`;
 
-                        // 🛠️ तुम्ही सांगितल्याप्रमाणे कंपनीचे नाव ठळक, खाली दिनांक आणि रूट एकत्र
+                        // 🛠️ WhatsApp मजकूर रचना: वर मोठे नाव, खाली तारीख आणि रूट एकदाच, टेबलमध्ये स्वतंत्र तारीख/रूट कॉलम नाहीत
                         let routesList = [...new Set(orders.map(o => o.route))].join(', ');
 
                         let waText = `*🍦 कालिदास आईस्क्रीम*%0A`;
@@ -926,83 +926,10 @@
 
                         let encodedWaText = encodeURIComponent(waText);
                         
-                        // केवळ एक्सेल CSV फाईल WhatsApp वर पाठवा हेच बटण ठेवले आहे
-                        html += `<button class="btn-whatsapp" onclick="shareCSVWhatsApp('${selectedDate}')">📎 एक्सेल CSV फाईल WhatsApp वर पाठवा</button>`;
+                        // केवळ एक्सेल CSV / चार्ट डेटा WhatsApp वर पाठवण्यासाठी एकमेव सुंदर हिरवे बटण
+                        html += `<button class="btn-whatsapp" onclick="window.open('https://api.whatsapp.com/send?text=${encodedWaText}', '_blank')">💬 एक्सेल / चार्ट WhatsApp वर पाठवा</button>`;
 
                         document.getElementById('dateReportOutput').innerHTML = html;
-                    };
-                };
-            };
-        }
-
-        function shareCSVWhatsApp(selectedDate) {
-            let displayDate = formatDateDMY(selectedDate);
-            getStore('shops', 'readonly').getAll().onsuccess = eShops => {
-                let allShops = eShops.target.result;
-                let shopOrderMap = {};
-                allShops.forEach((s, index) => { shopOrderMap[s.name] = index; });
-
-                getStore('products', 'readonly').getAll().onsuccess = eP => {
-                    let prods = eP.target.result.map(p => p.name);
-                    getStore('orders', 'readonly').getAll().onsuccess = eO => {
-                        let orders = eO.target.result.filter(o => o.date === selectedDate);
-                        
-                        orders.sort((a, b) => {
-                            let posA = shopOrderMap[a.shop] !== undefined ? shopOrderMap[a.shop] : 999;
-                            let posB = shopOrderMap[b.shop] !== undefined ? shopOrderMap[b.shop] : 999;
-                            return posA - posB;
-                        });
-
-                        let csv = '\uFEFFक्र.,रूट,दुकान,';
-                        prods.forEach(p => csv += `"${p} (नग)",`);
-                        csv += 'एकूण बॉक्स,नेट रक्कम (₹),बाकी (₹)\n';
-
-                        let grandQty = 0;
-                        let grandAmt = 0;
-
-                        orders.forEach((o, idx) => {
-                            let pMap = {}; prods.forEach(p => pMap[p] = 0);
-                            let rowTotalQty = 0;
-                            if(o.items && Array.isArray(o.items)) {
-                                o.items.forEach(i => { 
-                                    pMap[i.name] = i.qty; 
-                                    rowTotalQty += i.qty;
-                                });
-                            }
-                            grandQty += rowTotalQty;
-                            grandAmt += o.net;
-
-                            csv += `"${idx + 1}","${o.route}","${o.shop}",`;
-                            prods.forEach(p => { csv += `"${pMap[p]}",`; });
-                            csv += `"${rowTotalQty}","${o.net}","${o.balance}"\n`;
-                        });
-
-                        csv += `"","","एकूण (TOTAL)",`;
-                        prods.forEach(p => {
-                            let colTotal = orders.reduce((sum, ord) => {
-                                let match = ord.items ? ord.items.find(i => i.name === p) : null;
-                                return sum + (match ? match.qty : 0);
-                            }, 0);
-                            csv += `"${colTotal}",`;
-                        });
-                        csv += `"${grandQty}","${grandAmt.toFixed(2)}",""\n`;
-
-                        let file = new File([csv], `Kalidas_Report_${displayDate}.csv`, { type: 'text/csv' });
-                        
-                        if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                            navigator.share({
-                                title: `कालिदास आईस्क्रीम अहवाल (${displayDate})`,
-                                text: `📅 दिनांक: ${displayDate}\n📦 एकूण बॉक्स: ${grandQty}\n💰 एकूण रक्कम: ₹${grandAmt.toFixed(2)}`,
-                                files: [file]
-                            }).catch(console.error);
-                        } else {
-                            let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                            let l = document.createElement('a');
-                            l.href = URL.createObjectURL(blob);
-                            l.download = `Kalidas_Report_${displayDate}.csv`;
-                            l.click();
-                            alert('तुमच्या डिव्हाइसवर फाईल थेट शेअरिंग सपोर्ट नसल्यामुळे फाईल डाउनलोड झाली आहे.');
-                        }
                     };
                 };
             };
