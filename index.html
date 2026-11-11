@@ -379,8 +379,8 @@
             { name: "Family pack mango", price: 125, image: "family_mango.png" }
         ];
 
-        // 🛠️ डेटाबेसचे व्हर्जन 36 करून जुना कॅशे पूर्णपणे रीसेट केला आहे
-        const req = indexedDB.open("KalidasIceCreamDB", 36);
+        // 🛠️ डेटाबेसचे व्हर्जन 37 केले जेणेकरून कॅशे रीफ्रेश होईल
+        const req = indexedDB.open("KalidasIceCreamDB", 37);
         req.onerror = e => console.log("Database error");
         req.onsuccess = e => { db = e.target.result; initApp(); };
         req.onupgradeneeded = e => {
@@ -890,18 +890,21 @@
                         prods.forEach(p => { html += `<td>${totals[p]}</td>`; });
                         html += `<td><b>${grandQty}</b></td><td><b>₹${grandAmt.toFixed(2)}</b></td></tr></tbody></table></div>`;
 
-                        let waText = `*🍦 कालिदास आईस्क्रीम ऑर्डर चार्ट*%0A`;
-                        waText += `📅 दिनांक: ${displayDate}%0A`;
+                        // 🛠️ सुधारित WhatsApp मजकूर फॉरमॅट: कंपनीचे नाव मोठे व ठळक, खाली दिनांक आणि रूट एकत्र
+                        let routesList = [...new Set(orders.map(o => o.route))].join(', ');
+
+                        let waText = `*🍦 कालिदास आईस्क्रीम*%0A`;
+                        waText += `📅 दिनांक: ${displayDate} | 🛣️ रूट: ${routesList}%0A`;
                         waText += `\`\`\`%0A`;
                         waText += `--------------------------------------------------%0A`;
-                        waText += `क्र. | दुकान / रूट                | नग  | नेट ₹%0A`;
+                        waText += `क्र. | दुकान                      | नग  | नेट ₹%0A`;
                         waText += `--------------------------------------------------%0A`;
 
                         orders.forEach((o, idx) => {
                             let rowTotalQty = 0;
                             if(o.items) o.items.forEach(i => rowTotalQty += i.qty);
                             
-                            let shopShort = o.shop.length > 20 ? o.shop.substring(0, 18) + '..' : o.shop.padEnd(20, ' ');
+                            let shopShort = o.shop.length > 22 ? o.shop.substring(0, 20) + '..' : o.shop.padEnd(22, ' ');
                             let qtyStr = (rowTotalQty + '').padEnd(3, ' ');
                             let netStr = ('₹' + o.net).padEnd(6, ' ');
                             let idxStr = ((idx + 1) + '').padEnd(3, ' ');
@@ -922,8 +925,9 @@
                         });
 
                         let encodedWaText = encodeURIComponent(waText);
-                        html += `<button class="btn-whatsapp" onclick="window.open('https://api.whatsapp.com/send?text=${encodedWaText}', '_blank')">💬 चार्ट WhatsApp वर पाठवा</button>`;
-                        html += `<button class="btn-whatsapp" style="background:#128c7e; margin-top:8px;" onclick="shareCSVWhatsApp('${selectedDate}')">📎 एक्सेल CSV फाईल WhatsApp वर पाठवा</button>`;
+                        
+                        // 'चार्ट WhatsApp वर पाठवा' हे बटण काढून टाकले असून आता फक्त 'एक्सेल CSV फाईल WhatsApp वर पाठवा' हे बटण ठेवले आहे.
+                        html += `<button class="btn-whatsapp" style="background:#128c7e; margin-top:12px;" onclick="shareCSVWhatsApp('${selectedDate}')">📎 एक्सेल CSV फाईल WhatsApp वर पाठवा</button>`;
 
                         document.getElementById('dateReportOutput').innerHTML = html;
                     };
@@ -949,7 +953,7 @@
                             return posA - posB;
                         });
 
-                        let csv = '\uFEFFक्र.,तारीख,रूट,दुकान,';
+                        let csv = '\uFEFFक्र.,रूट,दुकान,';
                         prods.forEach(p => csv += `"${p} (नग)",`);
                         csv += 'एकूण बॉक्स,नेट रक्कम (₹),बाकी (₹)\n';
 
@@ -968,12 +972,12 @@
                             grandQty += rowTotalQty;
                             grandAmt += o.net;
 
-                            csv += `"${idx + 1}","${displayDate}","${o.route}","${o.shop}",`;
+                            csv += `"${idx + 1}","${o.route}","${o.shop}",`;
                             prods.forEach(p => { csv += `"${pMap[p]}",`; });
                             csv += `"${rowTotalQty}","${o.net}","${o.balance}"\n`;
                         });
 
-                        csv += `"","","","एकूण (TOTAL)",`;
+                        csv += `"","","एकूण (TOTAL)",`;
                         prods.forEach(p => {
                             let colTotal = orders.reduce((sum, ord) => {
                                 let match = ord.items ? ord.items.find(i => i.name === p) : null;
@@ -1030,11 +1034,13 @@
                     });
 
                     let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                    let l = document.createElement('a');
-                    l.href = URL.createObjectURL(blob);
+                    let l = document.1createElement ? document.createElement('a') : null;
+                    // Fallback download trigger
+                    let lElement = document.createElement('a');
+                    lElement.href = URL.createObjectURL(blob);
                     let todayStr = formatDateDMY(new Date().toISOString().slice(0,10));
-                    l.download = `Kalidas_Orders_Report_${todayStr}.csv`;
-                    l.click();
+                    lElement.download = `Kalidas_Orders_Report_${todayStr}.csv`;
+                    lElement.click();
                 };
             };
         }
@@ -1055,7 +1061,7 @@
         }
     </script>
 
-    <!-- ⚡ कॅशे पूर्णपणे साफ करून नवीन कोड लोड करणारी सर्विस वर्कर स्क्रिप्ट -->
+    <!-- ⚡ स्वयंचलित कॅशे रीफ्रेश आणि ऑफलाइन सर्विस वर्कर -->
     <script>
         if ('serviceWorker' in navigator) {
             navigator.serviceWorker.getRegistrations().then(registrations => {
