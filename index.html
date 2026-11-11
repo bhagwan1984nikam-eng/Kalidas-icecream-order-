@@ -176,7 +176,7 @@
 
     <script>
         let db;
-
+let currentReportShareData = null;
         const defaultShops = [
             {"route": "Banda", "name": "Nandkishor sweets Malgaon highway", "details": "Malgaon | Lokesh 73020 19 933"},
             {"route": "Banda", "name": "hotel Laxmi Narayan,Malgaon bazar", "details": "Malgaon bazar | 9022 312 374"},
@@ -971,7 +971,67 @@ function loadOrders() {
                 };
             };
         }
+// WhatsApp साठी CSV फाईल आधी तयार ठेवणे
+let uniqueRoutes = [...new Set(orders.map(o => o.route).filter(Boolean))];
+let routeLabel = uniqueRoutes.join(', ');
 
+let csv = '\uFEFF';
+csv += '"दिनांक","' + displayDate + '"\n';
+csv += '"रूट","' + routeLabel + '"\n\n';
+csv += '"क्र.","दुकान",';
+
+prods.forEach(p => {
+    csv += '"' + String(p).replace(/"/g, '""') + ' (नग)",';
+});
+csv += '"एकूण बॉक्स","नेट रक्कम (₹)","बाकी (₹)"\n';
+
+orders.forEach((o, idx) => {
+    let pMap = {};
+    prods.forEach(p => pMap[p] = 0);
+    let rowTotalQty = 0;
+
+    if (o.items && Array.isArray(o.items)) {
+        o.items.forEach(i => {
+            pMap[i.name] = Number(i.qty) || 0;
+            rowTotalQty += Number(i.qty) || 0;
+        });
+    }
+
+    csv += '"' + (idx + 1) + '","' +
+        String(o.shop || '').replace(/"/g, '""') + '",';
+
+    prods.forEach(p => {
+        csv += '"' + (pMap[p] || 0) + '",';
+    });
+
+    csv += '"' + rowTotalQty + '","' +
+        (Number(o.net) || 0).toFixed(2) + '","' +
+        (Number(o.balance) || 0).toFixed(2) + '"\n';
+});
+
+csv += '"","एकूण (TOTAL)",';
+prods.forEach(p => {
+    let colTotal = orders.reduce((sum, ord) => {
+        let match = ord.items && ord.items.find(i => i.name === p);
+        return sum + (match ? (Number(match.qty) || 0) : 0);
+    }, 0);
+    csv += '"' + colTotal + '",';
+});
+csv += '"' + grandQty + '","' + grandAmt.toFixed(2) + '",""\n';
+
+let csvFile = new File(
+    [csv],
+    'Kalidas_Report_' + selectedDate + '.csv',
+    { type: 'text/csv;charset=utf-8;' }
+);
+
+currentReportShareData = {
+    file: csvFile,
+    date: displayDate,
+    route: routeLabel,
+    qty: grandQty,
+    amount: grandAmt
+};
 function shareCSVWhatsApp(selectedDate) {
     let displayDate = formatDateDMY(selectedDate);
 
