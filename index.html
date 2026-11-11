@@ -1089,67 +1089,47 @@ function shareCSVWhatsApp(selectedDate) {
 
                     if (o.items && Array.isArray(o.items)) {
                         o.items.forEach(i => {
-                            pMap[i.name] = i.qty;
-                            rowTotalQty += i.qty;
-                        });
-                    }
+function shareCSVWhatsApp() {
+    if (!currentReportShareData || !currentReportShareData.file) {
+        alert('कृपया आधी अहवाल तयार होऊ द्या.');
+        return;
+    }
 
-                    grandQty += rowTotalQty;
-                    grandAmt += Number(o.net || 0);
+    const data = currentReportShareData;
+    const file = data.file;
 
-                    csv += `"${idx + 1}","${String(o.shop || '').replace(/"/g, '""')}",`;
+    const shareText =
+        'कालिदास आईस्क्रीम अहवाल\n' +
+        'दिनांक: ' + data.date + '\n' +
+        'रूट: ' + data.route + '\n' +
+        'एकूण बॉक्स: ' + data.qty + '\n' +
+        'एकूण रक्कम: ₹' + Number(data.amount).toFixed(2);
 
-                    prods.forEach(p => {
-                        csv += `"${pMap[p]}",`;
-                    });
+    if (navigator.share && navigator.canShare &&
+        navigator.canShare({ files: [file] })) {
 
-                    csv += `"${rowTotalQty}","${o.net}","${o.balance}"\n`;
-                });
+        navigator.share({
+            title: 'कालिदास आईस्क्रीम अहवाल',
+            text: shareText,
+            files: [file]
+        }).catch(error => {
+            if (error.name !== 'AbortError') {
+                alert('शेअर करताना समस्या आली: ' + error.message);
+            }
+        });
 
-                // एकूण बेरीज
-                csv += `"","एकूण (TOTAL)",`;
+    } else {
+        const url = URL.createObjectURL(file);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = file.name;
+        document.body.appendChild(link);
+        link.click();
+        link.remove();
 
-                prods.forEach(p => {
-                    let colTotal = orders.reduce((sum, ord) => {
-                        let match = ord.items
-                            ? ord.items.find(i => i.name === p)
-                            : null;
-                        return sum + (match ? match.qty : 0);
-                    }, 0);
-
-                    csv += `"${colTotal}",`;
-                });
-
-                csv += `"${grandQty}","${grandAmt.toFixed(2)}",""\n`;
-
-                let file = new File(
-                    [csv],
-                    `Kalidas_Report_${displayDate}.csv`,
-                    { type: 'text/csv;charset=utf-8;' }
-                );
-
-                if (navigator.canShare && navigator.canShare({ files: [file] })) {
-                    navigator.share({
-                        title: `कालिदास आईस्क्रीम अहवाल (${displayDate})`,
-                        text: `दिनांक: ${displayDate}\nरूट: ${routeLabel}\nएकूण बॉक्स: ${grandQty}\nएकूण रक्कम: ₹${grandAmt.toFixed(2)}`,
-                        files: [file]
-                    }).catch(console.error);
-                } else {
-                    let blob = new Blob(
-                        [csv],
-                        { type: 'text/csv;charset=utf-8;' }
-                    );
-
-                    let l = document.createElement('a');
-                    l.href = URL.createObjectURL(blob);
-                    l.download = `Kalidas_Report_${displayDate}.csv`;
-                    l.click();
-
-                    alert('अहवाल CSV फाईल डाउनलोड झाली आहे.');
-                }
-            };
-        };
-    };
+        setTimeout(() => URL.revokeObjectURL(url), 1500);
+        alert('CSV डाउनलोड झाली आहे. डाउनलोडमधून WhatsApp वर पाठवा.');
+    }
 }
  function exportCSV() {
             getStore('products', 'readonly').getAll().onsuccess = eP => {
