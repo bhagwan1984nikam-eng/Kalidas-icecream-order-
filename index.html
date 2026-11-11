@@ -379,8 +379,8 @@
             { name: "Family pack mango", price: 125, image: "family_mango.png" }
         ];
 
-        // 🛠️ डेटाबेसचे व्हर्जन 40 केले
-        const req = indexedDB.open("KalidasIceCreamDB", 40);
+        // 🛠️ डेटाबेसचे व्हर्जन 41 केले
+        const req = indexedDB.open("KalidasIceCreamDB", 41);
         req.onerror = e => console.log("Database error");
         req.onsuccess = e => { db = e.target.result; initApp(); };
         req.onupgradeneeded = e => {
@@ -858,7 +858,7 @@
                         });
 
                         let html = `<h3>दिनांक: ${displayDate} चा अहवाल</h3>`;
-                        html += '<div class="table-responsive"><table><thead><tr><th>क्र.</th><th>रूट</th><th>दुकान</th>';
+                        html += '<div class="table-responsive"><table><thead><tr><th>क्र.</th><th>दुकान</th>';
                         prods.forEach(p => html += `<th>${p}</th>`);
                         html += '<th>एकूण बॉक्स</th><th>नेट रक्कम</th></tr></thead><tbody>';
 
@@ -876,7 +876,7 @@
                                 });
                             }
 
-                            html += `<tr><td>${idx+1}</td><td>${o.route}</td><td>${o.shop}</td>`;
+                            html += `<tr><td>${idx+1}</td><td>${o.shop}</td>`;
                             prods.forEach(p => { 
                                 html += `<td>${pMap[p] || 0}</td>`; 
                                 totals[p] += (pMap[p] || 0); 
@@ -886,11 +886,11 @@
                             grandAmt += o.net;
                         });
 
-                        html += `<tr class="total-row"><td colspan="3">एकूण (TOTAL)</td>`;
+                        html += `<tr class="total-row"><td colspan="2">एकूण (TOTAL)</td>`;
                         prods.forEach(p => { html += `<td>${totals[p]}</td>`; });
                         html += `<td><b>${grandQty}</b></td><td><b>₹${grandAmt.toFixed(2)}</b></td></tr></tbody></table></div>`;
 
-                        // 🛠️ WhatsApp मजकूर रचना: वर मोठे नाव, खाली तारीख आणि रूट एकदाच, टेबलमध्ये स्वतंत्र तारीख/रूट कॉलम नाहीत
+                        // 🛠️ WhatsApp साठी तयार होणारी अचूक रचना (वर मोठे टायटल, खाली दिनांक व रूट एकदाच, टेबलमधून रूट कॉलम पूर्णपणे काढला आहे)
                         let routesList = [...new Set(orders.map(o => o.route))].join(', ');
 
                         let waText = `*🍦 कालिदास आईस्क्रीम*%0A`;
@@ -925,9 +925,7 @@
                         });
 
                         let encodedWaText = encodeURIComponent(waText);
-                        
-                        // केवळ एक्सेल CSV / चार्ट डेटा WhatsApp वर पाठवण्यासाठी एकमेव सुंदर हिरवे बटण
-                        html += `<button class="btn-whatsapp" onclick="window.open('https://api.whatsapp.com/send?text=${encodedWaText}', '_blank')">💬 एक्सेल / चार्ट WhatsApp वर पाठवा</button>`;
+                        html += `<button class="btn-whatsapp" onclick="window.open('https://api.whatsapp.com/send?text=${encodedWaText}', '_blank')">💬 चार्ट WhatsApp वर पाठवा</button>`;
 
                         document.getElementById('dateReportOutput').innerHTML = html;
                     };
@@ -948,6 +946,7 @@
                         let pMap = {}; prods.forEach(p => pMap[p] = 0);
                         let rowTotalQty = 0;
                         if(o.items && Array.isArray(o.items)) {
+                            o.items.readAll = true; // dummy
                             o.items.forEach(i => { 
                                 pMap[i.name] = i.qty; 
                                 rowTotalQty += i.qty;
