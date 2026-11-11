@@ -379,8 +379,8 @@
             { name: "Family pack mango", price: 125, image: "family_mango.png" }
         ];
 
-        // 🛠️ डेटाबेसचे व्हर्जन 42 केले
-        const req = indexedDB.open("KalidasIceCreamDB", 42);
+        // 🛠️ डेटाबेसचे व्हर्जन 43 केले
+        const req = indexedDB.open("KalidasIceCreamDB", 43);
         req.onerror = e => console.log("Database error");
         req.onsuccess = e => { db = e.target.result; initApp(); };
         req.onupgradeneeded = e => {
@@ -758,6 +758,16 @@
             };
         }
 
+        // 🛠️ ऑर्डर डिलीट करण्याचे फिचर पुन्हा जोडले
+        function deleteOrder(id) {
+            if(confirm("ही ऑर्डर नक्की डिलीट करायची का?")) {
+                getStore('orders', 'readwrite').delete(id).onsuccess = () => {
+                    alert('ऑर्डर यशस्वीरित्या डिलीट केली!');
+                    loadOrders();
+                };
+            }
+        }
+
         function resetOrderForm() {
             document.getElementById('editingOrderId').value = '';
             document.getElementById('orderFormTitle').innerText = "नवीन ऑर्डर नोंदवा";
@@ -813,7 +823,10 @@
                                 <td>${o.shop} (${o.route})</td>
                                 <td>₹${o.net}</td>
                                 <td>₹${o.balance}</td>
-                                <td><button class="btn-edit" onclick="editOrder(${o.id})">एडिट</button></td>
+                                <td>
+                                    <button class="btn-edit" onclick="editOrder(${o.id})">एडिट</button>
+                                    <button class="btn-danger" onclick="deleteOrder(${o.id})">डिलीट</button>
+                                </td>
                             </tr>`;
                         });
                         html += `</table></div></div></div>`;
@@ -892,6 +905,39 @@
 
                         let routesList = [...new Set(orders.map(o => o.route))].join(', ');
 
+                        // 🛠️ WhatsApp किंवा डाऊनलोड होणाऱ्या CSV साठी वर नाव, तारीख आणि रूट सेट केले
+                        let csvContent = '\uFEFF';
+                        csvContent += `"कालिदास आईस्क्रीम"\n`;
+                        csvContent += `"दिनांक: ${displayDate} | रूट: ${routesList}"\n\n`;
+                        
+                        let csvHeader = 'क्र.,दुकान,';
+                        prods.forEach(p => csvHeader += `"${p} (नग)",`);
+                        csvHeader += 'एकूण बॉक्स,नेट रक्कम (₹)\n';
+                        csvContent += csvHeader;
+
+                        orders.forEach((o, idx) => {
+                            let pMap = {}; prods.forEach(p => pMap[p] = 0);
+                            let rowTotalQty = 0;
+                            if(o.items && Array.isArray(o.items)) {
+                                o.items.forEach(i => { 
+                                    pMap[i.name] = i.qty; 
+                                    rowTotalQty += i.qty;
+                                });
+                            }
+
+                            csvContent += `"${idx + 1}","${o.shop}",`;
+                            prods.forEach(p => { csvContent += `"${pMap[p]}",`; });
+                            csvContent += `"${rowTotalQty}","${o.net}"\n`;
+                        });
+
+                        // एकूण ओळ
+                        csvContent += `"","एकूण (TOTAL)",`;
+                        prods.forEach(p => {
+                            csvContent += `"${totals[p]}",`;
+                        });
+                        csvContent += `"${grandQty}","${grandAmt.toFixed(2)}"\n`;
+
+                        // WhatsApp शेअरिंगसाठी मजकूर तयार करणे
                         let waText = `*🍦 कालिदास आईस्क्रीम*%0A`;
                         waText += `📅 दिनांक: ${displayDate} | 🛣️ रूट: ${routesList}%0A`;
                         waText += `\`\`\`%0A`;
@@ -925,13 +971,33 @@
 
                         let encodedWaText = encodeURIComponent(waText);
                         
-                        // केवळ एक्सेल CSV फाईल WhatsApp वर पाठवा हे बरोबर हिरवे बटण येथे ठेवले आहे
-                        html += `<button class="btn-whatsapp" onclick="window.open('https://api.whatsapp.com/send?text=${encodedWaText}', '_blank')">📎 एक्सेल CSV फाईल WhatsApp वर पाठवा</button>`;
+                        // एक्सेल / CSV फाईल थेट डाऊनलोड किंवा WhatsApp वर शेअर करण्याचे बटण
+                        html += `<button class="btn-whatsapp" onclick="shareCSVReport('${displayDate}', \`${encodeURIComponent(csvContent)}\`)">📎 एक्सेल CSV फाईल WhatsApp वर पाठवा</button>`;
 
                         document.getElementById('dateReportOutput').innerHTML = html;
                     };
                 };
             };
+        }
+
+        function shareCSVReport(displayDate, encodedCsv) {
+            let csvText = decodeURIComponent(encodedCsv);
+            let file = new File([csvText], `Kalidas_Report_${displayDate}.csv`, { type: 'text/csv;charset=utf-8;' });
+            
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                navigator.share({
+                    title: `कालिदास आईस्क्रीम अहवाल (${displayDate})`,
+                    text: `📅 दिनांक: ${displayDate}`,
+                    files: [file]
+                }).catch(console.error);
+            } else {
+                let blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
+                let l = document.createElement('a');
+                l.href = URL.createObjectURL(blob);
+                l.download = `Kalidas_Report_${displayDate}.csv`;
+                l.click();
+                alert('एक्सेल CSV फाईल तुमच्या डिव्हाइसवर डाऊनलोड झाली आहे!');
+            }
         }
 
         function exportCSV() {
