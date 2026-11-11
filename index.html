@@ -380,8 +380,8 @@
             { name: "Family pack mango", price: 125, image: "family_mango.png" }
         ];
 
-        // Database version set to 44
-        const req = indexedDB.open("KalidasIceCreamDB", 44);
+        // Database version set to 45
+        const req = indexedDB.open("KalidasIceCreamDB", 45);
         req.onerror = e => console.log("Database error");
         req.onsuccess = e => { db = e.target.result; initApp(); };
         req.onupgradeneeded = e => {
@@ -579,7 +579,6 @@
             }
         }
 
-        // 🛠️ दुकानांचा क्रमांक (स्थान) वर/खाली बदलण्याचे नवीन फंकशन
         function moveShop(id, direction) {
             getStore('shops', 'readonly').getAll().onsuccess = e => {
                 let shops = e.target.result;
@@ -589,7 +588,6 @@
                 let targetIndex = index + direction;
                 if(targetIndex < 0 || targetIndex >= shops.length) return;
 
-                // दुकानांचे स्थान अदलाबदल करा
                 let temp = shops[index];
                 shops[index] = shops[targetIndex];
                 shops[targetIndex] = temp;
@@ -598,7 +596,7 @@
                 let store = tx.objectStore('shops');
                 store.clear();
                 shops.forEach(s => {
-                    delete s.id; // नवीन ऑटो-इन्क्रिमेंट आयडी मिळण्यासाठी
+                    delete s.id;
                     store.add(s);
                 });
 
@@ -936,7 +934,6 @@
 
                         let routesList = [...new Set(orders.map(o => o.route))].join(', ');
 
-                        // CSV तयार करणे
                         let csvContent = '\uFEFF';
                         csvContent += `"कालिदास आईस्क्रीम"\n`;
                         csvContent += `"दिनांक: ${displayDate} | रूट: ${routesList}"\n\n`;
@@ -967,8 +964,8 @@
                         });
                         csvContent += `"${grandQty}","${grandAmt.toFixed(2)}"\n`;
 
-                        // 🛠️ एक्सेल CSV फाईल डाऊनलोड व शेअरिंगचे काम १००% चालणारे बटण
-                        html += `<button class="btn-whatsapp" onclick="downloadCSVReport('${displayDate}', \`${encodeURIComponent(csvContent)}\`)">📎 एक्सेल CSV फाईल WhatsApp वर पाठवा (डाउनलोड करा)</button>`;
+                        // 🛠️ थेट WhatsApp वर CSV फाईल पाठवणारे (Share API) ॲक्टिव्ह बटण
+                        html += `<button class="btn-whatsapp" onclick="sendCSVToWhatsApp('${displayDate}', \`${encodeURIComponent(csvContent)}\`)">📎 एक्सेल CSV फाईल WhatsApp वर पाठवा</button>`;
 
                         document.getElementById('dateReportOutput').innerHTML = html;
                     };
@@ -976,14 +973,28 @@
             };
         }
 
-        function downloadCSVReport(displayDate, encodedCsv) {
+        // थेट WhatsApp वर फाईल किंवा मजकूर शेअर करणारे फंक्शन
+        function sendCSVToWhatsApp(displayDate, encodedCsv) {
             let csvText = decodeURIComponent(encodedCsv);
-            let blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
-            let l = document.createElement('a');
-            l.href = URL.createObjectURL(blob);
-            l.download = `Kalidas_IceCream_Report_${displayDate}.csv`;
-            l.click();
-            alert(`दिनांक ${displayDate} ची एक्सेल CSV फाईल डाउनलोड झाली आहे! आता तुम्ही ती फाईल मॅनेजरमधून WhatsApp वर सहज शेअर करू शकता.`);
+            let file = new File([csvText], `Kalidas_Report_${displayDate}.csv`, { type: 'text/csv;charset=utf-8;' });
+            
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                navigator.share({
+                    title: `कालिदास आईस्क्रीम अहवाल (${displayDate})`,
+                    text: `कालिदास आईस्क्रीम - दिनांक: ${displayDate}`,
+                    files: [file]
+                }).catch((err) => {
+                    console.log('Share error:', err);
+                });
+            } else {
+                // जर फोनमध्ये थेट शेअरिंग सपोर्ट करत नसेल तर फाईल डाउनलोड होईल
+                let blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
+                let l = document.createElement('a');
+                l.href = URL.createObjectURL(blob);
+                l.download = `Kalidas_Report_${displayDate}.csv`;
+                l.click();
+                alert('तुमच्या डिव्हाइसवर फाईल डाउनलोड झाली आहे. आता ती WhatsApp वर शेअर करा.');
+            }
         }
 
         function exportCSV() {
