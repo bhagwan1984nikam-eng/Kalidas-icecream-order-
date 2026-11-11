@@ -176,7 +176,7 @@
 
     <script>
         let db;
-let currentReportShareData = null;
+
         const defaultShops = [
             {"route": "Banda", "name": "Nandkishor sweets Malgaon highway", "details": "Malgaon | Lokesh 73020 19 933"},
             {"route": "Banda", "name": "hotel Laxmi Narayan,Malgaon bazar", "details": "Malgaon bazar | 9022 312 374"},
@@ -379,8 +379,8 @@ let currentReportShareData = null;
             { name: "Family pack mango", price: 125, image: "family_mango.png" }
         ];
 
-        // 🛠️ डेटाबेसचे व्हर्जन 34 वरून 35 केले जेणेकरून जुना कॅशे पूर्ण डिलीट होऊन नवीन कोड लोड होईल
-        const req = indexedDB.open("KalidasIceCreamDB", 35);
+        // 🛠️ डेटाबेसचे व्हर्जन 36 करून जुना कॅशे पूर्णपणे रीसेट केला आहे
+        const req = indexedDB.open("KalidasIceCreamDB", 36);
         req.onerror = e => console.log("Database error");
         req.onsuccess = e => { db = e.target.result; initApp(); };
         req.onupgradeneeded = e => {
@@ -767,102 +767,61 @@ let currentReportShareData = null;
             clearOrderFormQuantities();
         }
 
-        
-function deleteOrder(id) {
-    if (!confirm("ही ऑर्डर कायमची डिलीट करायची आहे का?")) {
-        return;
-    }
-
-    let editingId = document.getElementById('editingOrderId').value;
-
-    if (editingId && parseInt(editingId) === id) {
-        resetOrderForm();
-    }
-
-    let tx = db.transaction('orders', 'readwrite');
-    tx.objectStore('orders').delete(id);
-
-    tx.oncomplete = () => {
-        alert('ऑर्डर यशस्वीरित्या डिलीट झाली!');
-        loadOrders();
-    };
-
-    tx.onerror = () => {
-        alert('ऑर्डर डिलीट करताना समस्या आली.');
-    };
-}
-
-function loadOrders() {
-    getStore('shops', 'readonly').getAll().onsuccess = eShops => {
-        let allShops = eShops.target.result;
-        let shopOrderMap = {};
-
-        allShops.forEach((s, index) => {
-            shopOrderMap[s.name] = index;
-        });
-
-        getStore('orders', 'readonly').getAll().onsuccess = e => {
-            let orders = e.target.result.reverse();
-            let grouped = {};
-
-            orders.forEach(o => {
-                if (!grouped[o.date]) grouped[o.date] = [];
-                grouped[o.date].push(o);
-            });
-
-            for (let date in grouped) {
-                grouped[date].sort((a, b) => {
-                    let posA = shopOrderMap[a.shop] !== undefined ? shopOrderMap[a.shop] : 999;
-                    let posB = shopOrderMap[b.shop] !== undefined ? shopOrderMap[b.shop] : 999;
-                    return posA - posB;
-                });
-            }
-
-            let html = '';
-
-            for (let date in grouped) {
-                let dateOrders = grouped[date];
-                let dayTotalNet = dateOrders.reduce((sum, item) => sum + item.net, 0);
-                let displayDate = formatDateDMY(date);
-
-                html += `
-                    <div class="folder-group">
-                        <div class="folder-header" onclick="toggleFolder(this)">
-                            <span>📁 दिनांक: ${displayDate} (${dateOrders.length} ऑर्डर्स)</span>
-                            <span>एकूण: ₹${dayTotalNet.toFixed(2)} 🔽</span>
-                        </div>
-                        <div class="folder-content">
-                            <div class="table-responsive">
-                                <table>
-                                    <tr>
-                                        <th>दुकान</th>
-                                        <th>नेट रक्कम</th>
-                                        <th>बाकी</th>
-                                        <th>कृती</th>
-                                    </tr>
-                `;
-
-                dateOrders.forEach(o => {
-                    html += `<tr>
-                        <td>${o.shop} (${o.route})</td>
-                        <td>₹${o.net}</td>
-                        <td>₹${o.balance}</td>
-                        <td>
-                            <button class="btn-edit" onclick="editOrder(${o.id})">एडिट</button>
-                            <button class="btn-danger" onclick="deleteOrder(${o.id})">डिलीट</button>
-                        </td>
-                    </tr>`;
+        function loadOrders() {
+            getStore('shops', 'readonly').getAll().onsuccess = eShops => {
+                let allShops = eShops.target.result;
+                let shopOrderMap = {};
+                allShops.forEach((s, index) => {
+                    shopOrderMap[s.name] = index;
                 });
 
-                html += `</table></div></div></div>`;
-            }
+                getStore('orders', 'readonly').getAll().onsuccess = e => {
+                    let orders = e.target.result.reverse();
+                    let grouped = {};
+                    orders.forEach(o => {
+                        if(!grouped[o.date]) grouped[o.date] = [];
+                        grouped[o.date].push(o);
+                    });
 
-            document.getElementById('orderHistoryFolders').innerHTML =
-                html || '<p style="color:gray;text-align:center;">कोणत्याही ऑर्डर्स नोंदवलेल्या नाहीत.</p>';
-        };
-    };
-}
+                    for(let date in grouped) {
+                        grouped[date].sort((a, b) => {
+                            let posA = shopOrderMap[a.shop] !== undefined ? shopOrderMap[a.shop] : 999;
+                            let posB = shopOrderMap[b.shop] !== undefined ? shopOrderMap[b.shop] : 999;
+                            return posA - posB;
+                        });
+                    }
 
+                    let html = '';
+                    for(let date in grouped) {
+                        let dateOrders = grouped[date];
+                        let dayTotalNet = dateOrders.reduce((sum, item) => sum + item.net, 0);
+                        let displayDate = formatDateDMY(date);
+                        
+                        html += `
+                            <div class="folder-group">
+                                <div class="folder-header" onclick="toggleFolder(this)">
+                                    <span>📁 दिनांक: ${displayDate} (${dateOrders.length} ऑर्डर्स)</span>
+                                    <span>एकूण: ₹${dayTotalNet.toFixed(2)} 🔽</span>
+                                </div>
+                                <div class="folder-content">
+                                    <div class="table-responsive">
+                                        <table>
+                                            <tr><th>दुकान</th><th>नेट रक्कम</th><th>बाकी</th><th>कृती</th></tr>
+                        `;
+                        dateOrders.forEach(o => {
+                            html += `<tr>
+                                <td>${o.shop} (${o.route})</td>
+                                <td>₹${o.net}</td>
+                                <td>₹${o.balance}</td>
+                                <td><button class="btn-edit" onclick="editOrder(${o.id})">एडिट</button></td>
+                            </tr>`;
+                        });
+                        html += `</table></div></div></div>`;
+                    }
+                    document.getElementById('orderHistoryFolders').innerHTML = html || '<p style="color:gray;text-align:center;">कोणत्याही ऑर्डर्स नोंदवलेल्या नाहीत.</p>';
+                };
+            };
+        }
 
         function toggleFolder(header) {
             let content = header.nextElementSibling;
@@ -971,167 +930,81 @@ function loadOrders() {
                 };
             };
         }
-// WhatsApp साठी CSV फाईल आधी तयार ठेवणे
-let uniqueRoutes = [...new Set(orders.map(o => o.route).filter(Boolean))];
-let routeLabel = uniqueRoutes.join(', ');
 
-let csv = '\uFEFF';
-csv += '"दिनांक","' + displayDate + '"\n';
-csv += '"रूट","' + routeLabel + '"\n\n';
-csv += '"क्र.","दुकान",';
+        function shareCSVWhatsApp(selectedDate) {
+            let displayDate = formatDateDMY(selectedDate);
+            getStore('shops', 'readonly').getAll().onsuccess = eShops => {
+                let allShops = eShops.target.result;
+                let shopOrderMap = {};
+                allShops.forEach((s, index) => { shopOrderMap[s.name] = index; });
 
-prods.forEach(p => {
-    csv += '"' + String(p).replace(/"/g, '""') + ' (नग)",';
-});
-csv += '"एकूण बॉक्स","नेट रक्कम (₹)","बाकी (₹)"\n';
+                getStore('products', 'readonly').getAll().onsuccess = eP => {
+                    let prods = eP.target.result.map(p => p.name);
+                    getStore('orders', 'readonly').getAll().onsuccess = eO => {
+                        let orders = eO.target.result.filter(o => o.date === selectedDate);
+                        
+                        orders.sort((a, b) => {
+                            let posA = shopOrderMap[a.shop] !== undefined ? shopOrderMap[a.shop] : 999;
+                            let posB = shopOrderMap[b.shop] !== undefined ? shopOrderMap[b.shop] : 999;
+                            return posA - posB;
+                        });
 
-orders.forEach((o, idx) => {
-    let pMap = {};
-    prods.forEach(p => pMap[p] = 0);
-    let rowTotalQty = 0;
+                        let csv = '\uFEFFक्र.,तारीख,रूट,दुकान,';
+                        prods.forEach(p => csv += `"${p} (नग)",`);
+                        csv += 'एकूण बॉक्स,नेट रक्कम (₹),बाकी (₹)\n';
 
-    if (o.items && Array.isArray(o.items)) {
-        o.items.forEach(i => {
-            pMap[i.name] = Number(i.qty) || 0;
-            rowTotalQty += Number(i.qty) || 0;
-        });
-    }
+                        let grandQty = 0;
+                        let grandAmt = 0;
 
-    csv += '"' + (idx + 1) + '","' +
-        String(o.shop || '').replace(/"/g, '""') + '",';
+                        orders.forEach((o, idx) => {
+                            let pMap = {}; prods.forEach(p => pMap[p] = 0);
+                            let rowTotalQty = 0;
+                            if(o.items && Array.isArray(o.items)) {
+                                o.items.forEach(i => { 
+                                    pMap[i.name] = i.qty; 
+                                    rowTotalQty += i.qty;
+                                });
+                            }
+                            grandQty += rowTotalQty;
+                            grandAmt += o.net;
 
-    prods.forEach(p => {
-        csv += '"' + (pMap[p] || 0) + '",';
-    });
+                            csv += `"${idx + 1}","${displayDate}","${o.route}","${o.shop}",`;
+                            prods.forEach(p => { csv += `"${pMap[p]}",`; });
+                            csv += `"${rowTotalQty}","${o.net}","${o.balance}"\n`;
+                        });
 
-    csv += '"' + rowTotalQty + '","' +
-        (Number(o.net) || 0).toFixed(2) + '","' +
-        (Number(o.balance) || 0).toFixed(2) + '"\n';
-});
+                        csv += `"","","","एकूण (TOTAL)",`;
+                        prods.forEach(p => {
+                            let colTotal = orders.reduce((sum, ord) => {
+                                let match = ord.items ? ord.items.find(i => i.name === p) : null;
+                                return sum + (match ? match.qty : 0);
+                            }, 0);
+                            csv += `"${colTotal}",`;
+                        });
+                        csv += `"${grandQty}","${grandAmt.toFixed(2)}",""\n`;
 
-csv += '"","एकूण (TOTAL)",';
-prods.forEach(p => {
-    let colTotal = orders.reduce((sum, ord) => {
-        let match = ord.items && ord.items.find(i => i.name === p);
-        return sum + (match ? (Number(match.qty) || 0) : 0);
-    }, 0);
-    csv += '"' + colTotal + '",';
-});
-csv += '"' + grandQty + '","' + grandAmt.toFixed(2) + '",""\n';
+                        let file = new File([csv], `Kalidas_Report_${displayDate}.csv`, { type: 'text/csv' });
+                        
+                        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                            navigator.share({
+                                title: `कालिदास आईस्क्रीम अहवाल (${displayDate})`,
+                                text: `📅 दिनांक: ${displayDate}\n📦 एकूण बॉक्स: ${grandQty}\n💰 एकूण रक्कम: ₹${grandAmt.toFixed(2)}`,
+                                files: [file]
+                            }).catch(console.error);
+                        } else {
+                            let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+                            let l = document.createElement('a');
+                            l.href = URL.createObjectURL(blob);
+                            l.download = `Kalidas_Report_${displayDate}.csv`;
+                            l.click();
+                            alert('तुमच्या डिव्हाइसवर फाईल थेट शेअरिंग सपोर्ट नसल्यामुळे फाईल डाउनलोड झाली आहे.');
+                        }
+                    };
+                };
+            };
+        }
 
-let csvFile = new File(
-    [csv],
-    'Kalidas_Report_' + selectedDate + '.csv',
-    { type: 'text/csv;charset=utf-8;' }
-);
-
-currentReportShareData = {
-    file: csvFile,
-    date: displayDate,
-    route: routeLabel,
-    qty: grandQty,
-    amount: grandAmt
-};
-function shareCSVWhatsApp(selectedDate) {
-    let displayDate = formatDateDMY(selectedDate);
-
-    getStore('shops', 'readonly').getAll().onsuccess = eShops => {
-        let allShops = eShops.target.result;
-        let shopOrderMap = {};
-        allShops.forEach((s, index) => {
-            shopOrderMap[s.name] = index;
-        });
-
-        getStore('products', 'readonly').getAll().onsuccess = eP => {
-            let prods = eP.target.result.map(p => p.name);
-
-            getStore('orders', 'readonly').getAll().onsuccess = eO => {
-                let orders = eO.target.result.filter(
-                    o => o.date === selectedDate
-                );
-
-                orders.sort((a, b) => {
-                    let posA = shopOrderMap[a.shop] !== undefined
-                        ? shopOrderMap[a.shop] : 999;
-                    let posB = shopOrderMap[b.shop] !== undefined
-                        ? shopOrderMap[b.shop] : 999;
-                    return posA - posB;
-                });
-
-                // तारीख आणि रूट फक्त वर एकदाच
-                let uniqueRoutes = [
-                    ...new Set(orders.map(o => o.route).filter(Boolean))
-                ];
-                let routeLabel = uniqueRoutes.join(', ');
-
-                let csv = '\uFEFF';
-                csv += '"दिनांक","' + displayDate + '"\n';
-                csv += '"रूट","' +
-                    routeLabel.replace(/"/g, '""') + '"\n\n';
-
-                // दुकानांच्या ओळीत तारीख आणि रूट नाहीत
-                csv += 'क्र.,दुकान,';
-
-                prods.forEach(p => {
-                    csv += `"${p.replace(/"/g, '""')} (नग)",`;
-                });
-
-                csv += 'एकूण बॉक्स,नेट रक्कम (₹),बाकी (₹)\n';
-
-                let grandQty = 0;
-                let grandAmt = 0;
-
-                orders.forEach((o, idx) => {
-                    let pMap = {};
-                    prods.forEach(p => pMap[p] = 0);
-
-                    let rowTotalQty = 0;
-
-                    if (o.items && Array.isArray(o.items)) {
-                        o.items.forEach(i => {
-function shareCSVWhatsApp() {
-    if (!currentReportShareData || !currentReportShareData.file) {
-        alert('कृपया आधी अहवाल तयार होऊ द्या.');
-        return;
-    }
-
-    const data = currentReportShareData;
-    const file = data.file;
-
-    const shareText =
-        'कालिदास आईस्क्रीम अहवाल\n' +
-        'दिनांक: ' + data.date + '\n' +
-        'रूट: ' + data.route + '\n' +
-        'एकूण बॉक्स: ' + data.qty + '\n' +
-        'एकूण रक्कम: ₹' + Number(data.amount).toFixed(2);
-
-    if (navigator.share && navigator.canShare &&
-        navigator.canShare({ files: [file] })) {
-
-        navigator.share({
-            title: 'कालिदास आईस्क्रीम अहवाल',
-            text: shareText,
-            files: [file]
-        }).catch(error => {
-            if (error.name !== 'AbortError') {
-                alert('शेअर करताना समस्या आली: ' + error.message);
-            }
-        });
-
-    } else {
-        const url = URL.createObjectURL(file);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = file.name;
-        document.body.appendChild(link);
-        link.click();
-        link.remove();
-
-        setTimeout(() => URL.revokeObjectURL(url), 1500);
-        alert('CSV डाउनलोड झाली आहे. डाउनलोडमधून WhatsApp वर पाठवा.');
-    }
-}
- function exportCSV() {
+        function exportCSV() {
             getStore('products', 'readonly').getAll().onsuccess = eP => {
                 let prods = eP.target.result.map(p => p.name);
                 getStore('orders', 'readonly').getAll().onsuccess = eO => {
@@ -1180,19 +1053,31 @@ function shareCSVWhatsApp() {
                 };
             };
         }
-            </script>
+    </script>
 
-    <!-- OFFLINE SERVICE WORKER REGISTRATION -->
+    <!-- ⚡ कॅशे पूर्णपणे साफ करून नवीन कोड लोड करणारी सर्विस वर्कर स्क्रिप्ट -->
     <script>
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function () {
-                navigator.serviceWorker.register('./sw.js')
-                    .then(function (registration) {
-                        console.log('Offline support active:', registration.scope);
-                    })
-                    .catch(function (error) {
-                        console.error('Service Worker Error:', error);
+            navigator.serviceWorker.getRegistrations().then(registrations => {
+                for(let registration of registrations) {
+                    registration.unregister();
+                }
+            });
+            window.addEventListener('load', () => {
+                navigator.serviceWorker.register('data:text/javascript;charset=utf-8,' + encodeURIComponent(`
+                    self.addEventListener('install', e => { self.skipWaiting(); });
+                    self.addEventListener('activate', e => {
+                        e.waitUntil(
+                            caches.keys().then(keys => Promise.all(keys.map(key => caches.delete(key))))
+                            .then(() => self.clients.claim())
+                        );
                     });
+                    self.addEventListener('fetch', e => {
+                        e.respondWith(
+                            fetch(e.request).catch(() => caches.match(e.request))
+                        );
+                    });
+                `)).catch(err => console.log(err));
             });
         }
     </script>
