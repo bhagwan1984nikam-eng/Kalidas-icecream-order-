@@ -161,8 +161,7 @@
                 <div id="dateReportOutput" style="margin-top:12px;"></div>
                 
                 <hr style="margin: 15px 0; border:0; border-top:1px solid #eee;">
-                <h2>बॅकअप व CSV</h2>
-                <button class="btn" style="margin-top:8px;" onclick="exportCSV()">संपूर्ण Excel CSV डाउनलोड करा</button>
+                <h2>बॅकअप</h2>
                 <button class="btn" style="margin-top:8px; background:#d32f2f;" onclick="exportJSON()">JSON बॅकअप घ्या</button>
             </div>
         </div>
@@ -965,8 +964,8 @@
                         });
                         csvContent += `"${grandQty}","${grandAmt.toFixed(2)}"\n`;
 
-                        html += `<button class="btn" style="margin-top:8px;" onclick="exportCSVReport('${displayDate}', \`${encodeURIComponent(csvContent)}\`)">📥 एक्सेल CSV फाईल डाऊनलोड करा</button>`;
-                        html += `<button class="btn-whatsapp" onclick="sendTextToWhatsApp('${displayDate}', \`${encodeURIComponent(csvContent)}\`)">💬 थेट मजकूर (Text) WhatsApp वर पाठवा</button>`;
+                        // फक्त WhatsApp वर मजकूर पाठवण्याचे एकमेव बटण
+                        html += `<button class="btn-whatsapp" style="margin-top:8px;" onclick="sendTextToWhatsApp('${displayDate}', \`${encodeURIComponent(csvContent)}\`)">📎 एक्सेल CSV फाईल व्हॉट्सॲप ला पाठवा</button>`;
 
                         document.getElementById('dateReportOutput').innerHTML = html;
                     };
@@ -974,55 +973,11 @@
             };
         }
 
-        function exportCSVReport(displayDate, encodedCsv) {
-            let csvText = decodeURIComponent(encodedCsv);
-            let blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
-            let l = document.createElement('a');
-            l.href = URL.createObjectURL(blob);
-            l.download = `Kalidas_Report_${displayDate}.csv`;
-            l.click();
-        }
-
         function sendTextToWhatsApp(displayDate, encodedCsv) {
             let csvText = decodeURIComponent(encodedCsv);
             let cleanText = csvText.replace(/"/g, '').replace(/\\n/g, '\n');
             let whatsappUrl = `https://api.whatsapp.com/send?text=` + encodeURIComponent(cleanText);
             window.open(whatsappUrl, '_blank');
-        }
-
-        function exportCSV() {
-            getStore('products', 'readonly').getAll().onsuccess = eP => {
-                let prods = eP.target.result.map(p => p.name);
-                getStore('orders', 'readonly').getAll().onsuccess = eO => {
-                    let orders = eO.target.result;
-                    let csv = '\uFEFFक्र.,तारीख,रूट,दुकान,';
-                    prods.forEach(p => csv += `"${p}",`);
-                    csv += 'एकूण बॉक्स,नेट रक्कम (₹),बाकी (₹)\n';
-
-                    orders.forEach((o, idx) => {
-                        let pMap = {}; prods.forEach(p => pMap[p] = 0);
-                        let rowTotalQty = 0;
-                        if(o.items && Array.isArray(o.items)) {
-                            o.items.forEach(i => { 
-                                pMap[i.name] = i.qty; 
-                                rowTotalQty += i.qty;
-                            });
-                        }
-
-                        let displayDate = formatDateDMY(o.date);
-                        csv += `"${idx + 1}","${displayDate}","${o.route}","${o.shop}",`;
-                        prods.forEach(p => { csv += `"${pMap[p]}",`; });
-                        csv += `"${rowTotalQty}","${o.net}","${o.balance}"\n`;
-                    });
-
-                    let blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-                    let l = document.createElement('a');
-                    l.href = URL.createObjectURL(blob);
-                    let todayStr = formatDateDMY(new Date().toISOString().slice(0,10));
-                    l.download = `Kalidas_Orders_Report_${todayStr}.csv`;
-                    l.click();
-                };
-            };
         }
 
         function exportJSON() {
