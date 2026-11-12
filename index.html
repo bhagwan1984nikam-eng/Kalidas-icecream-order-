@@ -153,7 +153,7 @@
         <!-- 4. Reports Section -->
         <div id="sec-reports" class="section">
             <div class="card">
-                <h2>तारीखनुसार अहवाल व WhatsApp शेअरिंग</h2>
+                <h2>तारीखनुसार अहवाल व शेअरिंग</h2>
                 <div class="form-group" style="margin-top: 8px;">
                     <label>अहवालासाठी तारीख निवडा:</label>
                     <input type="date" id="reportDateSelect" onchange="generateDateReport()">
@@ -379,6 +379,7 @@
             { name: "Family pack mango", price: 125, image: "family_mango.png" }
         ];
 
+        // Database version permanently fixed to 50 for complete offline stability
         const req = indexedDB.open("KalidasIceCreamDB", 50);
         req.onerror = e => console.log("Database error");
         req.onsuccess = e => { db = e.target.result; initApp(); };
@@ -964,8 +965,9 @@
                         });
                         csvContent += `"${grandQty}","${grandAmt.toFixed(2)}"\n`;
 
-                        // फक्त WhatsApp वर मजकूर पाठवण्याचे एकमेव बटण
-                        html += `<button class="btn-whatsapp" style="margin-top:8px;" onclick="sendTextToWhatsApp('${displayDate}', \`${encodeURIComponent(csvContent)}\`)">📎 एक्सेल CSV फाईल व्हॉट्सॲप ला पाठवा</button>`;
+                        // दोन बटणे: 1. थेट मजकूर WhatsApp ला पाठवा, 2. Excel CSV फाईल डाउनलोड करा
+                        html += `<button class="btn-whatsapp" style="margin-top:8px;" onclick="sendTextToWhatsApp('${displayDate}', \`${encodeURIComponent(csvContent)}\`)">💬 थेट मजकूर (Text) WhatsApp वर पाठवा</button>`;
+                        html += `<button class="btn" style="margin-top:8px;" onclick="exportCSVReport('${displayDate}', \`${encodeURIComponent(csvContent)}\`)">📥 एक्सेल CSV फाईल डाऊनलोड करा</button>`;
 
                         document.getElementById('dateReportOutput').innerHTML = html;
                     };
@@ -978,6 +980,15 @@
             let cleanText = csvText.replace(/"/g, '').replace(/\\n/g, '\n');
             let whatsappUrl = `https://api.whatsapp.com/send?text=` + encodeURIComponent(cleanText);
             window.open(whatsappUrl, '_blank');
+        }
+
+        function exportCSVReport(displayDate, encodedCsv) {
+            let csvText = decodeURIComponent(encodedCsv);
+            let blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
+            let l = document.createElement('a');
+            l.href = URL.createObjectURL(blob);
+            l.download = `Kalidas_Report_${displayDate}.csv`;
+            l.click();
         }
 
         function exportJSON() {
