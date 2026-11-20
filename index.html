@@ -153,7 +153,7 @@
         <!-- 4. Reports Section -->
         <div id="sec-reports" class="section">
             <div class="card">
-                <h2>तारीखनुसार अहवाल व शेअरिंग</h2>
+                <h2>तारीखनुसार अहवाल व WhatsApp शेअरिंग</h2>
                 <div class="form-group" style="margin-top: 8px;">
                     <label>अहवालासाठी तारीख निवडा:</label>
                     <input type="date" id="reportDateSelect" onchange="generateDateReport()">
@@ -379,7 +379,12 @@
             { name: "Family pack mango", price: 125, image: "family_mango.png" }
         ];
 
-        // Database version permanently fixed to 50 for offline storage
+        let latestReportPayload = {
+            displayDate: '',
+            csvText: ''
+        };
+
+        // Database version permanently fixed to 50 to preserve existing data
         const req = indexedDB.open("KalidasIceCreamDB", 50);
         req.onerror = e => console.log("Database error");
         req.onsuccess = e => { db = e.target.result; initApp(); };
@@ -394,6 +399,13 @@
             if(!dateStr) return '';
             let parts = dateStr.split('-');
             return parts.length === 3 ? `${parts[2]}-${parts[1]}-${parts[0]}` : dateStr;
+        }
+
+        function extractPhoneNumbers(detailsStr) {
+            if(!detailsStr) return '';
+            let matches = detailsStr.match(/(?:\+?\d[\d\s-]{6,}\d)/g);
+            if(!matches) return '';
+            return matches.map(m => m.trim().replace(/\s+/g, ' ')).join(' / ');
         }
 
         function switchTab(id, el) {
@@ -880,8 +892,10 @@
             getStore('shops', 'readonly').getAll().onsuccess = eShops => {
                 let allShops = eShops.target.result;
                 let shopOrderMap = {};
+                let shopPhoneMap = {};
                 allShops.forEach((s, index) => {
                     shopOrderMap[s.name] = index;
+                    shopPhoneMap[s.name] = extractPhoneNumbers(s.details);
                 });
 
                 getStore('products', 'readonly').getAll().onsuccess = eP => {
@@ -901,7 +915,7 @@
                         });
 
                         let html = `<h3>दिनांक: ${displayDate} चा अहवाल</h3>`;
-                        html += '<div class="table-responsive"><table><thead><tr><th>क्र.</th><th>दुकान</th>';
+                        html += '<div class="table-responsive"><table><thead><tr><th>क्र.</th><th>दुकान</th><th>संपर्क नंबर</th>';
                         prods.forEach(p => html += `<th>${p}</th>`);
                         html += '<th>एकूण बॉक्स</th><th>नेट रक्कम</th></tr></thead><tbody>';
 
@@ -918,8 +932,9 @@
                                     rowTotalQty += i.qty;
                                 });
                             }
+                            let phone = shopPhoneMap[o.shop] || '-';
 
-                            html += `<tr><td>${idx+1}</td><td>${o.shop}</td>`;
+                            html += `<tr><td>${idx+1}</td><td>${o.shop}</td><td>${phone}</td>`;
                             prods.forEach(p => { 
                                 html += `<td>${pMap[p] || 0}</td>`; 
                                 totals[p] += (pMap[p] || 0); 
@@ -929,7 +944,7 @@
                             grandAmt += o.net;
                         });
 
-                        html += `<tr class="total-row"><td colspan="2">एकूण (TOTAL)</td>`;
+                        html += `<tr class="total-row"><td colspan="3">एकूण (TOTAL)</td>`;
                         prods.forEach(p => { html += `<td>${totals[p]}</td>`; });
                         html += `<td><b>${grandQty}</b></td><td><b>₹${grandAmt.toFixed(2)}</b></td></tr></tbody></table></div>`;
 
@@ -939,7 +954,7 @@
                         csvContent += `"कालिदास आईस्क्रीम"\n`;
                         csvContent += `"दिनांक: ${displayDate} | रूट: ${routesList}"\n\n`;
                         
-                        let csvHeader = 'क्र.,दुकान,';
+                        let csvHeader = 'क्र.,दुकान,संपर्क नंबर,';
                         prods.forEach(p => csvHeader += `"${p}",`);
                         csvHeader += 'एकूण बॉक्स,नेट रक्कम (₹)\n';
                         csvContent += csvHeader;
@@ -953,20 +968,25 @@
                                     rowTotalQty += i.qty;
                                 });
                             }
+                            let phone = shopPhoneMap[o.shop] || '';
 
-                            csvContent += `"${idx + 1}","${o.shop}",`;
+                            csvContent += `"${idx + 1}","${o.shop}","${phone}",`;
                             prods.forEach(p => { csvContent += `"${pMap[p]}",`; });
                             csvContent += `"${rowTotalQty}","${o.net}"\n`;
                         });
 
-                        csvContent += `"","एकूण (TOTAL)",`;
+                        csvContent += `"","एकूण (TOTAL)","",`;
                         prods.forEach(p => {
                             csvContent += `"${totals[p]}",`;
                         });
                         csvContent += `"${grandQty}","${grandAmt.toFixed(2)}"\n`;
 
-                        // "एक्सेल CSV फाईल व्हॉट्सॲप ला पाठवा" बटण
-                        html += `<button class="btn-whatsapp" style="margin-top:8px;" onclick="exportCSVReport('${displayDate}', \`${encodeURIComponent(csvContent)}\`)">📎 एक्सेल CSV फाईल व्हॉट्सॲप ला पाठवा</button>`;
+                        latestReportPayload = {
+                            displayDate: displayDate,
+                            csvText: csvContent
+                        };
+
+                        html += `<button class="btn-whatsapp" style="margin-top:8px;" onclick="shareCSVDirectToWhatsApp()">📤 एक्सेल CSV फाईल डायरेक्ट व्हॉट्सॲप ला पाठवा</button>`;
 
                         document.getElementById('dateReportOutput').innerHTML = html;
                     };
@@ -974,19 +994,38 @@
             };
         }
 
-        function exportCSVReport(displayDate, encodedCsv) {
-            let csvText = decodeURIComponent(encodedCsv);
-            let blob = new Blob([csvText], { type: 'text/csv;charset=utf-8;' });
+        async function shareCSVDirectToWhatsApp() {
+            if(!latestReportPayload.csvText) {
+                return alert('कृपया आधी अहवाल जनरेट करा.');
+            }
+
+            let fileName = `Kalidas_Report_${latestReportPayload.displayDate}.csv`;
+            let blob = new Blob([latestReportPayload.csvText], { type: 'text/csv;charset=utf-8;' });
+            let file = new File([blob], fileName, { type: 'text/csv' });
+
+            // डायरेक्ट फाईल शेअरिंग (Web Share API) - डाऊनलोडशिवाय थेट WhatsApp वर पाठवण्याचा प्रयत्न
+            if (navigator.canShare && navigator.canShare({ files: [file] })) {
+                try {
+                    await navigator.share({
+                        title: `कालिदास ऑर्डर अहवाल - ${latestReportPayload.displayDate}`,
+                        text: `दिनांक ${latestReportPayload.displayDate} चा ऑर्डर CSV अहवाल`,
+                        files: [file]
+                    });
+                    return;
+                } catch (err) {
+                    if (err.name === 'AbortError') return;
+                }
+            }
+
+            // जर ब्राउझर थेट फाईल शेअरिंगला परवानगी देत नसेल तर पर्याय म्हणून फाईल डाऊनलोड व WhatsApp उघडणे
             let l = document.createElement('a');
             l.href = URL.createObjectURL(blob);
-            l.download = `Kalidas_Report_${displayDate}.csv`;
+            l.download = fileName;
             l.click();
-            
-            // युजरला व्हॉट्सॲपवर डाऊनलोड केलेली फाईल कागदपत्र म्हणून निवडण्यासाठी सूचना
             setTimeout(() => {
-                alert("एक्सेल CSV फाईल डाऊनलोड झाली आहे! आता व्हॉट्सॲप उघडून 📎 (Attach) आयकॉनवर क्लिक करा आणि 'Document' मधून ही फाईल निवडून पाठवा.");
+                alert("तुमच्या ब्राउझरमध्ये थेट फाईल शेअरिंग ब्लॉक असल्याने फाईल डाऊनलोड केली आहे. व्हॉट्सॲप उघडून Document मधून ही फाईल पाठवा.");
                 window.open("https://api.whatsapp.com/", "_blank");
-            }, 1000);
+            }, 800);
         }
 
         function exportJSON() {
@@ -1007,18 +1046,5 @@
             };
         }
     </script>
-    <script>
-if ('serviceWorker' in navigator) {
-    window.addEventListener('load', function () {
-        navigator.serviceWorker.register('./sw.js')
-            .then(function (registration) {
-                console.log('Offline Ready:', registration.scope);
-            })
-            .catch(function (error) {
-                console.error('SW Error:', error);
-            });
-    });
-}
-</script>
 </body>
 </html>
